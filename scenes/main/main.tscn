@@ -1,0 +1,37 @@
+[gd_scene format=3 uid="uid://cj2o6bu7lko4k"]
+
+[node name="Main" type="Node" unique_id=107272976]
+
+[node name="Systems" type="Node" parent="." unique_id=1350648501]
+
+[node name="World" type="Node2D" parent="." unique_id=1955869184]
+position = Vector2(-2, 0)
+
+[node name="MapRoot" type="Node2D" parent="World" unique_id=1003631701]
+
+[node name="HudLayer" type="CanvasLayer" parent="." unique_id=2132097352]
+layer = 10
+
+[node name="HudRoot" type="Control" parent="HudLayer" unique_id=1142900938]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="PauseLayer" type="CanvasLayer" parent="." unique_id=621645473]
+layer = 20
+
+[node name="PauseRoot" type="Control" parent="PauseLayer" unique_id=1415300725]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="DebugLayer" type="CanvasLayer" parent="." unique_id=41373179]
+layer = 100
+
+[node name="DebugRoot" type="Control" parent="DebugLayer" unique_id=1276353785]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0

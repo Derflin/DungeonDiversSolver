@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cbh8nyrjgedi"
-path="res://.godot/imported/DungeonSolvers-Corridor-Variants-1row.png-7e595ffdd368927ce148e7d49043c956.ctex"
+path="res://.godot/imported/DungeonSolvers-Base- Corridor-Variants-1row.png-9fa8293cf0281fabaa15c0f4f68ee473.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/icons/corridors/DungeonSolvers-Corridor-Variants-1row.png"
-dest_files=["res://.godot/imported/DungeonSolvers-Corridor-Variants-1row.png-7e595ffdd368927ce148e7d49043c956.ctex"]
+source_file="res://assets/icons/corridors/DungeonSolvers-Base- Corridor-Variants-1row.png"
+dest_files=["res://.godot/imported/DungeonSolvers-Base- Corridor-Variants-1row.png-9fa8293cf0281fabaa15c0f4f68ee473.ctex"]
 
 [params]
 

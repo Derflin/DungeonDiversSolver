@@ -1,12 +1,12 @@
 [gd_resource type="Resource" script_class="RoomSpecialType" format=3 uid="uid://ccmnq07pv5xka"]
 
-[ext_resource type="Texture2D" uid="uid://7f6rw10d7kvl" path="res://assets/icons/special_rooms/static/DungeonSolvers-ArenaRoom-Background.png" id="1_3cybb"]
-[ext_resource type="Texture2D" uid="uid://dggp5kkk4i4ga" path="res://assets/icons/special_rooms/static/DungeonSolvers-ArenaRoom-Icon.png" id="2_r115l"]
-[ext_resource type="Script" uid="uid://pyxshpew1nfw" path="res://scripts/resources/room_special_type.gd" id="3_cocog"]
+[ext_resource type="Texture2D" uid="uid://7f6rw10d7kvl" path="res://assets/icons/special_rooms/static/DungeonSolvers-ArenaRoom-Background.png" id="1_uetje"]
+[ext_resource type="Texture2D" uid="uid://dggp5kkk4i4ga" path="res://assets/icons/special_rooms/static/DungeonSolvers-ArenaRoom-Icon.png" id="2_iachv"]
+[ext_resource type="Script" uid="uid://pyxshpew1nfw" path="res://scripts/resources/room_special_type.gd" id="3_fdoa4"]
 
 [resource]
-script = ExtResource("3_cocog")
-id = &"arena_room"
+script = ExtResource("3_fdoa4")
+id = &"special_arena_room"
 display_name = "Arena Room"
-icon = ExtResource("2_r115l")
-background = ExtResource("1_3cybb")
+icon = ExtResource("2_iachv")
+background = ExtResource("1_uetje")

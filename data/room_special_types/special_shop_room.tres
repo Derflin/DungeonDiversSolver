@@ -1,12 +1,12 @@
 [gd_resource type="Resource" script_class="RoomSpecialType" format=3 uid="uid://gb28i7ylwxe3"]
 
-[ext_resource type="Texture2D" uid="uid://dgh6m8l7f33gj" path="res://assets/icons/special_rooms/static/DungeonSolvers-ShopRoom-Background.png" id="1_c50g8"]
-[ext_resource type="Texture2D" uid="uid://j6i6mbrdtpxw" path="res://assets/icons/special_rooms/static/DungeonSolvers-ShopRoom-Icon.png" id="2_cbi3p"]
-[ext_resource type="Script" uid="uid://pyxshpew1nfw" path="res://scripts/resources/room_special_type.gd" id="3_6vrct"]
+[ext_resource type="Texture2D" uid="uid://dgh6m8l7f33gj" path="res://assets/icons/special_rooms/static/DungeonSolvers-ShopRoom-Background.png" id="1_oh6ny"]
+[ext_resource type="Texture2D" uid="uid://j6i6mbrdtpxw" path="res://assets/icons/special_rooms/static/DungeonSolvers-ShopRoom-Icon.png" id="2_djnrt"]
+[ext_resource type="Script" uid="uid://pyxshpew1nfw" path="res://scripts/resources/room_special_type.gd" id="3_6ipga"]
 
 [resource]
-script = ExtResource("3_6vrct")
-id = &"shop_room"
+script = ExtResource("3_6ipga")
+id = &"special_shop_room"
 display_name = "Shop Room"
-icon = ExtResource("2_cbi3p")
-background = ExtResource("1_c50g8")
+icon = ExtResource("2_djnrt")
+background = ExtResource("1_oh6ny")

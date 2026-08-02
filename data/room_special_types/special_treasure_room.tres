@@ -1,12 +1,12 @@
 [gd_resource type="Resource" script_class="RoomSpecialType" format=3 uid="uid://dfdmwir5q34hx"]
 
-[ext_resource type="Texture2D" uid="uid://dx5fe83eqmhnr" path="res://assets/icons/special_rooms/static/DungeonSolvers-TreasureRoom-Background.png" id="1_eya8r"]
-[ext_resource type="Texture2D" uid="uid://b2e5fqvbafl5q" path="res://assets/icons/special_rooms/static/DungeonSolvers-TreasureRoom-Icon.png" id="2_1aj7b"]
-[ext_resource type="Script" uid="uid://pyxshpew1nfw" path="res://scripts/resources/room_special_type.gd" id="3_sffmr"]
+[ext_resource type="Texture2D" uid="uid://dx5fe83eqmhnr" path="res://assets/icons/special_rooms/static/DungeonSolvers-TreasureRoom-Background.png" id="1_uvrdb"]
+[ext_resource type="Texture2D" uid="uid://b2e5fqvbafl5q" path="res://assets/icons/special_rooms/static/DungeonSolvers-TreasureRoom-Icon.png" id="2_hil0a"]
+[ext_resource type="Script" uid="uid://pyxshpew1nfw" path="res://scripts/resources/room_special_type.gd" id="3_i7lu6"]
 
 [resource]
-script = ExtResource("3_sffmr")
-id = &"treasure_room"
+script = ExtResource("3_i7lu6")
+id = &"special_treasure_room"
 display_name = "Treasure Room"
-icon = ExtResource("2_1aj7b")
-background = ExtResource("1_eya8r")
+icon = ExtResource("2_hil0a")
+background = ExtResource("1_uvrdb")

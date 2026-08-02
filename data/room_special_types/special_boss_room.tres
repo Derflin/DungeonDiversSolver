@@ -1,12 +1,12 @@
 [gd_resource type="Resource" script_class="RoomSpecialType" format=3 uid="uid://c5xq3isq83814"]
 
-[ext_resource type="Texture2D" uid="uid://34urue5gshop" path="res://assets/icons/special_rooms/static/DungeonSolvers-BossRoom-Background.png" id="1_o6fo5"]
-[ext_resource type="Texture2D" uid="uid://cjetpat70ifdo" path="res://assets/icons/special_rooms/static/DungeonSolvers-BossRoom-Icon.png" id="2_w7q67"]
-[ext_resource type="Script" uid="uid://pyxshpew1nfw" path="res://scripts/resources/room_special_type.gd" id="3_kkqay"]
+[ext_resource type="Texture2D" uid="uid://34urue5gshop" path="res://assets/icons/special_rooms/static/DungeonSolvers-BossRoom-Background.png" id="1_ktvpc"]
+[ext_resource type="Texture2D" uid="uid://cjetpat70ifdo" path="res://assets/icons/special_rooms/static/DungeonSolvers-BossRoom-Icon.png" id="2_j077j"]
+[ext_resource type="Script" uid="uid://pyxshpew1nfw" path="res://scripts/resources/room_special_type.gd" id="3_nw6u8"]
 
 [resource]
-script = ExtResource("3_kkqay")
-id = &"boss_room"
+script = ExtResource("3_nw6u8")
+id = &"special_boss_room"
 display_name = "Boss Room"
-icon = ExtResource("2_w7q67")
-background = ExtResource("1_o6fo5")
+icon = ExtResource("2_j077j")
+background = ExtResource("1_ktvpc")

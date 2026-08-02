@@ -1,3 +1,12 @@
-[gd_resource type="Resource" format=3 uid="uid://qdsgobpamdnl"]
+[gd_resource type="Resource" script_class="RoomSpecialType" format=3 uid="uid://qdsgobpamdnl"]
+
+[ext_resource type="Texture2D" uid="uid://cein2r16sgh56" path="res://assets/icons/special_rooms/static/DungeonSolvers-EntranceRoom-Background.png" id="1_qs4s7"]
+[ext_resource type="Texture2D" uid="uid://k331cewqaram" path="res://assets/icons/special_rooms/static/DungeonSolvers-EntranceRoom-Icon.png" id="2_cymg1"]
+[ext_resource type="Script" uid="uid://pyxshpew1nfw" path="res://scripts/resources/room_special_type.gd" id="3_raiaa"]
 
 [resource]
+script = ExtResource("3_raiaa")
+id = &"entrance_room"
+display_name = "Entracne Room"
+icon = ExtResource("2_cymg1")
+background = ExtResource("1_qs4s7")

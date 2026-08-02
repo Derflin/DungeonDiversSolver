@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dwg4mifywdiad"
-path="res://.godot/imported/DungeonSolvers-Barricade-All.png-bb563b2936a78c92157a35712adef57b.ctex"
+path="res://.godot/imported/DungeonSolvers-Base - Barricade-All.png-aa22a383d382729ef400eae2d8b5790c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/icons/barricades/DungeonSolvers-Barricade-All.png"
-dest_files=["res://.godot/imported/DungeonSolvers-Barricade-All.png-bb563b2936a78c92157a35712adef57b.ctex"]
+source_file="res://assets/icons/barricades/DungeonSolvers-Base - Barricade-All.png"
+dest_files=["res://.godot/imported/DungeonSolvers-Base - Barricade-All.png-aa22a383d382729ef400eae2d8b5790c.ctex"]
 
 [params]
 

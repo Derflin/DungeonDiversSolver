@@ -6,6 +6,7 @@
 
 [resource]
 script = ExtResource("3_fdoa4")
+kind = 10
 id = &"special_arena_room"
 display_name = "Arena Room"
 icon = ExtResource("2_iachv")

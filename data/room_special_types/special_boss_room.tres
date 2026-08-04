@@ -6,6 +6,7 @@
 
 [resource]
 script = ExtResource("3_nw6u8")
+kind = 20
 id = &"special_boss_room"
 display_name = "Boss Room"
 icon = ExtResource("2_j077j")

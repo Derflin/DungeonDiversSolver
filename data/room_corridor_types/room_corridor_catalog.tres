@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="RoomCorridorCatalog" format=3 uid="uid://dr477aksaq14e"]
+
+[ext_resource type="Script" uid="uid://c2rsioeuqhftd" path="res://scripts/resources/room_corridor_type.gd" id="1_vefcb"]
+[ext_resource type="Resource" uid="uid://caq1o36pv737i" path="res://data/room_corridor_types/corridor_base.tres" id="2_l602p"]
+[ext_resource type="Script" uid="uid://dq5p1un6ukmqi" path="res://scripts/resources/room_corridor_catalog.gd" id="3_s7ih5"]
+
+[resource]
+script = ExtResource("3_s7ih5")
+room_types = Array[ExtResource("1_vefcb")]([ExtResource("2_l602p")])

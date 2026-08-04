@@ -6,6 +6,7 @@
 
 [resource]
 script = ExtResource("3_p08gc")
+kind = 40
 id = &"special_library_room"
 display_name = "Library Room"
 icon = ExtResource("2_liou6")

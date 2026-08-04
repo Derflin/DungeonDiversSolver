@@ -6,6 +6,7 @@
 
 [resource]
 script = ExtResource("3_i7lu6")
+kind = 60
 id = &"special_treasure_room"
 display_name = "Treasure Room"
 icon = ExtResource("2_hil0a")

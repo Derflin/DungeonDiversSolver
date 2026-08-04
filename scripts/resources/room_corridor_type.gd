@@ -1,6 +1,13 @@
 class_name RoomCorridorType
 extends Resource
 
+enum Kind {
+	BASE = 10,
+}
+
+
+@export var kind: Kind
+
 @export var id: StringName
 @export var display_name: String
 

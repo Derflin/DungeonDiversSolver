@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://c2rsioeuqhftd" path="res://scripts/resources/room_corridor_type.gd" id="1_dh3b2"]
 [ext_resource type="Texture2D" uid="uid://dwg4mifywdiad" path="res://assets/icons/barricades/DungeonSolvers-Base - Barricade-All.png" id="1_ekrv3"]
+[ext_resource type="Texture2D" uid="uid://bxfbygos4nwyu" path="res://assets/icons/corridors/DungeonSolvers - Base - Connections.png" id="2_bx4w1"]
 [ext_resource type="Texture2D" uid="uid://d4ja2ui1y3cy1" path="res://assets/icons/corridors/DungeonSolvers-Base - Corridor-Variants-4row.png" id="2_ekrv3"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_bx4w1"]
@@ -410,4 +411,5 @@ kind = 10
 id = &"corridor_base"
 display_name = "Corridor Base"
 floor_variants = SubResource("SpriteFrames_drd4b")
+connections_texture = ExtResource("2_bx4w1")
 barricades_texture = ExtResource("1_ekrv3")

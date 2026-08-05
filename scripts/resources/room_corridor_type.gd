@@ -14,5 +14,8 @@ enum Kind {
 @export_group("Floor")
 @export var floor_variants: SpriteFrames
 
+@export_group("Connections")
+@export var connections_texture: Texture2D
+
 @export_group("Barricades")
 @export var barricades_texture: Texture2D

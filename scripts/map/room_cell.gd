@@ -3,7 +3,7 @@ class_name RoomCell
 extends Node2D
 
 
-@export var cell_size := Vector2(15, 15): 
+@export var cell_size := Vector2(17, 17): 
 	set(value): 
 		cell_size = value 
 		queue_redraw() 
@@ -12,7 +12,6 @@ extends Node2D
 	set(value): 
 		show_editor_guide = value 
 		queue_redraw()
-
 
 var room_instance_data: RoomInstanceData
 
@@ -29,6 +28,10 @@ func _ready() -> void:
 
 
 func _draw() -> void: 
+	_draw_editor_guide()
+
+
+func _draw_editor_guide() -> void:
 	if not Engine.is_editor_hint(): 
 		return 
 		
@@ -67,3 +70,4 @@ func _draw() -> void:
 		Color(0.3, 0.7, 1.0, 0.35), 
 		1.0 
 	)
+	

@@ -36,7 +36,7 @@ func _draw_square_segments() -> void:
 			var rect_from = _grid_point_to_local(Vector2i(grid_x, grid_y))
 			var rect_to = _grid_point_to_local(Vector2i(grid_x + 1, grid_y + 1))
 			var rect_size = rect_to - rect_from
-			var color = external_line_color if grid_x < GRID_OUTER_CELL_COUNT or grid_x >= grid_size.x or grid_y < GRID_OUTER_CELL_COUNT or grid_y >= grid_size.y else internal_line_color
+			var color = external_line_color if grid_x < GRID_OUTER_CELL_COUNT or grid_x >= (grid_size.x + GRID_OUTER_CELL_COUNT) or grid_y < GRID_OUTER_CELL_COUNT or grid_y >= (grid_size.y + GRID_OUTER_CELL_COUNT) else internal_line_color			
 			_draw_square_segment(Rect2(rect_from, rect_size), color)
 	
 	
@@ -50,3 +50,10 @@ func _grid_point_to_local(grid_point: Vector2i) -> Vector2:
 	
 func _draw_square_segment(rect_coords: Rect2, color: Color) -> void:
 	draw_rect(rect_coords, color, false, 1.0)
+	
+	
+func get_grid_size() -> Vector2:
+	return Vector2(
+		(grid_size.x + 2 * GRID_OUTER_CELL_COUNT) * (grid_room_size.x + 1.0) + 1.0,
+		(grid_size.y + 2 * GRID_OUTER_CELL_COUNT) * (grid_room_size.y + 1.0) + 1.0,
+	)

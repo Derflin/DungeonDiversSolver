@@ -5,11 +5,40 @@
 
 [node name="RoomGrid" type="Node2D" unique_id=1905427388]
 script = ExtResource("1_u42w3")
+fit_padding = -18.0
+maximum_zoom = 6.0
+
+[node name="BackgroundLayer" type="CanvasLayer" parent="." unique_id=1121686894]
+layer = -10
+
+[node name="BackgroundRoot" type="Control" parent="BackgroundLayer" unique_id=806153058]
+z_index = -1000
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Background" type="ColorRect" parent="BackgroundLayer/BackgroundRoot" unique_id=1455567765]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.14733289, 0.12835406, 0.12315822, 1)
 
 [node name="GridBackground" type="Node2D" parent="." unique_id=964215121]
 
 [node name="GridLines" type="Node2D" parent="GridBackground" unique_id=587287736 node_paths=PackedStringArray("grid_parent_node")]
 script = ExtResource("2_f4qe3")
 grid_parent_node = NodePath("../..")
+internal_line_color = Color(0.78431374, 0.5647059, 0.43137255, 0.15686275)
+external_line_color = Color(0.4509804, 0.15294118, 0.17254902, 0.15686275)
 
 [node name="Rooms" type="Node2D" parent="." unique_id=439474740]
+
+[node name="MapCamera" type="Camera2D" parent="." unique_id=888741653]

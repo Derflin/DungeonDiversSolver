@@ -1,7 +1,14 @@
+class_name RoomGrid
 extends Node2D
+
 
 var _room_cell_scene
 var rooms: Dictionary[Vector2i, RoomInstanceData] = {}
+
+@export_group("Grid Parameters")
+@export var grid_size: Vector2i = Vector2i(17, 17)
+@export var grid_room_size: Vector2i = Vector2i(15, 15)
+
 
 func _ready() -> void:
 	print("Room Grid Ready")

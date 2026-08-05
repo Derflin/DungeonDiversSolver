@@ -1,6 +1,13 @@
 [gd_scene format=3 uid="uid://byxiaffshj4eo"]
 
 [ext_resource type="Script" uid="uid://dqy34gaxtjvvi" path="res://scripts/map/room_grid.gd" id="1_u42w3"]
+[ext_resource type="Script" uid="uid://cblsrx8vubsak" path="res://scripts/map/grid_background.gd" id="2_f4qe3"]
 
 [node name="RoomGrid" type="Node2D" unique_id=1905427388]
 script = ExtResource("1_u42w3")
+
+[node name="GridBackground" type="TileMapLayer" parent="." unique_id=1936433695]
+z_index = -100
+script = ExtResource("2_f4qe3")
+
+[node name="Rooms" type="Node2D" parent="." unique_id=439474740]

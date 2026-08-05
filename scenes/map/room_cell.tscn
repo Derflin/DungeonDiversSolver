@@ -4,3 +4,26 @@
 
 [node name="RoomCell" type="Node2D" unique_id=889635569]
 script = ExtResource("1_qcwte")
+
+[node name="Shadow" type="Sprite2D" parent="." unique_id=1263625526]
+
+[node name="Content" type="Node2D" parent="." unique_id=995449802]
+z_index = 10
+
+[node name="Floor" type="Sprite2D" parent="Content" unique_id=408459672]
+
+[node name="Background" type="Sprite2D" parent="Content" unique_id=141918688]
+
+[node name="Connections" type="Node2D" parent="Content" unique_id=1791298404]
+
+[node name="Barricades" type="Node2D" parent="Content" unique_id=1941264087]
+
+[node name="BarricadeUp" type="Sprite2D" parent="Content/Barricades" unique_id=657509913]
+
+[node name="BarricadeRight" type="Sprite2D" parent="Content/Barricades" unique_id=1353906017]
+
+[node name="BarricadeDown" type="Sprite2D" parent="Content/Barricades" unique_id=1565560945]
+
+[node name="BarricadeLeft" type="Sprite2D" parent="Content/Barricades" unique_id=1466949998]
+
+[node name="Icon" type="Sprite2D" parent="Content" unique_id=324784093]

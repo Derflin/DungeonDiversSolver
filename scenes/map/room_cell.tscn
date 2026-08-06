@@ -9,10 +9,12 @@ script = ExtResource("1_qcwte")
 [node name="Shadow" type="Sprite2D" parent="." unique_id=1263625526]
 visible = false
 z_index = -10
+texture_filter = 1
 texture = ExtResource("2_v3rlt")
 
 [node name="Content" type="Node2D" parent="." unique_id=995449802]
 z_index = 10
+texture_filter = 1
 
 [node name="Floor" type="Sprite2D" parent="Content" unique_id=408459672]
 

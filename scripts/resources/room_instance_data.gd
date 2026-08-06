@@ -22,9 +22,38 @@ enum BarricadeDirectionFlags {
 }
 
 
+var instance_seed_value: int = -1
+var old_special_type: RoomSpecialType = null
+var old_secret_type: RoomSecretType = null
+
+
 @export var corridor_type: RoomCorridorType
-@export var special_type: RoomSpecialType = null
-@export var secret_type: RoomSecretType = null
+@export var special_type: RoomSpecialType = null:
+	set(value):
+		if special_type == value:
+			return
+			
+		special_type = value
+		if value == null:
+			if old_secret_type != null and secret_type == null:
+				secret_type = old_secret_type
+				old_secret_type = null
+		else:
+			old_secret_type = secret_type
+			secret_type = null
+@export var secret_type: RoomSecretType = null:
+	set(value):
+		if secret_type == value:
+			return
+			
+		secret_type = value
+		if value == null:
+			if old_special_type != null and special_type == null:
+				special_type = old_special_type
+				old_special_type = null
+		else:
+			old_special_type = special_type
+			special_type = null
 
 @export_group("Connections", "connection_")
 @export_flags(
@@ -51,6 +80,7 @@ var barricade_directions_mask: int = BarricadeDirectionFlags.NONE
 
 func _ready() -> void:
 	corridor_type = GameData.room_corridor_types.get_default_type()
+	instance_seed_value = randi()
 		
 
 func create(_corridor_type: RoomCorridorType, _special_type: RoomSpecialType = null, _secret_type: RoomSecretType = null, _connection_directions_mask: ConnectionDirectionFlags = ConnectionDirectionFlags.NONE, _barricade_directions_mask: BarricadeDirectionFlags = BarricadeDirectionFlags.NONE) -> void:
@@ -60,6 +90,96 @@ func create(_corridor_type: RoomCorridorType, _special_type: RoomSpecialType = n
 	
 	connection_directions_mask = _connection_directions_mask
 	barricade_directions_mask = _barricade_directions_mask
+	
+
+func get_room_floor_visual_data() -> ResolvedVisualData:
+	var visual_data = ResolvedSpriteFramesVisualData.new()
+	visual_data.sprite_frames = corridor_type.floor_variants
+	visual_data.animation_name = "default"
+	visual_data.frame = corridor_type.get_floor_variant_frame_index(instance_seed_value)
+	visual_data.variants = true
+	
+	return visual_data
+	
+	
+func get_room_background_visual_data() -> ResolvedVisualData:
+	var visual_data: ResolvedVisualData = null
+	
+	if special_type != null:
+		visual_data = ResolvedTextureVisualData.new()
+		visual_data.texture = special_type.background
+		visual_data.hframes = special_type.background_hframes
+		visual_data.vframes = special_type.background_vframes
+		visual_data.frame = special_type.background_frame
+		
+	if secret_type != null:
+		if secret_type.animated_background == null:
+			visual_data = ResolvedTextureVisualData.new()
+			visual_data.texture = secret_type.background
+			visual_data.hframes = secret_type.background_hframes
+			visual_data.vframes = secret_type.background_vframes
+			visual_data.frame = secret_type.background_frame
+			
+		else:
+			visual_data = ResolvedSpriteFramesVisualData.new()
+			visual_data.sprite_frames = secret_type.animated_background
+			visual_data.animation_name = "default"
+			#TODO: add something that would randomize frame number and sync it together with secret icon if animated and frame 0 was randomized
+			visual_data.frame = 0
+			visual_data.variants = true
+		
+	return visual_data
+	
+
+func get_room_connections_visual_data() -> ResolvedVisualData:
+	var visual_data = ResolvedTextureVisualData.new()
+	visual_data.texture = corridor_type.connections_texture
+	visual_data.hframes = corridor_type.connections_texture_hframes
+	visual_data.vframes = corridor_type.connections_texture_vframes
+	visual_data.frame = -1
+	visual_data.dictionary_frame_per_direction = corridor_type.CONNECTION_FRAME_BY_DIRECTION
+	
+	return visual_data
+	
+	
+func get_room_barricades_visual_data() -> ResolvedVisualData:
+	var visual_data = ResolvedTextureVisualData.new()
+	visual_data.texture = corridor_type.barricades_texture
+	visual_data.hframes = corridor_type.barricades_texture_hframes
+	visual_data.vframes = corridor_type.barricades_texture_vframes
+	visual_data.frame = -1
+	visual_data.dictionary_frame_per_direction = corridor_type.BARRICADE_FRAME_BY_DIRECTION
+	
+	return visual_data
+
+	
+func get_room_icon_visual_data() -> ResolvedVisualData:
+	var visual_data: ResolvedVisualData = null
+	
+	if special_type != null:
+		visual_data = ResolvedTextureVisualData.new()
+		visual_data.texture = special_type.icon
+		visual_data.hframes = special_type.icon_hframes
+		visual_data.vframes = special_type.icon_vframes
+		visual_data.frame = special_type.icon_frame
+		
+	if secret_type != null:
+		if secret_type.animated_icon == null:
+			visual_data = ResolvedTextureVisualData.new()
+			visual_data.texture = secret_type.icon
+			visual_data.hframes = secret_type.icon_hframes
+			visual_data.vframes = secret_type.icon_vframes
+			visual_data.frame = secret_type.icon_frame
+			
+		else:
+			visual_data = ResolvedSpriteFramesVisualData.new()
+			visual_data.sprite_frames = secret_type.animated_icon
+			visual_data.animation_name = "default"
+			#TODO: add something that would randomize frame number and sync it together with secret background if animated and frame 0 was randomized
+			visual_data.frame = 0
+			visual_data.variants = true
+		
+	return visual_data
 
 
 func has_connection(direction: ConnectionDirectionFlags) -> bool:

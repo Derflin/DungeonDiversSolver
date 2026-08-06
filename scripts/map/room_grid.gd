@@ -37,8 +37,20 @@ var minimum_visible_fraction_per_axis := 0.5
 var pan_drag_threshold = 4.0
 
 @export_group("Grid Parameters")
-@export var grid_size: Vector2i = Vector2i(17, 17)
-@export var grid_room_size: Vector2i = Vector2i(15, 15)
+@export var grid_size: Vector2i = Vector2i(17, 17):
+	set(value): 
+		grid_size = value
+		if grid_lines != null:
+			grid_lines.grid_size = grid_size
+			grid_lines.queue_redraw()
+			fit_map_to_view.call_deferred()
+@export var grid_room_size: Vector2i = Vector2i(15, 15):
+	set(value): 
+		grid_room_size = value
+		if grid_lines != null:
+			grid_lines.grid_room_size = grid_room_size
+			grid_lines.queue_redraw()
+			fit_map_to_view.call_deferred()
 
 
 func _ready() -> void:

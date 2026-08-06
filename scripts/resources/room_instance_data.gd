@@ -95,7 +95,7 @@ func create(_corridor_type: RoomCorridorType, _special_type: RoomSpecialType = n
 func get_room_floor_visual_data() -> ResolvedVisualData:
 	var visual_data: ResolvedVisualData = null
 
-	if corridor_type != null:
+	if corridor_type != null and secret_type == null:
 		visual_data = ResolvedSpriteFramesVisualData.new()
 		visual_data.sprite_frames = corridor_type.floor_variants
 		visual_data.animation_name = "default"
@@ -129,7 +129,7 @@ func get_room_background_visual_data(refresh_room_id: int) -> ResolvedVisualData
 			visual_data.animation_name = "default"
 			var frame_generated = secret_type.generate_secret_background_icon_pair_frames(refresh_room_id, true, false)
 			visual_data.frame = frame_generated["frame"]
-			visual_data.animated_variants = secret_type.animated_background_variants
+			visual_data.animated_variants = secret_type.animated_background_random_frame
 			visual_data.animation_timer_interval = secret_type.generate_secret_backround_icon_pair_timer_interval(refresh_room_id, frame_generated["triggered_base_frame"])
 			
 		
@@ -188,7 +188,7 @@ func get_room_icon_visual_data(refresh_room_id: int) -> ResolvedVisualData:
 			visual_data.animation_name = "default"
 			var frame_generated = secret_type.generate_secret_background_icon_pair_frames(refresh_room_id, false, true)
 			visual_data.frame = frame_generated["frame"]
-			visual_data.animated_variants = secret_type.animated_icon_variants
+			visual_data.animated_variants = secret_type.animated_icon_random_frame
 			visual_data.animation_timer_interval = secret_type.generate_secret_backround_icon_pair_timer_interval(refresh_room_id, frame_generated["triggered_base_frame"])
 		
 	return visual_data

@@ -161,11 +161,12 @@ func _refresh_room_content_connections() -> void:
 		return
 		
 	for direction_flag: RoomInstanceData.ConnectionDirectionFlags in connection_sprites:
-		var connection_sprite: Sprite2D = connection_sprites[direction_flag]
-		var frame_index: int = connections_data.dictionary_frame_per_direction[direction_flag]
-		connections_data.frame = frame_index
+		if room_instance_data.has_connection(direction_flag):
+			var connection_sprite: Sprite2D = connection_sprites[direction_flag]
+			var frame_index: int = connections_data.dictionary_frame_per_direction[direction_flag]
+			connections_data.frame = frame_index
 		
-		apply_sprite_from_visual_data(connection_sprite, connections_data)
+			apply_sprite_from_visual_data(connection_sprite, connections_data)
 	
 
 #TODO: test it out
@@ -175,12 +176,13 @@ func _refresh_room_content_barricades() -> void:
 	if barricades_data == null:
 		return
 		
-	for direction_flag: RoomInstanceData.BarricadeDirectionFlags in connection_sprites:
-		var barricade_sprite: Sprite2D = barricade_sprites[direction_flag]
-		var frame_index: int = barricades_data.dictionary_frame_per_direction[direction_flag]
-		barricades_data.frame = frame_index
-		
-		apply_sprite_from_visual_data(barricade_sprite, barricades_data)
+	for direction_flag: RoomInstanceData.BarricadeDirectionFlags in barricade_sprites:
+		if room_instance_data.has_barricade(direction_flag):
+			var barricade_sprite: Sprite2D = barricade_sprites[direction_flag]
+			var frame_index: int = barricades_data.dictionary_frame_per_direction[direction_flag]
+			barricades_data.frame = frame_index
+			
+			apply_sprite_from_visual_data(barricade_sprite, barricades_data)
 	
 
 #TODO: test it out

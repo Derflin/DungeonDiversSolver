@@ -93,11 +93,14 @@ func create(_corridor_type: RoomCorridorType, _special_type: RoomSpecialType = n
 	
 
 func get_room_floor_visual_data() -> ResolvedVisualData:
-	var visual_data = ResolvedSpriteFramesVisualData.new()
-	visual_data.sprite_frames = corridor_type.floor_variants
-	visual_data.animation_name = "default"
-	visual_data.frame = corridor_type.get_floor_variant_frame_index(instance_seed_value)
-	visual_data.animated_variants = false
+	var visual_data: ResolvedVisualData = null
+
+	if corridor_type != null:
+		visual_data = ResolvedSpriteFramesVisualData.new()
+		visual_data.sprite_frames = corridor_type.floor_variants
+		visual_data.animation_name = "default"
+		visual_data.frame = corridor_type.get_floor_variant_frame_index(instance_seed_value)
+		visual_data.animated_variants = false
 	
 	return visual_data
 	
@@ -134,23 +137,29 @@ func get_room_background_visual_data(refresh_room_id: int) -> ResolvedVisualData
 	
 
 func get_room_connections_visual_data() -> ResolvedVisualData:
-	var visual_data = ResolvedTextureVisualData.new()
-	visual_data.texture = corridor_type.connections_texture
-	visual_data.hframes = corridor_type.connections_texture_hframes
-	visual_data.vframes = corridor_type.connections_texture_vframes
-	visual_data.frame = -1
-	visual_data.dictionary_frame_per_direction = corridor_type.CONNECTION_FRAME_BY_DIRECTION
+	var visual_data: ResolvedVisualData = null
+
+	if corridor_type != null:
+		visual_data = ResolvedTextureVisualData.new()
+		visual_data.texture = corridor_type.connections_texture
+		visual_data.hframes = corridor_type.connections_texture_hframes
+		visual_data.vframes = corridor_type.connections_texture_vframes
+		visual_data.frame = -1
+		visual_data.dictionary_frame_per_direction = corridor_type.CONNECTION_FRAME_BY_DIRECTION
 	
 	return visual_data
 	
 	
 func get_room_barricades_visual_data() -> ResolvedVisualData:
-	var visual_data = ResolvedTextureVisualData.new()
-	visual_data.texture = corridor_type.barricades_texture
-	visual_data.hframes = corridor_type.barricades_texture_hframes
-	visual_data.vframes = corridor_type.barricades_texture_vframes
-	visual_data.frame = -1
-	visual_data.dictionary_frame_per_direction = corridor_type.BARRICADE_FRAME_BY_DIRECTION
+	var visual_data: ResolvedVisualData = null
+
+	if corridor_type != null:
+		visual_data = ResolvedTextureVisualData.new()
+		visual_data.texture = corridor_type.barricades_texture
+		visual_data.hframes = corridor_type.barricades_texture_hframes
+		visual_data.vframes = corridor_type.barricades_texture_vframes
+		visual_data.frame = -1
+		visual_data.dictionary_frame_per_direction = corridor_type.BARRICADE_FRAME_BY_DIRECTION
 	
 	return visual_data
 

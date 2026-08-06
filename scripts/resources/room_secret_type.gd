@@ -74,15 +74,15 @@ func generate_secret_background_icon_pair_frames(seed_id: int, background_check:
 		return result_dict
 		
 	if background_check and (animated_icon == null or animated_icon.get_frame_count("default") == 1):
-		result_dict["frame"] = rng.randi_range(0, animated_background.get_frame_count("default"))
+		result_dict["frame"] = rng.randi_range(0, animated_background.get_frame_count("default") - 1)
 		return result_dict
 		
 	if icon_check and (animated_background == null or animated_background.get_frame_count("default") == 1):
-		result_dict["frame"] = rng.randi_range(0, animated_icon.get_frame_count("default"))
+		result_dict["frame"] = rng.randi_range(0, animated_icon.get_frame_count("default") - 1)
 		return result_dict
 		
-	background_frame = rng.randi_range(0, animated_background.get_frame_count("default"))
-	icon_frame = rng.randi_range(0, animated_icon.get_frame_count("default"))
+	background_frame = rng.randi_range(0, animated_background.get_frame_count("default") - 1)
+	icon_frame = rng.randi_range(0, animated_icon.get_frame_count("default") - 1)
 	
 	if background_frame == animated_background_default_frame or icon_frame == animated_icon_default_frame:
 		background_frame = animated_background_default_frame

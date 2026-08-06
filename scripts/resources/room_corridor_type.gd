@@ -55,5 +55,5 @@ func get_floor_variant_frame_index(seed_value: int) -> int:
 	var rng = RandomNumberGenerator.new()
 	rng.seed = seed_value
 	
-	return rng.randi_range(0, floor_variants.get_frame_count("default"))
+	return rng.randi_range(0, floor_variants.get_frame_count("default") - 1)
 	

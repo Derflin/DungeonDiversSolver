@@ -49,6 +49,10 @@ var connection_directions_mask: int = ConnectionDirectionFlags.NONE
 var barricade_directions_mask: int = BarricadeDirectionFlags.NONE
 
 
+func _ready() -> void:
+	corridor_type = GameData.room_corridor_types.get_default_type()
+		
+
 func create(_corridor_type: RoomCorridorType, _special_type: RoomSpecialType = null, _secret_type: RoomSecretType = null, _connection_directions_mask: ConnectionDirectionFlags = ConnectionDirectionFlags.NONE, _barricade_directions_mask: BarricadeDirectionFlags = BarricadeDirectionFlags.NONE) -> void:
 	corridor_type = _corridor_type
 	special_type = _special_type

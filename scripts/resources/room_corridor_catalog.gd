@@ -4,6 +4,11 @@ extends Resource
 @export var room_types: Array[RoomCorridorType] = []
 
 
+func get_default_type() -> RoomCorridorType:
+	var default_type = get_type(RoomCorridorType.Kind.BASE)
+	return default_type
+	
+
 func get_type(kind: RoomCorridorType.Kind) -> RoomCorridorType:
 	for room_type in room_types:
 		if room_type == null:

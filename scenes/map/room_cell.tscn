@@ -47,3 +47,10 @@ z_index = 10
 [node name="BarricadeLeft" type="Sprite2D" parent="Content/Barricades" unique_id=1466949998]
 
 [node name="Icon" type="Sprite2D" parent="Content" unique_id=324784093]
+
+[node name="Timers" type="Node2D" parent="." unique_id=1677504413]
+
+[node name="VariationAnimationTimer" type="Timer" parent="Timers" unique_id=1001963192]
+one_shot = true
+
+[connection signal="timeout" from="Timers/VariationAnimationTimer" to="." method="_on_variation_animation_timer_timeout"]

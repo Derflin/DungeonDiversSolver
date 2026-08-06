@@ -47,6 +47,11 @@ extends Node2D
 }
 
 
+var refresh_room_seed: int
+var background_last_frame: int = -1
+var icon_last_frame: int = -1
+
+
 func create(_room_instance_data: RoomInstanceData) -> void:
 	room_instance_data = _room_instance_data
 	
@@ -86,6 +91,8 @@ func refresh_visuals() -> void:
 	
 	if room_instance_data == null:
 		return
+		
+	refresh_room_seed = randi()
 		
 	_refresh_room_shadow()
 	_refresh_room_content()
@@ -133,29 +140,17 @@ func _refresh_room_content_floor() -> void:
 	if floor_data == null:
 		return
 		
-	apply_sprite_element_visual_data($Content/Floor, floor_data)
-	#$Content/Floor.texture = floor_data.texture
-	#$Content/Floor.hframes = floor_data.columns
-	#$Content/Floor.vframes = floor_data.rows
-	##TODO: right now not sure how to handle this
-	#$Content/Floor.frame = 0
-	#$Content/Floor.visible = $Content/Floor.texture != null
+	apply_sprite_from_visual_data($Content/Floor, floor_data)
 	
 	
 #TODO: test it out
 func _refresh_room_content_background() -> void:
-	var background_data = room_instance_data.get_room_background_visual_data()
+	var background_data = room_instance_data.get_room_background_visual_data(refresh_room_seed)
 	
 	if background_data == null:
 		return
 		
-	apply_sprite_element_visual_data($Content/Background, background_data)
-	#$Content/Background.texture = background_data.texture
-	#$Content/Background.hframes = background_data.columns
-	#$Content/Background.vframes = background_data.rows
-	##TODO: right now not sure how to handle this
-	#$Content/Background.frame = 0
-	#$Content/Background.visible = $Content/Background.texture != null
+	apply_sprite_from_visual_data($Content/Background, background_data)
 	
 	
 #TODO: test it out
@@ -170,12 +165,7 @@ func _refresh_room_content_connections() -> void:
 		var frame_index: int = connections_data.dictionary_frame_per_direction[direction_flag]
 		connections_data.frame = frame_index
 		
-		apply_sprite_element_visual_data(connection_sprite, connections_data)
-		#connection_sprite.texture = connections_data.texture
-		#connection_sprite.hframes = connections_data.columns
-		#connection_sprite.vframes = connections_data.rows
-		#connection_sprite.frame = frame_index
-		#connection_sprite.visible = connection_sprite.texture != null
+		apply_sprite_from_visual_data(connection_sprite, connections_data)
 	
 
 #TODO: test it out
@@ -190,28 +180,17 @@ func _refresh_room_content_barricades() -> void:
 		var frame_index: int = barricades_data.dictionary_frame_per_direction[direction_flag]
 		barricades_data.frame = frame_index
 		
-		apply_sprite_element_visual_data(barricade_sprite, barricades_data)
-		#barricade_sprite.texture = barricades_data.texture
-		#barricade_sprite.hframes = barricades_data.columns
-		#barricade_sprite.vframes = barricades_data.rows
-		#barricade_sprite.frame = frame_index
-		#barricade_sprite.visible = barricade_sprite.texture != null
+		apply_sprite_from_visual_data(barricade_sprite, barricades_data)
 	
 
 #TODO: test it out
 func _refresh_room_content_icon() -> void:
-	var icon_data = room_instance_data.get_room_icon_visual_data()
+	var icon_data = room_instance_data.get_room_icon_visual_data(refresh_room_seed)
 	
 	if icon_data == null:
 		return
 		
-	apply_sprite_element_visual_data($Content/Icon, icon_data)
-	#$Content/Icon.texture = icon_data.texture
-	#$Content/Icon.hframes = icon_data.columns
-	#$Content/Icon.vframes = icon_data.rows
-	##TODO: right now not sure how to handle this
-	#$Content/Icon.frame = 0
-	#$Content/Icon.visible = $Content/Icon.texture != null
+	apply_sprite_from_visual_data($Content/Icon, icon_data)
 
 
 func _draw() -> void: 
@@ -259,9 +238,22 @@ func _draw_editor_guide() -> void:
 	)
 	
 
-#TODO
-func apply_sprite_element_visual_data(sprite: Sprite2D, visual_data: ResolvedVisualData) -> void:
-	pass
+func apply_sprite_from_visual_data(sprite: Sprite2D, visual_data: ResolvedVisualData) -> void:
+	if visual_data is ResolvedTextureVisualData:
+		sprite.texture = visual_data.texture
+		sprite.hframes = visual_data.hframes
+		sprite.vframes = visual_data.vframes
+		sprite.frame = visual_data.frame
+		sprite.visible = visual_data.texture != null
+		
+	elif visual_data is ResolvedSpriteFramesVisualData:
+		apply_sprite_frame(sprite, visual_data.sprite_frames, visual_data.animation_name, visual_data.frame)
+		sprite.visible = sprite.texture != null
+		
+		if visual_data.animated_variants:
+			var related_timer = $Timers/VariationAnimationTimer
+			if related_timer.is_stopped():
+				related_timer.start(visual_data.animation_timer_interval)
 	
 	
 func apply_sprite_frame(sprite: Sprite2D, sprite_frames: SpriteFrames, animation_name: StringName, frame_index: int) -> void:
@@ -280,5 +272,9 @@ func apply_sprite_frame(sprite: Sprite2D, sprite_frames: SpriteFrames, animation
 		return
 		
 	sprite.texture = sprite_frames.get_frame_texture(animation_name, frame_index)
-	
-	
+
+
+func _on_variation_animation_timer_timeout() -> void:
+	refresh_room_seed = randi()
+	_refresh_room_content_background()
+	_refresh_room_content_icon()

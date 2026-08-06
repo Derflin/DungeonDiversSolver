@@ -97,12 +97,12 @@ func get_room_floor_visual_data() -> ResolvedVisualData:
 	visual_data.sprite_frames = corridor_type.floor_variants
 	visual_data.animation_name = "default"
 	visual_data.frame = corridor_type.get_floor_variant_frame_index(instance_seed_value)
-	visual_data.variants = true
+	visual_data.animated_variants = false
 	
 	return visual_data
 	
 	
-func get_room_background_visual_data() -> ResolvedVisualData:
+func get_room_background_visual_data(refresh_room_id: int) -> ResolvedVisualData:
 	var visual_data: ResolvedVisualData = null
 	
 	if special_type != null:
@@ -124,9 +124,11 @@ func get_room_background_visual_data() -> ResolvedVisualData:
 			visual_data = ResolvedSpriteFramesVisualData.new()
 			visual_data.sprite_frames = secret_type.animated_background
 			visual_data.animation_name = "default"
-			#TODO: add something that would randomize frame number and sync it together with secret icon if animated and frame 0 was randomized
-			visual_data.frame = 0
-			visual_data.variants = true
+			var frame_generated = secret_type.generate_secret_background_icon_pair_frames(refresh_room_id, true, false)
+			visual_data.frame = frame_generated["frame"]
+			visual_data.animated_variants = secret_type.animated_background_variants
+			visual_data.animation_timer_interval = secret_type.generate_secret_backround_icon_pair_timer_interval(refresh_room_id, frame_generated["triggered_base_frame"])
+			
 		
 	return visual_data
 	
@@ -153,7 +155,7 @@ func get_room_barricades_visual_data() -> ResolvedVisualData:
 	return visual_data
 
 	
-func get_room_icon_visual_data() -> ResolvedVisualData:
+func get_room_icon_visual_data(refresh_room_id: int) -> ResolvedVisualData:
 	var visual_data: ResolvedVisualData = null
 	
 	if special_type != null:
@@ -175,9 +177,10 @@ func get_room_icon_visual_data() -> ResolvedVisualData:
 			visual_data = ResolvedSpriteFramesVisualData.new()
 			visual_data.sprite_frames = secret_type.animated_icon
 			visual_data.animation_name = "default"
-			#TODO: add something that would randomize frame number and sync it together with secret background if animated and frame 0 was randomized
-			visual_data.frame = 0
-			visual_data.variants = true
+			var frame_generated = secret_type.generate_secret_background_icon_pair_frames(refresh_room_id, false, true)
+			visual_data.frame = frame_generated["frame"]
+			visual_data.animated_variants = secret_type.animated_icon_variants
+			visual_data.animation_timer_interval = secret_type.generate_secret_backround_icon_pair_timer_interval(refresh_room_id, frame_generated["triggered_base_frame"])
 		
 	return visual_data
 

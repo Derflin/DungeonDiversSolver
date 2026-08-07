@@ -1,0 +1,39 @@
+class_name GridSpace
+extends Node2D
+
+
+@export var grid_parent_node: RoomGrid
+
+@onready var grid_lines: Node2D = $GridBackground/GridLines
+@onready var rooms_container: Node2D = $Rooms
+
+
+@export var grid_size: Vector2i:
+	set(value): 
+		grid_size = value
+		if grid_lines != null:
+			grid_lines.grid_size = grid_size
+			grid_lines.queue_redraw()
+
+@export var grid_room_size: Vector2i:
+	set(value): 
+		grid_room_size = value
+		if grid_lines != null:
+			grid_lines.grid_room_size = grid_room_size
+			grid_lines.queue_redraw()
+
+
+func _ready():
+	grid_size = grid_parent_node.grid_size
+	grid_room_size = grid_parent_node.grid_room_size
+	
+
+func get_map_rect() -> Rect2:
+	return Rect2(
+		grid_lines.position - grid_lines.get_grid_offset(),
+		grid_lines.get_grid_size(),
+	)
+
+
+func append_room(room: RoomCell) -> void:
+	rooms_container.add_child(room)

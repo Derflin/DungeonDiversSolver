@@ -10,7 +10,7 @@ var _is_panning = false
 var _pan_start_screen_position = Vector2.ZERO
 
 
-@onready var grid_lines: Node2D = $GridBackground/GridLines
+@onready var grid_space: Node2D = $GridSpace
 @onready var map_camera: Camera2D = $MapCamera
 
 
@@ -40,16 +40,14 @@ var pan_drag_threshold = 4.0
 @export var grid_size: Vector2i = Vector2i(17, 17):
 	set(value): 
 		grid_size = value
-		if grid_lines != null:
-			grid_lines.grid_size = grid_size
-			grid_lines.queue_redraw()
+		if grid_space != null:
+			grid_space.grid_size = grid_size
 			fit_map_to_view.call_deferred()
 @export var grid_room_size: Vector2i = Vector2i(15, 15):
 	set(value): 
 		grid_room_size = value
-		if grid_lines != null:
-			grid_lines.grid_room_size = grid_room_size
-			grid_lines.queue_redraw()
+		if grid_space != null:
+			grid_space.grid_room_size = grid_room_size
 			fit_map_to_view.call_deferred()
 
 
@@ -58,7 +56,7 @@ func _ready() -> void:
 
 
 func fit_map_to_view() -> void:
-	var map_rect = get_map_rect()
+	var map_rect = grid_space.get_map_rect()
 	
 	if map_rect.size.x <= 0.0 or map_rect.size.y <= 0.0:
 		push_warning("Cannot fit a map with an empty size.")
@@ -90,13 +88,6 @@ func fit_map_to_view() -> void:
 	
 	map_camera.position = map_rect.get_center()
 	map_camera.zoom = Vector2.ONE * fitted_zoom
-
-
-func get_map_rect() -> Rect2:	
-	return Rect2(
-		grid_lines.position,
-		grid_lines.get_grid_size(),
-	)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -169,7 +160,7 @@ func zoom_at_screen_position(requested_zoom: float, screen_position: Vector2) ->
 	
 	
 func clamp_camera_to_minimum_visibility() -> void:
-	var map_rect = get_map_rect()
+	var map_rect = grid_space.get_map_rect()
 	
 	if map_rect.size.x <= 0:
 		return
@@ -231,7 +222,7 @@ func clamp_axis_for_overlap(requested_position: float, map_minimum: float, map_m
 
 
 func get_constrained_zoom_target(screen_position: Vector2) -> Vector2:
-	var map_rect = get_map_rect()
+	var map_rect = grid_space.get_map_rect()
 	var cursor_map_position = make_canvas_position_local(screen_position)
 	
 	var map_vicinity = map_rect.grow(zoom_focus_margin)

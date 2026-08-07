@@ -38,10 +38,11 @@ var pan_drag_threshold = 4.0
 
 
 func _ready() -> void:
-	fit_map_to_view.call_deferred()
+	var instant = true
+	fit_map_to_view.call_deferred(instant)
 
 
-func fit_map_to_view() -> void:
+func fit_map_to_view(instant: bool = false) -> void:
 	var map_rect = grid_space.get_map_rect()
 	
 	if map_rect.size.x <= 0.0 or map_rect.size.y <= 0.0:
@@ -72,8 +73,8 @@ func fit_map_to_view() -> void:
 	
 	minimum_zoom = fitted_zoom
 	
-	map_camera.position = map_rect.get_center()
-	map_camera.zoom = Vector2.ONE * fitted_zoom
+	map_camera.set_camera_position(map_rect.get_center(), instant)
+	map_camera.set_camera_zoom(fitted_zoom, instant)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -105,13 +106,13 @@ func _handle_zoom_input(event: InputEvent, multiplier: float) -> void:
 		focus_position = event.position
 		
 	zoom_at_screen_position(
-		map_camera.zoom.x * multiplier,
+		map_camera.get_camera_zoom().x * multiplier,
 		focus_position,
 	)
 
 
 func zoom_at_screen_position(requested_zoom: float, screen_position: Vector2) -> void:
-	var old_zoom = map_camera.zoom.x
+	var old_zoom = map_camera.get_camera_zoom().x
 	
 	var new_zoom = clampf(
 		requested_zoom,
@@ -124,23 +125,10 @@ func zoom_at_screen_position(requested_zoom: float, screen_position: Vector2) ->
 		
 	var zoom_target = get_constrained_zoom_target(screen_position)
 	
-	var target_offset_from_camera = zoom_target - map_camera.position
+	var target_offset_from_camera = zoom_target - map_camera.get_camera_position()
 	
-	map_camera.position = zoom_target - target_offset_from_camera * old_zoom / new_zoom
-		
-	#if zoom_toward_mouse:
-	#	var viewport_center = (
-	#		get_viewport().get_visible_rect().size / 2.0
-	#	)
-	#		
-	#	var cursor_offset = screen_position - viewport_center
-	#		
-	#	# Reposition the camera so that the world point under the mouse remains under the mouse after chaning the zoom.
-	#	map_camera.position += (
-	#		cursor_offset / old_zoom - cursor_offset / new_zoom
-	#	)
-		
-	map_camera.zoom = Vector2.ONE * new_zoom
+	map_camera.set_camera_position(zoom_target - target_offset_from_camera * old_zoom / new_zoom)
+	map_camera.set_camera_zoom(new_zoom)
 	
 	clamp_camera_to_minimum_visibility()
 	
@@ -156,12 +144,13 @@ func clamp_camera_to_minimum_visibility() -> void:
 		
 	var viewport_size = get_viewport().get_visible_rect().size
 	
+	var map_camera_zoom = map_camera.get_camera_zoom()
 	var visible_world_size = Vector2(
-		viewport_size.x / map_camera.zoom.x,
-		viewport_size.y / map_camera.zoom.y,
+		viewport_size.x / map_camera_zoom.x,
+		viewport_size.y / map_camera_zoom.y,
 	)
 	
-	var new_position = map_camera.position
+	var new_position = map_camera.get_camera_position()
 	
 	new_position.x = clamp_axis_for_overlap(
 		new_position.x,
@@ -179,7 +168,7 @@ func clamp_camera_to_minimum_visibility() -> void:
 		minimum_visible_fraction_per_axis
 	)
 	
-	map_camera.position = new_position
+	map_camera.set_camera_position(new_position)
 	
 	
 func clamp_axis_for_overlap(requested_position: float, map_minimum: float, map_maximum: float, visible_length: float, required_fraction: float) -> float:
@@ -288,11 +277,11 @@ func _handle_pan_input(event: InputEvent) -> bool:
 				
 			_is_panning = true
 			
-		var camera_movement = event.relative / map_camera.zoom.x
+		var camera_movement = event.relative / map_camera.get_camera_zoom().x
 		
 		# Subtraction makes the map follow the mouse:
 		# drag right -> map appers to move right.
-		map_camera.position -= camera_movement
+		map_camera.set_camera_position(map_camera.get_camera_position() - camera_movement)
 		
 		clamp_camera_to_minimum_visibility()
 		

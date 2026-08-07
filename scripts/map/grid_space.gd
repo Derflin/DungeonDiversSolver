@@ -4,8 +4,6 @@ extends Node2D
 signal grid_space_parameters_changed
 
 
-@export var grid_parent_node: RoomGrid
-
 @onready var grid_lines: Node2D = $GridBackground/GridLines
 @onready var rooms_container: Node2D = $Rooms
 
@@ -26,11 +24,6 @@ signal grid_space_parameters_changed
 			grid_lines.grid_room_size = grid_room_size
 			grid_lines.queue_redraw()
 			grid_space_parameters_changed.emit()
-
-
-func _ready():
-	grid_size = grid_parent_node.grid_size
-	grid_room_size = grid_parent_node.grid_room_size
 	
 
 func get_map_rect() -> Rect2:

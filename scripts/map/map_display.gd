@@ -1,4 +1,3 @@
-class_name RoomGrid
 extends Node2D
 
 

@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://cj2o6bu7lko4k"]
 
-[ext_resource type="PackedScene" uid="uid://byxiaffshj4eo" path="res://scenes/map/room_grid.tscn" id="1_hyk8p"]
+[ext_resource type="PackedScene" uid="uid://byxiaffshj4eo" path="res://scenes/map/map_display.tscn" id="1_hyk8p"]
 
 [node name="Main" type="Node" unique_id=107272976]
 
@@ -10,7 +10,7 @@
 
 [node name="MapRoot" type="Node2D" parent="World" unique_id=1003631701]
 
-[node name="RoomGrid" parent="World/MapRoot" unique_id=1905427388 instance=ExtResource("1_hyk8p")]
+[node name="MapDisplay" parent="World/MapRoot" unique_id=1905427388 instance=ExtResource("1_hyk8p")]
 
 [node name="HudLayer" type="CanvasLayer" parent="." unique_id=2132097352]
 layer = 10

@@ -131,9 +131,8 @@ func _refresh_room_content() -> void:
 	_refresh_room_content_connections()
 	_refresh_room_content_barricades()
 	_refresh_room_content_icon()
-	
 
-#TODO: test it out
+
 func _refresh_room_content_floor() -> void:
 	var floor_data = room_instance_data.get_room_floor_visual_data()
 	
@@ -141,9 +140,8 @@ func _refresh_room_content_floor() -> void:
 		return
 		
 	apply_sprite_from_visual_data($Content/Floor, floor_data)
-	
-	
-#TODO: test it out
+
+
 func _refresh_room_content_background() -> void:
 	var background_data = room_instance_data.get_room_background_visual_data(refresh_room_seed)
 	
@@ -151,9 +149,8 @@ func _refresh_room_content_background() -> void:
 		return
 		
 	apply_sprite_from_visual_data($Content/Background, background_data)
-	
-	
-#TODO: test it out
+
+
 func _refresh_room_content_connections() -> void:
 	var connections_data = room_instance_data.get_room_connections_visual_data()
 	
@@ -167,9 +164,8 @@ func _refresh_room_content_connections() -> void:
 			connections_data.frame = frame_index
 		
 			apply_sprite_from_visual_data(connection_sprite, connections_data)
-	
 
-#TODO: test it out
+
 func _refresh_room_content_barricades() -> void:
 	var barricades_data = room_instance_data.get_room_barricades_visual_data()
 	
@@ -183,9 +179,8 @@ func _refresh_room_content_barricades() -> void:
 			barricades_data.frame = frame_index
 			
 			apply_sprite_from_visual_data(barricade_sprite, barricades_data)
-	
 
-#TODO: test it out
+
 func _refresh_room_content_icon() -> void:
 	var icon_data = room_instance_data.get_room_icon_visual_data(refresh_room_seed)
 	

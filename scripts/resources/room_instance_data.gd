@@ -78,7 +78,7 @@ var connection_directions_mask: int = ConnectionDirectionFlags.NONE
 var barricade_directions_mask: int = BarricadeDirectionFlags.NONE
 
 
-func _ready() -> void:
+func _init() -> void:
 	corridor_type = GameData.room_corridor_types.get_default_type()
 	instance_seed_value = randi()
 		

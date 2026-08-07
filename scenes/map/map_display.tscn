@@ -4,8 +4,48 @@
 [ext_resource type="Script" uid="uid://d38b21rn7ly2u" path="res://scripts/map/grid_lines.gd" id="2_f4qe3"]
 [ext_resource type="Script" uid="uid://m7m3resnhnq0" path="res://scripts/map/grid_space.gd" id="2_vij0f"]
 [ext_resource type="Script" uid="uid://d0a2gab5b665" path="res://scripts/map/map_camera.gd" id="4_1umrj"]
+[ext_resource type="Script" uid="uid://b58j6wyehrxbb" path="res://scripts/map/grid_interaction_overlay.gd" id="4_ilqgx"]
+[ext_resource type="Texture2D" uid="uid://g3krt8efxnw4" path="res://assets/icons/cursor/DungeonSolvers-RoomCursor-All.png" id="5_ilqgx"]
+
+[sub_resource type="Animation" id="Animation_ilqgx"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(1, 1)]
+}
+
+[sub_resource type="Animation" id="Animation_tt585"]
+resource_name = "default"
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.33, 0.66, 1),
+"transitions": PackedFloat32Array(0.75, 1, 1, 10),
+"update": 0,
+"values": [Vector2(1, 1), Vector2(1.07, 1.07), Vector2(1.07, 1.07), Vector2(1, 1)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_s1iqf"]
+_data = {
+&"RESET": SubResource("Animation_ilqgx"),
+&"default": SubResource("Animation_tt585")
+}
 
 [node name="MapDisplay" type="Node2D" unique_id=1905427388]
+texture_filter = 1
 script = ExtResource("1_pnlec")
 fit_padding = -18.0
 maximum_zoom = 6.0
@@ -46,6 +86,17 @@ internal_line_color = Color(0.78431374, 0.5647059, 0.43137255, 0.15686275)
 external_line_color = Color(0.4509804, 0.15294118, 0.17254902, 0.15686275)
 
 [node name="Rooms" type="Node2D" parent="GridSpace" unique_id=439474740]
+
+[node name="GridInteractionOverlay" type="Node2D" parent="GridSpace" unique_id=1846869119]
+z_index = 100
+script = ExtResource("4_ilqgx")
+
+[node name="MapCursor" type="Sprite2D" parent="GridSpace/GridInteractionOverlay" unique_id=452657165]
+visible = false
+texture = ExtResource("5_ilqgx")
+
+[node name="CursorAnimation" type="AnimationPlayer" parent="GridSpace/GridInteractionOverlay/MapCursor" unique_id=1033457261]
+libraries/ = SubResource("AnimationLibrary_s1iqf")
 
 [node name="MapCamera" type="Camera2D" parent="." unique_id=888741653]
 position_smoothing_speed = 10.0

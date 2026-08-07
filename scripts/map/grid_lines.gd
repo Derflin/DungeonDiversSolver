@@ -8,6 +8,8 @@ const GRID_OUTER_CELL_COUNT = 2
 var grid_size: Vector2i
 var grid_room_size: Vector2i
 
+var grid_offset: Vector2 = Vector2(0.5, 0.5)
+
 
 @export var grid_parent_node: GridSpace
 
@@ -43,8 +45,8 @@ func _draw_square_segments() -> void:
 func _grid_point_to_local(grid_point: Vector2i) -> Vector2:
 	# grid_room_size + 2 * GRID_LINE_WIDTH - GRID LINE WIDTH -> Square size + border from each side
 	return Vector2(
-		grid_point.x * (grid_room_size.x + GRID_LINE_WIDTH),
-		grid_point.y * (grid_room_size.y + GRID_LINE_WIDTH),
+		grid_point.x * (grid_room_size.x + GRID_LINE_WIDTH) + grid_offset.x,
+		grid_point.y * (grid_room_size.y + GRID_LINE_WIDTH) + grid_offset.y,
 	)
 	
 	

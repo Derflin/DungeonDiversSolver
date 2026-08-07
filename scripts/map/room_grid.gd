@@ -36,20 +36,6 @@ var minimum_visible_fraction_per_axis := 0.5
 @export_range(0.0, 20.0, 1.0)
 var pan_drag_threshold = 4.0
 
-@export_group("Grid Parameters")
-@export var grid_size: Vector2i = Vector2i(17, 17):
-	set(value): 
-		grid_size = value
-		if grid_space != null:
-			grid_space.grid_size = grid_size
-			fit_map_to_view.call_deferred()
-@export var grid_room_size: Vector2i = Vector2i(15, 15):
-	set(value): 
-		grid_room_size = value
-		if grid_space != null:
-			grid_space.grid_room_size = grid_room_size
-			fit_map_to_view.call_deferred()
-
 
 func _ready() -> void:
 	fit_map_to_view.call_deferred()
@@ -313,5 +299,8 @@ func _handle_pan_input(event: InputEvent) -> bool:
 		get_viewport().set_input_as_handled()
 		return true
 		
-	return false
-	
+	return false	
+
+
+func _on_grid_space_grid_space_parameters_changed() -> void:
+	fit_map_to_view.call_deferred()

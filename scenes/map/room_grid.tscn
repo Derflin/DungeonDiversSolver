@@ -32,9 +32,8 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0.14733289, 0.12835406, 0.12315822, 1)
 
-[node name="GridSpace" type="Node2D" parent="." unique_id=1737615389 node_paths=PackedStringArray("grid_parent_node")]
+[node name="GridSpace" type="Node2D" parent="." unique_id=1737615389]
 script = ExtResource("2_vij0f")
-grid_parent_node = NodePath("..")
 
 [node name="GridBackground" type="Node2D" parent="GridSpace" unique_id=964215121]
 
@@ -47,3 +46,5 @@ external_line_color = Color(0.4509804, 0.15294118, 0.17254902, 0.15686275)
 [node name="Rooms" type="Node2D" parent="GridSpace" unique_id=439474740]
 
 [node name="MapCamera" type="Camera2D" parent="." unique_id=888741653]
+
+[connection signal="grid_space_parameters_changed" from="GridSpace" to="." method="_on_grid_space_grid_space_parameters_changed"]

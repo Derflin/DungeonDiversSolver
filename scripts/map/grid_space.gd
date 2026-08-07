@@ -1,6 +1,8 @@
 class_name GridSpace
 extends Node2D
 
+signal grid_space_parameters_changed
+
 
 @export var grid_parent_node: RoomGrid
 
@@ -8,19 +10,22 @@ extends Node2D
 @onready var rooms_container: Node2D = $Rooms
 
 
-@export var grid_size: Vector2i:
+@export_group("Grid Parameters")
+@export var grid_size: Vector2i = Vector2i(17, 17):
 	set(value): 
 		grid_size = value
 		if grid_lines != null:
 			grid_lines.grid_size = grid_size
 			grid_lines.queue_redraw()
+			grid_space_parameters_changed.emit()
 
-@export var grid_room_size: Vector2i:
+@export var grid_room_size: Vector2i = Vector2i(15, 15):
 	set(value): 
 		grid_room_size = value
 		if grid_lines != null:
 			grid_lines.grid_room_size = grid_room_size
 			grid_lines.queue_redraw()
+			grid_space_parameters_changed.emit()
 
 
 func _ready():

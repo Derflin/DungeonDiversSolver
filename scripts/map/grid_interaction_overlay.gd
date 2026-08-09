@@ -1,7 +1,7 @@
 extends Node2D
 
 
-enum CursorKind {
+enum MapCursorKind {
 	VALID = 0,
 	INVALID = 1,
 }
@@ -10,9 +10,9 @@ enum CursorKind {
 @onready var map_cursor: Sprite2D = $MapCursor
 @onready var map_cursor_animation_player: AnimationPlayer = $MapCursor/CursorAnimation
 
-@onready var cursor_kinds_texture_frames: Dictionary = {
-	CursorKind.VALID: 0,
-	CursorKind.INVALID: 1,
+@onready var map_cursor_kinds_texture_frames: Dictionary = {
+	MapCursorKind.VALID: 0,
+	MapCursorKind.INVALID: 1,
 }
 
 
@@ -29,7 +29,7 @@ func hide_map_cursor() -> void:
 
 func show_map_cursor(cursor_position: Vector2, valid_position: bool) -> void:
 	map_cursor.position = cursor_position
-	map_cursor.frame = cursor_kinds_texture_frames[CursorKind.VALID if valid_position else CursorKind.INVALID]
+	map_cursor.frame = map_cursor_kinds_texture_frames[MapCursorKind.VALID if valid_position else MapCursorKind.INVALID]
 	map_cursor.visible = true
 	
 	if not map_cursor_animation_player.is_playing():

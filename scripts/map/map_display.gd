@@ -292,3 +292,7 @@ func _handle_pan_input(event: InputEvent) -> bool:
 
 func _on_grid_space_grid_space_parameters_changed() -> void:
 	fit_map_to_view.call_deferred()
+
+
+func _on_grid_space_selected_room_changed(room_coords: Vector2i, room_center_position: Vector2) -> void:
+	map_camera.set_camera_position(room_center_position)

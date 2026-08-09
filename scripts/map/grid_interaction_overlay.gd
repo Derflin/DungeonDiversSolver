@@ -15,6 +15,8 @@ enum MapCursorKind {
 	MapCursorKind.INVALID: 1,
 }
 
+@onready var room_selection_cursor: Sprite2D = $RoomSelectionCursor
+
 
 func _ready() -> void:
 	map_cursor.hframes = 2
@@ -34,3 +36,20 @@ func show_map_cursor(cursor_position: Vector2, valid_position: bool) -> void:
 	
 	if not map_cursor_animation_player.is_playing():
 		map_cursor_animation_player.play("default")
+
+
+func hide_room_selection_cursor() -> void:
+	room_selection_cursor.visible = false
+
+
+func show_room_selection_cursor(cursor_position: Vector2) -> void:
+	room_selection_cursor.position = cursor_position
+	room_selection_cursor.visible = true
+
+
+func is_room_selection_cursor_visible() -> bool:
+	return room_selection_cursor.visible
+
+
+func is_room_selection_cursor_position(cursor_position: Vector2) -> bool:
+	return room_selection_cursor.position == cursor_position

@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://d0a2gab5b665" path="res://scripts/map/map_camera.gd" id="4_1umrj"]
 [ext_resource type="Script" uid="uid://b58j6wyehrxbb" path="res://scripts/map/grid_interaction_overlay.gd" id="4_ilqgx"]
 [ext_resource type="Texture2D" uid="uid://g3krt8efxnw4" path="res://assets/icons/cursor/DungeonSolvers-RoomCursor-All.png" id="5_ilqgx"]
+[ext_resource type="Texture2D" uid="uid://c7rltc1fvjp6u" path="res://assets/icons/cursor/RoomSelectionCursor.png" id="6_tt585"]
 
 [sub_resource type="Animation" id="Animation_ilqgx"]
 length = 0.001
@@ -91,6 +92,10 @@ external_line_color = Color(0.4509804, 0.15294118, 0.17254902, 0.15686275)
 z_index = 100
 script = ExtResource("4_ilqgx")
 
+[node name="RoomSelectionCursor" type="Sprite2D" parent="GridSpace/GridInteractionOverlay" unique_id=1464321161]
+visible = false
+texture = ExtResource("6_tt585")
+
 [node name="MapCursor" type="Sprite2D" parent="GridSpace/GridInteractionOverlay" unique_id=452657165]
 visible = false
 texture = ExtResource("5_ilqgx")
@@ -104,3 +109,4 @@ script = ExtResource("4_1umrj")
 smoothing_position_speed = 15.0
 
 [connection signal="grid_space_parameters_changed" from="GridSpace" to="." method="_on_grid_space_grid_space_parameters_changed"]
+[connection signal="selected_room_changed" from="GridSpace" to="." method="_on_grid_space_selected_room_changed"]

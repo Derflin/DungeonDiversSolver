@@ -2,6 +2,7 @@ class_name GridSpace
 extends Node2D
 
 signal grid_space_parameters_changed
+signal selected_room_changed(room_coords: Vector2i, room_center_position: Vector2)
 
 
 @onready var grid_lines: Node2D = $GridBackground/GridLines
@@ -30,6 +31,10 @@ signal grid_space_parameters_changed
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		_update_hovered_map_cursor()
+		
+	elif event.is_action_pressed("map_select"):
+		_update_selected_room_cursor()
+		get_viewport().set_input_as_handled()
 
 
 func _update_hovered_map_cursor() -> void:
@@ -43,6 +48,26 @@ func _update_hovered_map_cursor() -> void:
 	var map_cursor_position = get_room_center_from_coords(coords)
 	
 	grid_interaction_overlay.show_map_cursor(map_cursor_position, is_valid_coords(coords))
+
+
+func _update_selected_room_cursor() -> void:
+	var mouse_position = get_local_mouse_position()
+	
+	var is_selected_room_cursor_visible = grid_interaction_overlay.is_room_selection_cursor_visible()
+	if is_selected_room_cursor_visible:
+		grid_interaction_overlay.hide_room_selection_cursor()
+	
+	if is_local_position_on_grid_lines(mouse_position):
+		return
+		
+	var coords = get_coords_at_local_position(mouse_position)
+	var map_cursor_position = get_room_center_from_coords(coords)
+	
+	var is_selected_coords_valid = is_valid_coords(coords)
+	if is_selected_coords_valid and (not is_selected_room_cursor_visible or not grid_interaction_overlay.is_room_selection_cursor_position(map_cursor_position)):
+		grid_interaction_overlay.show_room_selection_cursor(map_cursor_position)
+		
+		selected_room_changed.emit(coords, map_cursor_position)
 
 
 func get_map_rect() -> Rect2:

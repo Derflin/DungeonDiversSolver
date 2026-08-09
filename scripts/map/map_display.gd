@@ -39,6 +39,26 @@ var pan_drag_threshold = 4.0
 func _ready() -> void:
 	var instant = true
 	fit_map_to_view.call_deferred(instant)
+	
+	#TODO: remove it later
+	_room_cell_scene = preload("res://scenes/map/room_cell.tscn")
+	var test_room = RoomInstanceData.new()
+	#test_room.enable_barricade(RoomInstanceData.BarricadeDirectionFlags.UP)
+	#test_room.enable_barricade(RoomInstanceData.BarricadeDirectionFlags.LEFT | RoomInstanceData.BarricadeDirectionFlags.RIGHT)
+	#test_room.enable_barricade(RoomInstanceData.BarricadeDirectionFlags.UP | RoomInstanceData.BarricadeDirectionFlags.LEFT | RoomInstanceData.BarricadeDirectionFlags.RIGHT)
+	test_room.enable_barricade(RoomInstanceData.BarricadeDirectionFlags.UP | RoomInstanceData.BarricadeDirectionFlags.DOWN | RoomInstanceData.BarricadeDirectionFlags.RIGHT)
+	#test_room.special_type = GameData.room_special_types.get_type(RoomSpecialType.Kind.ARENA)
+	#test_room.special_type = GameData.room_special_types.get_type(RoomSpecialType.Kind.ENTRANCE)
+	#test_room.special_type = GameData.room_special_types.get_type(RoomSpecialType.Kind.LIBRARY)
+	#test_room.secret_type = GameData.room_secret_types.get_type(RoomSecretType.Kind.ERROR_ROOM)
+	rooms[Vector2i(5, 5)] = test_room
+	for room_coords in rooms:
+		var room_instance_data = rooms[room_coords]
+		var room_cell_instance = _room_cell_scene.instantiate()
+		room_cell_instance.position = grid_space.get_room_center_from_coords(room_coords)
+		room_cell_instance.create(room_instance_data)
+		grid_space.append_room(room_cell_instance)
+		
 
 
 func fit_map_to_view(instant: bool = false) -> void:

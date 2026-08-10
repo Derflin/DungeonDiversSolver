@@ -6,7 +6,8 @@ signal selected_room_changed(room_coords: Vector2i, room_center_position: Vector
 
 
 var _room_cell_scene
-var rooms: Dictionary[Vector2i, RoomInstanceData] = {}
+var room_instances: Dictionary[Vector2i, RoomInstanceData] = {}
+var room_cells: Dictionary[Vector2i, RoomCell] = {}
 
 
 @onready var grid_lines: Node2D = $GridBackground/GridLines
@@ -44,10 +45,9 @@ func _ready() -> void:
 	#test_room.special_type = GameData.room_special_types.get_type(RoomSpecialType.Kind.ENTRANCE)
 	#test_room.special_type = GameData.room_special_types.get_type(RoomSpecialType.Kind.LIBRARY)
 	#test_room.secret_type = GameData.room_secret_types.get_type(RoomSecretType.Kind.ERROR_ROOM)
-	rooms[Vector2i(5, 5)] = test_room
-	for room_coords in rooms:
-		var room_cell_instance = create_room(room_coords)
-		append_room(room_cell_instance)
+	room_instances[Vector2i(5, 5)] = test_room
+	for room_coords in room_instances:
+		create_room(room_coords)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -80,16 +80,15 @@ func handle_input_map_select() -> void:
 	var position_on_grid_lines = is_local_position_on_grid_lines(mouse_position)
 	var coords = get_coords_at_local_position(mouse_position)
 	
-	if not position_on_grid_lines and is_valid_coords(coords) and coords not in rooms:
+	if not position_on_grid_lines and is_valid_coords(coords) and coords not in room_instances:
 		create_and_save_empty_room(coords)
 	else:
 		_update_selected_room_cursor()
 
 
 func create_and_save_empty_room(room_coords: Vector2i) -> void:
-	rooms[room_coords] = RoomInstanceData.new()
-	var room_cell_instance = create_room(room_coords)
-	append_room(room_cell_instance)
+	room_instances[room_coords] = RoomInstanceData.new()
+	create_room(room_coords)
 
 
 func _update_selected_room_cursor() -> void:
@@ -109,6 +108,7 @@ func _update_selected_room_cursor() -> void:
 	var is_selected_coords_valid = is_valid_coords(coords)
 	if is_selected_coords_valid and (not was_selected_room_cursor_visible or not grid_interaction_overlay.is_room_selection_cursor_position(map_cursor_position)):
 		grid_interaction_overlay.show_room_selection_cursor(map_cursor_position)
+		grid_interaction_overlay.show_room_editor_menu(map_cursor_position)
 		
 		selected_room_changed.emit(coords, map_cursor_position)
 
@@ -133,8 +133,12 @@ func create_room(room_coords: Vector2i) -> RoomCell:
 	room_cell_instance.room_coords = room_coords
 	room_cell_instance.position = get_room_center_from_coords(room_coords)
 	
-	var room_cell_room_instance_data = rooms[room_coords]
+	var room_cell_room_instance_data = room_instances[room_coords]
 	room_cell_instance.create(room_cell_room_instance_data)
+	
+	room_cells[room_coords] = room_cell_instance
+	
+	append_room(room_cell_instance)
 	
 	return room_cell_instance
 

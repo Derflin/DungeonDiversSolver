@@ -5,6 +5,10 @@ signal grid_space_parameters_changed
 signal selected_room_changed(room_coords: Vector2i, room_center_position: Vector2)
 
 
+var _room_cell_scene
+var rooms: Dictionary[Vector2i, RoomInstanceData] = {}
+
+
 @onready var grid_lines: Node2D = $GridBackground/GridLines
 @onready var rooms_container: Node2D = $Rooms
 @onready var grid_interaction_overlay: Node2D = $GridInteractionOverlay
@@ -26,6 +30,25 @@ signal selected_room_changed(room_coords: Vector2i, room_center_position: Vector
 			grid_lines.grid_room_size = grid_room_size
 			grid_lines.queue_redraw()
 			grid_space_parameters_changed.emit()
+
+
+func _ready() -> void:
+	#TODO: remove it later
+	_room_cell_scene = preload("res://scenes/map/room_cell.tscn")
+	var test_room = RoomInstanceData.new()
+	#test_room.enable_barricade(RoomInstanceData.BarricadeDirectionFlags.UP)
+	#test_room.enable_barricade(RoomInstanceData.BarricadeDirectionFlags.LEFT | RoomInstanceData.BarricadeDirectionFlags.RIGHT)
+	#test_room.enable_barricade(RoomInstanceData.BarricadeDirectionFlags.UP | RoomInstanceData.BarricadeDirectionFlags.LEFT | RoomInstanceData.BarricadeDirectionFlags.RIGHT)
+	test_room.enable_barricade(RoomInstanceData.BarricadeDirectionFlags.UP | RoomInstanceData.BarricadeDirectionFlags.DOWN | RoomInstanceData.BarricadeDirectionFlags.RIGHT)
+	#test_room.special_type = GameData.room_special_types.get_type(RoomSpecialType.Kind.ARENA)
+	#test_room.special_type = GameData.room_special_types.get_type(RoomSpecialType.Kind.ENTRANCE)
+	#test_room.special_type = GameData.room_special_types.get_type(RoomSpecialType.Kind.LIBRARY)
+	#test_room.secret_type = GameData.room_secret_types.get_type(RoomSecretType.Kind.ERROR_ROOM)
+	rooms[Vector2i(5, 5)] = test_room
+	for room_coords in rooms:
+		var room_instance_data = rooms[room_coords]
+		var room_cell_instance = create_room(room_coords, room_instance_data)
+		append_room(room_cell_instance)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -80,6 +103,18 @@ func get_map_rect() -> Rect2:
 		grid_lines.position - grid_lines.get_grid_offset(),
 		grid_lines.get_grid_size(),
 	)
+
+
+func create_room(room_coords: Vector2i, room_instance_data: RoomInstanceData = null) -> RoomCell:
+	var room_cell_instance = _room_cell_scene.instantiate()
+	
+	room_cell_instance.room_coords = room_coords
+	room_cell_instance.position = get_room_center_from_coords(room_coords)
+	
+	var room_cell_room_instance_data = RoomInstanceData.new() if room_instance_data == null else room_instance_data
+	room_cell_instance.create(room_instance_data)
+	
+	return room_cell_instance
 
 
 func append_room(room: RoomCell) -> void:

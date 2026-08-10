@@ -26,8 +26,10 @@ extends Node2D
 		
 		if is_node_ready():
 			refresh_visuals()
-			
-			
+
+@export var room_coords: Vector2i = Vector2i(-1, -1)
+
+
 @onready var connection_sprites: Dictionary = {
 	RoomInstanceData.ConnectionDirectionFlags.UP: $Content/Connections/ConnectionUp,
 	RoomInstanceData.ConnectionDirectionFlags.DOWN: $Content/Connections/ConnectionDown,

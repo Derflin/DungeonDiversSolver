@@ -1,12 +1,19 @@
 extends Node2D
 
 
-#TODO: modify room_grid code to be able to automatically display and update room_cells visible on the grid in the correct positions
-#TODO: --- do it through "godot-radial-menu-control" plugin
-#TODO: add room_cell_preview for testing out different textures/animations
+#TODO: fully implement RoomEditorMenu:
+#TODO: --- populate submenus with correct options from GameData and textures
+#TODO: --- add custom label under the RoomEditorMenu that will be wide as the menu and display current hovered option name
+#TODO: --- implement option to set toggle buttons inside the RoomEditorMenu, maybe set them with the decorator ring or somehow hightlight the button
+#TODO: --- make sure that toggle buttons won't close the RoomEditorMenu, but rather update it accordingly
+#TODO: --- implement event listeners on RoomEditorMenu options clicked and handle them to modify room instance and room cells content
+#TODO: --- implement constraints on what options can be set at a same time for a room (for example turn off every other option if secret type is applied to room)
+#TODO: make sure that each room type is correctly displayed on the map
 #TODO: add readme file and mark TODOs in it
 #TODO: add comments
 #TODO: add asserts if everything needed is assigned on the start (mostly in case of export variables that need to be populated for everything to work correctly)
+#TODO: add room_cell_preview for testing out different textures/animations
+#TODO: add map validation based on some rules (rules defined in cataloge or something, displayed on screen to show which failed and which succeeded)
 #TODO: add option to save/load current map into a file
 #TODO: add option to set map parameters like map size, types of secret rooms, their count and their order
 #TODO: implement scripts for checking, hinting and solving each secret room type based on the current map

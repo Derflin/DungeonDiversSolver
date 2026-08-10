@@ -9,6 +9,13 @@ func _ready() -> void:
 	pass
 
 
+func _handle_mouse_buttons(event):
+	if event.is_action_pressed("map_select"):
+		if not is_submenu:
+			get_viewport().set_input_as_handled()
+		activate_selected()
+
+
 func activate_selected():	
 	if selected != -1 and menu_items[selected].id is Control:
 		open_submenu(menu_items[selected].id, selected)	

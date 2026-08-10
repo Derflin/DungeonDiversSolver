@@ -17,6 +17,8 @@ enum MapCursorKind {
 
 @onready var room_selection_cursor: Sprite2D = $RoomSelectionCursor
 
+@onready var room_editor_menu: RadialMenu = $RoomEditorMenu
+
 
 func _ready() -> void:
 	map_cursor.hframes = 2
@@ -40,11 +42,15 @@ func show_map_cursor(cursor_position: Vector2, valid_position: bool) -> void:
 
 func hide_room_selection_cursor() -> void:
 	room_selection_cursor.visible = false
+	
+	hide_room_editor_menu()
 
 
 func show_room_selection_cursor(cursor_position: Vector2) -> void:
 	room_selection_cursor.position = cursor_position
 	room_selection_cursor.visible = true
+	
+	show_room_editor_menu(cursor_position)
 
 
 func is_room_selection_cursor_visible() -> bool:
@@ -53,3 +59,11 @@ func is_room_selection_cursor_visible() -> bool:
 
 func is_room_selection_cursor_position(cursor_position: Vector2) -> bool:
 	return room_selection_cursor.position == cursor_position
+
+
+func hide_room_editor_menu() -> void:
+	room_editor_menu.visible = false
+
+
+func show_room_editor_menu(cursor_position: Vector2) -> void:
+	room_editor_menu.open_menu(cursor_position)

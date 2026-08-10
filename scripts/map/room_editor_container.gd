@@ -41,6 +41,8 @@ func create_submenu(parent_menu: RoomEditorRadialMenu) -> RoomEditorRadialMenu:
 	submenu.show_animation = parent_menu.show_animation
 	submenu.animation_speed_factor = parent_menu.animation_speed_factor
 	
+	submenu.outside_selection_factor = parent_menu.outside_selection_factor
+	
 	submenu.icon_scale = parent_menu.icon_scale
 	submenu.show_titles = parent_menu.show_titles
 	

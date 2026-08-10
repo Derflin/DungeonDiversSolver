@@ -67,3 +67,11 @@ func hide_room_editor_menu() -> void:
 
 func show_room_editor_menu(cursor_position: Vector2) -> void:
 	room_editor_menu.open_menu(cursor_position)
+	
+	
+func is_map_cursor_locked() -> bool:
+	return room_editor_menu.visible
+
+
+func is_room_selection_cursor_locked() -> bool:
+	return room_editor_menu.visible

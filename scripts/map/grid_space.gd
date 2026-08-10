@@ -60,6 +60,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _update_hovered_map_cursor() -> void:
+	if grid_interaction_overlay.is_map_cursor_locked():
+		return
+	
 	var mouse_position = get_local_mouse_position()
 	
 	if is_local_position_on_grid_lines(mouse_position):
@@ -90,6 +93,9 @@ func create_and_save_empty_room(room_coords: Vector2i) -> void:
 
 
 func _update_selected_room_cursor() -> void:
+	if grid_interaction_overlay.is_room_selection_cursor_locked():
+		return
+	
 	var mouse_position = get_local_mouse_position()
 	
 	var was_selected_room_cursor_visible = hide_selected_room_cursor()
@@ -188,7 +194,7 @@ func get_coords_at_local_position(local_position: Vector2) -> Vector2i:
 
 
 func _on_room_editor_menu_outside_click_menu_closed() -> void:
-	_update_selected_room_cursor()
+	hide_selected_room_cursor()
 
 
 func _on_room_editor_menu_inside_click_menu_closed() -> void:

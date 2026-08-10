@@ -17,7 +17,7 @@ enum MapCursorKind {
 
 @onready var room_selection_cursor: Sprite2D = $RoomSelectionCursor
 
-@onready var room_editor_menu: RadialMenu = $RoomEditorMenu
+@onready var room_editor_menu: RadialMenu = $RoomEditorContainer/RoomEditorMenu
 
 
 func _ready() -> void:

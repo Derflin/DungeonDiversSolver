@@ -8,6 +8,12 @@
 [ext_resource type="Texture2D" uid="uid://g3krt8efxnw4" path="res://assets/icons/cursor/DungeonSolvers-RoomCursor-All.png" id="5_ilqgx"]
 [ext_resource type="Texture2D" uid="uid://c7rltc1fvjp6u" path="res://assets/icons/cursor/RoomSelectionCursor.png" id="6_tt585"]
 [ext_resource type="Script" uid="uid://b74gmnio5bhjr" path="res://scripts/map/room_editor_menu.gd" id="7_s1iqf"]
+[ext_resource type="Script" uid="uid://dpc6vyk00y26p" path="res://scripts/map/room_editor_container.gd" id="7_v1ud3"]
+[ext_resource type="Texture2D" uid="uid://d226qrsx3vu01" path="res://assets/icons/room_editor_menu/DungeonSolvers-RoomEditor-Thrash-v2.png" id="8_jtbyp"]
+[ext_resource type="Texture2D" uid="uid://drvlo7ogidkkt" path="res://assets/icons/room_editor_menu/DungeonSolvers-RoomEditor-Barricades-v2.png" id="9_2qoeq"]
+[ext_resource type="Texture2D" uid="uid://dpdtn7e3s1phw" path="res://assets/icons/room_editor_menu/DungeonSolvers-RoomEditor-Connections.png" id="10_bstpx"]
+[ext_resource type="Texture2D" uid="uid://c1yldd6nv7wu1" path="res://assets/icons/room_editor_menu/DungeonSolvers-RoomEditor-Specials.png" id="11_lhxh2"]
+[ext_resource type="Texture2D" uid="uid://hhj72w5juo4e" path="res://assets/icons/room_editor_menu/DungeonSolvers-RoomEditor-Secrets-v2.png" id="12_134i6"]
 
 [sub_resource type="Animation" id="Animation_ilqgx"]
 length = 0.001
@@ -104,7 +110,16 @@ texture = ExtResource("5_ilqgx")
 [node name="CursorAnimation" type="AnimationPlayer" parent="GridSpace/GridInteractionOverlay/MapCursor" unique_id=1033457261]
 libraries/ = SubResource("AnimationLibrary_s1iqf")
 
-[node name="RoomEditorMenu" type="Control" parent="GridSpace/GridInteractionOverlay" unique_id=637577446]
+[node name="RoomEditorContainer" type="Node2D" parent="GridSpace/GridInteractionOverlay" unique_id=1403079873]
+position = Vector2(-0.5, -0.5)
+script = ExtResource("7_v1ud3")
+icon_delete_room_texture = ExtResource("8_jtbyp")
+icon_barricades_texture = ExtResource("9_2qoeq")
+icon_connections_texture = ExtResource("10_bstpx")
+icon_specials_texture = ExtResource("11_lhxh2")
+icon_secrets_texture = ExtResource("12_134i6")
+
+[node name="RoomEditorMenu" type="Control" parent="GridSpace/GridInteractionOverlay/RoomEditorContainer" unique_id=637577446]
 visible = false
 custom_minimum_size = Vector2(80, 80)
 layout_mode = 3
@@ -115,7 +130,6 @@ pivot_offset = Vector2(40, 40)
 size_flags_horizontal = 0
 size_flags_vertical = 0
 offset_transform_enabled = true
-offset_transform_position = Vector2(-0.5, -0.5)
 offset_transform_scale = Vector2(0.25, 0.25)
 offset_transform_visual_only = false
 script = ExtResource("7_s1iqf")
@@ -125,7 +139,7 @@ center_radius = 0
 circle_coverage = 1.0
 show_animation = true
 outside_selection_factor = 0.0
-icon_scale = 2.0
+icon_scale = 3.0
 show_titles = false
 metadata/_custom_type_script = "uid://c6hdaiv58a8pw"
 
@@ -136,5 +150,5 @@ smoothing_position_speed = 15.0
 
 [connection signal="grid_space_parameters_changed" from="GridSpace" to="." method="_on_grid_space_grid_space_parameters_changed"]
 [connection signal="selected_room_changed" from="GridSpace" to="." method="_on_grid_space_selected_room_changed"]
-[connection signal="inside_click_menu_closed" from="GridSpace/GridInteractionOverlay/RoomEditorMenu" to="GridSpace" method="_on_room_editor_menu_inside_click_menu_closed"]
-[connection signal="outside_click_menu_closed" from="GridSpace/GridInteractionOverlay/RoomEditorMenu" to="GridSpace" method="_on_room_editor_menu_outside_click_menu_closed"]
+[connection signal="inside_click_menu_closed" from="GridSpace/GridInteractionOverlay/RoomEditorContainer/RoomEditorMenu" to="GridSpace" method="_on_room_editor_menu_inside_click_menu_closed"]
+[connection signal="outside_click_menu_closed" from="GridSpace/GridInteractionOverlay/RoomEditorContainer/RoomEditorMenu" to="GridSpace" method="_on_room_editor_menu_outside_click_menu_closed"]

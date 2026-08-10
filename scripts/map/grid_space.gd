@@ -46,8 +46,7 @@ func _ready() -> void:
 	#test_room.secret_type = GameData.room_secret_types.get_type(RoomSecretType.Kind.ERROR_ROOM)
 	rooms[Vector2i(5, 5)] = test_room
 	for room_coords in rooms:
-		var room_instance_data = rooms[room_coords]
-		var room_cell_instance = create_room(room_coords, room_instance_data)
+		var room_cell_instance = create_room(room_coords)
 		append_room(room_cell_instance)
 
 
@@ -56,7 +55,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_update_hovered_map_cursor()
 		
 	elif event.is_action_pressed("map_select"):
-		_update_selected_room_cursor()
+		handle_input_map_select()
 		get_viewport().set_input_as_handled()
 
 
@@ -71,6 +70,23 @@ func _update_hovered_map_cursor() -> void:
 	var map_cursor_position = get_room_center_from_coords(coords)
 	
 	grid_interaction_overlay.show_map_cursor(map_cursor_position, is_valid_coords(coords))
+
+
+func handle_input_map_select() -> void:
+	var mouse_position = get_local_mouse_position()
+	var position_on_grid_lines = is_local_position_on_grid_lines(mouse_position)
+	var coords = get_coords_at_local_position(mouse_position)
+	
+	if not position_on_grid_lines and is_valid_coords(coords) and coords not in rooms:
+		create_and_save_empty_room(coords)
+	else:
+		_update_selected_room_cursor()
+
+
+func create_and_save_empty_room(room_coords: Vector2i) -> void:
+	rooms[room_coords] = RoomInstanceData.new()
+	var room_cell_instance = create_room(room_coords)
+	append_room(room_cell_instance)
 
 
 func _update_selected_room_cursor() -> void:
@@ -105,14 +121,14 @@ func get_map_rect() -> Rect2:
 	)
 
 
-func create_room(room_coords: Vector2i, room_instance_data: RoomInstanceData = null) -> RoomCell:
+func create_room(room_coords: Vector2i) -> RoomCell:
 	var room_cell_instance = _room_cell_scene.instantiate()
 	
 	room_cell_instance.room_coords = room_coords
 	room_cell_instance.position = get_room_center_from_coords(room_coords)
 	
-	var room_cell_room_instance_data = RoomInstanceData.new() if room_instance_data == null else room_instance_data
-	room_cell_instance.create(room_instance_data)
+	var room_cell_room_instance_data = rooms[room_coords]
+	room_cell_instance.create(room_cell_room_instance_data)
 	
 	return room_cell_instance
 

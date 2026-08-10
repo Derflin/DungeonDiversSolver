@@ -1,6 +1,19 @@
 extends Node2D
 
 
+#TODO: modify room_grid code to be able to automatically display and update room_cells visible on the grid in the correct positions
+#TODO: --- do it through "godot-radial-menu-control" plugin
+#TODO: add room_cell_preview for testing out different textures/animations
+#TODO: add readme file and mark TODOs in it
+#TODO: add comments
+#TODO: add asserts if everything needed is assigned on the start (mostly in case of export variables that need to be populated for everything to work correctly)
+#TODO: add option to save/load current map into a file
+#TODO: add option to set map parameters like map size, types of secret rooms, their count and their order
+#TODO: implement scripts for checking, hinting and solving each secret room type based on the current map
+#TODO: add overlay hud menu for triggering hinting and solving each secret room type for the current map
+#TODO: add option to load in map state from game screenshot (most likey would need to analyze the image and assume that the whole map is visible on it)
+
+
 var _pan_candidate = false
 var _is_panning = false
 var _pan_start_screen_position = Vector2.ZERO

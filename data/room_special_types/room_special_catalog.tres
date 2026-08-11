@@ -6,8 +6,9 @@
 [ext_resource type="Resource" uid="uid://qdsgobpamdnl" path="res://data/room_special_types/special_entrance_room.tres" id="4_afp4p"]
 [ext_resource type="Resource" uid="uid://n34oby2qk5tx" path="res://data/room_special_types/special_library_room.tres" id="5_mrq04"]
 [ext_resource type="Resource" uid="uid://gb28i7ylwxe3" path="res://data/room_special_types/special_shop_room.tres" id="6_agquh"]
+[ext_resource type="Resource" uid="uid://dfdmwir5q34hx" path="res://data/room_special_types/special_treasure_room.tres" id="7_na6d1"]
 [ext_resource type="Script" uid="uid://bkx2uplj6t58e" path="res://scripts/resources/room_special_catalog.gd" id="8_bg587"]
 
 [resource]
 script = ExtResource("8_bg587")
-room_types = Array[ExtResource("1_na6d1")]([ExtResource("2_1kod5"), ExtResource("3_mfrgd"), ExtResource("4_afp4p"), ExtResource("5_mrq04"), ExtResource("6_agquh"), null])
+room_types = Array[ExtResource("1_na6d1")]([ExtResource("2_1kod5"), ExtResource("3_mfrgd"), ExtResource("4_afp4p"), ExtResource("5_mrq04"), ExtResource("6_agquh"), ExtResource("7_na6d1")])

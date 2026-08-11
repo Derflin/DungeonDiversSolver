@@ -177,6 +177,8 @@ func get_frame_texture(texture: Texture2D, frame: int, hframes: int, vframes: in
 
 
 func update_room_editor_menu_hover_label_position() -> void:
+	const label_offset_y = 1.0
+	
 	var outer_menu: RoomEditorRadialMenu = room_editor_menu
 	if room_editor_menu.has_open_submenu():
 		var submenu = room_editor_menu.get_open_submenu()
@@ -195,7 +197,7 @@ func update_room_editor_menu_hover_label_position() -> void:
 	
 	room_editor_menu_hover_label.position = Vector2(
 		room_editor_menu.moved_to_position.x - room_editor_menu_hover_label.size.x / 2.0,
-		room_editor_menu.moved_to_position.y + visual_radius - label_top_inset
+		room_editor_menu.moved_to_position.y + visual_radius - label_top_inset + label_offset_y
 	)
 
 

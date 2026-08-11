@@ -62,7 +62,7 @@ func is_room_selection_cursor_position(cursor_position: Vector2) -> bool:
 
 
 func hide_room_editor_menu() -> void:
-	room_editor_menu.visible = false
+	room_editor_menu.close_menu()
 
 
 func show_room_editor_menu(cursor_position: Vector2) -> void:

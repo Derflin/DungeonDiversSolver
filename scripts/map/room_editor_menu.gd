@@ -51,8 +51,12 @@ func _on_submenu_item_selected(id, position) -> void:
 
 
 # Changed from the orig: Removed 400 limit from the "inner_limit" variable
-func get_selected_by_mouse() -> int:
-	if has_open_submenu():		
+# Changed from the orig: Changed default check for open submenu hovered status in order to keep the opened submenu always highlighted unless when it would be closed
+func get_selected_by_mouse(check_open_submenu_hover: bool = false) -> int:
+	if has_open_submenu():
+		if not check_open_submenu_hover:
+			return active_submenu_idx
+		
 		if get_open_submenu().get_selected_by_mouse() != -1:
 			# we don't change the selection while a submenu has a valid selection
 			return active_submenu_idx
@@ -172,3 +176,15 @@ func align_first_item_up() -> void:
 	var angle_per_item = TAU / count
 	
 	center_angle = PI / 2.0 - angle_per_item / 2.0
+
+# Changed from the orig: Added get_selected_by_mouse true flag to preserve original selection when the submenu is closed, so that the custom always highlighted submenu option wouldn't conflict with this function 
+func _on_submenu_cancelled():
+	var submenu = get_open_submenu()
+	_disconnect_submenu_signals(submenu)
+	
+	set_selected_item(get_selected_by_mouse(true))
+	if selected == -1 or selected == active_submenu_idx:
+		get_viewport().set_input_as_handled()
+	
+	active_submenu_idx = -1
+	queue_redraw()

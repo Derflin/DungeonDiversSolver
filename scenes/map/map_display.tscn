@@ -138,6 +138,7 @@ size_flags_vertical = 0
 offset_transform_enabled = true
 offset_transform_scale = Vector2(0.25, 0.25)
 offset_transform_visual_only = false
+mouse_filter = 1
 script = ExtResource("7_s1iqf")
 radius = 130
 width = 60

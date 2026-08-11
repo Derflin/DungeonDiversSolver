@@ -150,7 +150,16 @@ func open_submenu(submenu, idx):
 		submenu.center_angle = center_angle - (menu_items.size()/2.0*item_angle) + idx * item_angle + item_angle/2.0
 	
 	submenu.decorator_ring_position = decorator_ring_position
-	submenu.radius = radius + ring_width + gap_size*2
+
+	# Changed from the orig: Replaced submenu radius assignment, so that it would include proper radius calculation including the offset_transform parameters
+	submenu.radius = radius + ring_width + gap_size * 2.0
+	if submenu.offset_transform_enabled:
+		var scale = submenu.offset_transform_scale.x
+		var visual_radius = submenu.radius * scale
+		var center_phase := fposmod(moved_to_position.x, 1.0)
+		visual_radius = roundf(visual_radius - center_phase) + center_phase
+		submenu.radius = visual_radius / scale
+	
 	submenu.center_radius = center_radius  # submenu needs this to determine whether to draw labels
 	submenu.is_submenu = true
 	submenu.position = moved_to_position - submenu.center_offset

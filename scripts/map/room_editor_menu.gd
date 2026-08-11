@@ -2,15 +2,25 @@ class_name RoomEditorRadialMenu
 extends RadialMenu
 
 
+## Signal is sent after a mouse click is detected outside of the opened menu.
 signal outside_click_menu_closed
+## Signal is sent after a mouse click is detected inside the opened menu in the center section.
 signal inside_click_menu_closed
 
+## Signal is sent after menu is opened and fully processed.
 signal after_menu_opened
+## Signal is sent after menu is closed and fully processed.
 signal after_menu_closed
+## Signal is sent after submenu is opened and fully processed.
 signal after_submenu_opened
+## Signal is sent after submenu is closed and fully processed.
 signal after_submenu_closed
 
+## Signal is sent when the selected item is changed. This includes item changed to null.
 signal selection_changed(item)
+
+## Signal is sent when a toggleable item is selected.
+signal item_toggled(id, is_toggled, position)
 
 
 enum SubmenuAngleMode {
@@ -26,7 +36,7 @@ var fixed_center_angle := -PI / 2.0
 # Overloaded from RadialMenu
 func _handle_mouse_buttons(event) -> void:
 	# Changed from the orig: Removed mouse wheel action detection
-	# Chagned from the orig: Mapped input event action to match the one set in the project input settings
+	# Changed from the orig: Mapped input event action to match the one set in the project input settings
 	if event.is_action_pressed("map_select"):
 		if not is_submenu:
 			get_viewport().set_input_as_handled()
@@ -51,6 +61,18 @@ func activate_selected() -> void:
 			outside_click_menu_closed.emit()
 		else:
 			inside_click_menu_closed.emit()
+		return
+	
+	# Changed from the orig: Added custom handle for custom toggleable actions
+	var item: Dictionary = menu_items[selected]
+	if item.get("toggleable", false):
+		item["is_toggled"] = not item.get("is_toggled", false)
+		
+		queue_redraw()
+		
+		item_selected.emit(item.id, opened_at_position)
+		item_toggled.emit(item.id, item["is_toggled"], opened_at_position)
+		return
 
 
 # Overloaded from RadialMenu
@@ -234,3 +256,66 @@ func _disconnect_submenu_signals(submenu: RadialMenu):
 
 func _on_submenu_selection_changed(item: Variant) -> void:
 	selection_changed.emit(item)
+
+
+# Overloaded from RadialMenu
+func _draw():
+	var count = menu_items.size()	
+	if item_angle*count > 2*PI:
+		item_angle = 2*PI/count
+					
+	var start_angle = center_angle - item_angle * (count/2.0)
+	
+	var inout = get_inner_outer()
+	var inner = inout[0]
+	var outer = inout[1]
+	
+	var sw = _get_constant("StrokeWidth")
+	
+	# Draw the background for each menu item
+	for i in range(count):			
+		var coords = _calc_segment(inner, outer, start_angle+i*item_angle, start_angle+(i+1)*item_angle)		
+		if i == selected: 
+			Draw.draw_ring_segment(self, coords, _get_color("SelectedBackground"), _get_color("SelectedStroke"), sw, true)
+		else:
+			Draw.draw_ring_segment(self, coords, _get_color("Background"), _get_color("Stroke"), sw, true)
+
+	var rw = _get_constant("DecoratorRingWidth")
+	var ring_bg = _get_color("RingBackground")
+	for i in range(count):
+		# Changed from the orig: Added toggleable and is_toggled flags to the menu_items items
+		var item: Dictionary = menu_items[i]
+		if item.get("toggleable", false) and not item.get("is_toggled", false):
+			continue
+		
+		# draw decorator ring segment
+		if decorator_ring_position == Position.outside:	
+			#var coords = Draw.calc_ring_segment(outer, outer + rw, start_angle, start_angle+count*item_angle, center_offset)					
+			var coords = _calc_segment(outer, outer + rw, start_angle+i*item_angle, start_angle+(i+1)*item_angle)
+			Draw.draw_ring_segment(self, coords, ring_bg, ring_bg, 1, true)
+		elif decorator_ring_position == Position.inside:			
+			#var coords = Draw.calc_ring_segment(inner-rw, inner, start_angle, start_angle+count*item_angle, center_offset)			
+			var coords = _calc_segment(inner, inner-rw, start_angle+i*item_angle, start_angle+(i+1)*item_angle)
+			Draw.draw_ring_segment(self, coords, ring_bg, ring_bg, 1, true)
+			
+	# draw selection ring segment
+	if selected != -1 and not has_open_submenu():
+		var selector_size = _get_constant("SelectorSegmentWidth")		
+		var select_coords
+		if selector_position == Position.outside:
+			# TODO: Likely we need to swap the inner and outer radius here!			
+			select_coords = _calc_segment(outer, outer+selector_size, start_angle+selected*item_angle, start_angle+(selected+1)*item_angle)
+			Draw.draw_ring_segment(self, select_coords, _get_color("SelectorSegment"),_get_color("SelectorSegment"), 1, true)	
+		elif selector_position == Position.inside:			
+			# TODO: Likely we need to swap the inner and outer radius here!
+			select_coords = _calc_segment(inner-selector_size, inner, start_angle+selected*item_angle, start_angle+(selected+1)*item_angle)
+			Draw.draw_ring_segment(self, select_coords, _get_color("SelectorSegment"), _get_color("SelectorSegment"), 1, true)	
+
+	if center_radius != 0:
+		_draw_center()
+	
+	if show_titles and (not has_open_submenu() or get_open_submenu().selected == -1):
+		_draw_label()
+	
+	if DEBUG:
+		_debug_draw()

@@ -71,6 +71,8 @@ func _ready() -> void:
 				),
 				"title": "Barricade - " + room_corridor_type.BARRICADE_DISPLAY_NAME_BY_DIRECTION[barricade_direction],
 				"id": "action_barricade_" + str(barricade_direction),
+				"toggleable": true,
+				"is_toggled": false,
 			}
 		)
 	submenu_barricades.submenu_angle_mode = RoomEditorRadialMenu.SubmenuAngleMode.FIXED
@@ -90,6 +92,8 @@ func _ready() -> void:
 				),
 				"title": "Connection - " + room_corridor_type.CONNECTION_DISPLAY_NAME_BY_DIRECTION[connection_direction],
 				"id": "action_connection_" + str(connection_direction),
+				"toggleable": true,
+				"is_toggled": false,
 			}
 		)
 	submenu_connections.submenu_angle_mode = RoomEditorRadialMenu.SubmenuAngleMode.FIXED
@@ -104,6 +108,8 @@ func _ready() -> void:
 				"texture": room_special_type.get_static_texture(),
 				"title": "Special - " + room_special_type.get_display_name(),
 				"id": "action_special_" + room_special_type.get_id(),
+				"toggleable": true,
+				"is_toggled": false,
 			}
 		)
 	submenu_specials.submenu_angle_mode = RoomEditorRadialMenu.SubmenuAngleMode.FIXED
@@ -118,6 +124,8 @@ func _ready() -> void:
 				"texture": room_secret_type.get_static_texture(),
 				"title": "Secret - " + room_secret_type.get_display_name(),
 				"id": "action_secret_" + room_secret_type.get_id(),
+				"toggleable": true,
+				"is_toggled": false,
 			}
 		)
 	submenu_secrets.submenu_angle_mode = RoomEditorRadialMenu.SubmenuAngleMode.FIXED

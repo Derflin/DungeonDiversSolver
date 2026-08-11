@@ -1,8 +1,16 @@
 class_name RoomEditorRadialMenu
 extends RadialMenu
 
+
 signal outside_click_menu_closed
 signal inside_click_menu_closed
+
+signal after_menu_opened
+signal after_menu_closed
+signal after_submenu_opened
+signal after_submenu_closed
+
+signal selection_changed(item)
 
 
 enum SubmenuAngleMode {
@@ -150,6 +158,9 @@ func open_submenu(submenu, idx):
 	get_parent().add_child(submenu)
 	_connect_submenu_signals(submenu)
 	
+	# Changed from the orig: Added custom signal
+	after_submenu_opened.emit()
+	
 	# now make sure we have room to display the menu
 	var move = calc_move_to_fit(submenu)
 	if not move:
@@ -188,3 +199,55 @@ func _on_submenu_cancelled():
 	
 	active_submenu_idx = -1
 	queue_redraw()
+	
+	# Changed from the orig: Added custom signal
+	after_submenu_closed.emit()
+
+
+# Changed from the orig: Added selection_changed signal emitters
+func set_selected_item(itemidx):
+	if selected == itemidx:
+		return
+
+	selected = itemidx
+	if selected >= 0 and selected < menu_items.size():
+		item_hovered.emit(menu_items[selected])
+		selection_changed.emit(menu_items[selected])
+	else:
+		selection_changed.emit(null)
+
+	queue_redraw()
+
+
+func open_menu(center_position: Vector2) -> void:
+	super.open_menu(center_position)
+	
+	# Changed from the orig: Added custom signal
+	after_menu_opened.emit()
+
+
+func close_menu():
+	super.close_menu()
+	
+	# Changed from the orig: Added custom signal
+	after_menu_closed.emit()
+
+
+func _connect_submenu_signals(submenu : RadialMenu):
+	super._connect_submenu_signals(submenu)
+	
+	# Changed from the orig: Connected custom selection_changed signal
+	if submenu is RoomEditorRadialMenu:
+		submenu.selection_changed.connect(_on_submenu_selection_changed)
+
+
+func _disconnect_submenu_signals(submenu: RadialMenu):
+	# Changed from the orig: Disconnected custom selection_changed signal
+	if submenu is RoomEditorRadialMenu:
+		submenu.selection_changed.disconnect(_on_submenu_selection_changed)
+	
+	super._disconnect_submenu_signals(submenu)
+
+
+func _on_submenu_selection_changed(item) -> void:
+	selection_changed.emit(item)

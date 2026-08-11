@@ -54,6 +54,9 @@ _data = {
 &"default": SubResource("Animation_tt585")
 }
 
+[sub_resource type="LabelSettings" id="LabelSettings_lhxh2"]
+font_size = 36
+
 [node name="MapDisplay" type="Node2D" unique_id=1905427388]
 texture_filter = 1
 script = ExtResource("1_pnlec")
@@ -113,7 +116,6 @@ texture = ExtResource("5_ilqgx")
 libraries/ = SubResource("AnimationLibrary_s1iqf")
 
 [node name="RoomEditorContainer" type="Node2D" parent="GridSpace/GridInteractionOverlay" unique_id=1403079873]
-position = Vector2(-0.5, -0.5)
 script = ExtResource("7_v1ud3")
 icon_delete_room_texture = ExtResource("8_jtbyp")
 icon_barricades_texture = ExtResource("9_2qoeq")
@@ -148,6 +150,19 @@ icon_scale = 2.5
 show_titles = false
 metadata/_custom_type_script = "uid://c6hdaiv58a8pw"
 
+[node name="HoverLabel" type="Label" parent="GridSpace/GridInteractionOverlay/RoomEditorContainer" unique_id=1557615993]
+visible = false
+custom_minimum_size = Vector2(80, 0)
+custom_maximum_size = Vector2(80, -1)
+offset_right = 80.0
+offset_bottom = 50.0
+offset_transform_enabled = true
+offset_transform_scale = Vector2(0.25, 0.25)
+offset_transform_visual_only = false
+label_settings = SubResource("LabelSettings_lhxh2")
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="MapCamera" type="Camera2D" parent="." unique_id=888741653]
 position_smoothing_speed = 10.0
 script = ExtResource("4_1umrj")
@@ -155,5 +170,10 @@ smoothing_position_speed = 15.0
 
 [connection signal="grid_space_parameters_changed" from="GridSpace" to="." method="_on_grid_space_grid_space_parameters_changed"]
 [connection signal="selected_room_changed" from="GridSpace" to="." method="_on_grid_space_selected_room_changed"]
+[connection signal="after_menu_closed" from="GridSpace/GridInteractionOverlay/RoomEditorContainer/RoomEditorMenu" to="GridSpace/GridInteractionOverlay/RoomEditorContainer" method="_on_room_editor_menu_after_menu_closed"]
+[connection signal="after_menu_opened" from="GridSpace/GridInteractionOverlay/RoomEditorContainer/RoomEditorMenu" to="GridSpace/GridInteractionOverlay/RoomEditorContainer" method="_on_room_editor_menu_after_menu_opened"]
+[connection signal="after_submenu_closed" from="GridSpace/GridInteractionOverlay/RoomEditorContainer/RoomEditorMenu" to="GridSpace/GridInteractionOverlay/RoomEditorContainer" method="_on_room_editor_menu_after_submenu_closed"]
+[connection signal="after_submenu_opened" from="GridSpace/GridInteractionOverlay/RoomEditorContainer/RoomEditorMenu" to="GridSpace/GridInteractionOverlay/RoomEditorContainer" method="_on_room_editor_menu_after_submenu_opened"]
 [connection signal="inside_click_menu_closed" from="GridSpace/GridInteractionOverlay/RoomEditorContainer/RoomEditorMenu" to="GridSpace" method="_on_room_editor_menu_inside_click_menu_closed"]
 [connection signal="outside_click_menu_closed" from="GridSpace/GridInteractionOverlay/RoomEditorContainer/RoomEditorMenu" to="GridSpace" method="_on_room_editor_menu_outside_click_menu_closed"]
+[connection signal="selection_changed" from="GridSpace/GridInteractionOverlay/RoomEditorContainer/RoomEditorMenu" to="GridSpace/GridInteractionOverlay/RoomEditorContainer" method="_on_room_editor_menu_selection_changed"]

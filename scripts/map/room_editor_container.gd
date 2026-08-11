@@ -1,7 +1,7 @@
 extends Node2D
 
 
-var barricade_direction_menu_order: Array[RoomInstanceData.BarricadeDirectionFlags] = [
+const barricade_direction_menu_order: Array[RoomInstanceData.BarricadeDirectionFlags] = [
 	RoomInstanceData.BarricadeDirectionFlags.UP,
 	RoomInstanceData.BarricadeDirectionFlags.RIGHT,
 	RoomInstanceData.BarricadeDirectionFlags.DOWN,
@@ -21,6 +21,7 @@ const connection_direction_menu_order: Array[RoomInstanceData.ConnectionDirectio
 
 
 @onready var room_editor_menu = $RoomEditorMenu
+@onready var room_editor_menu_hover_label = $HoverLabel
 
 
 @export_group("Main menu - Icons", "icon_")
@@ -173,3 +174,57 @@ func get_frame_texture(texture: Texture2D, frame: int, hframes: int, vframes: in
 	)
 	
 	return atlas
+
+
+func update_room_editor_menu_hover_label_position() -> void:
+	var outer_menu: RoomEditorRadialMenu = room_editor_menu
+	if room_editor_menu.has_open_submenu():
+		var submenu = room_editor_menu.get_open_submenu()
+		if submenu is RoomEditorRadialMenu:
+			outer_menu = submenu
+
+	var visual_radius = outer_menu.radius
+	if outer_menu.offset_transform_enabled:
+		visual_radius *= outer_menu.offset_transform_scale.y
+	
+	var label_scale := 1.0
+	if room_editor_menu_hover_label.offset_transform_enabled:
+		label_scale = room_editor_menu_hover_label.offset_transform_scale.y
+	
+	var label_top_inset = (room_editor_menu_hover_label.size.y * (1.0 - label_scale) / 2.0 )
+	
+	room_editor_menu_hover_label.position = Vector2(
+		room_editor_menu.moved_to_position.x - room_editor_menu_hover_label.size.x / 2.0,
+		room_editor_menu.moved_to_position.y + visual_radius - label_top_inset
+	)
+
+
+func _on_room_editor_menu_selection_changed(item: Variant) -> void:
+	if item == null:
+		room_editor_menu_hover_label.text = ""
+		room_editor_menu_hover_label.visible = false
+		return
+		
+	room_editor_menu_hover_label.text = item["title"].strip_edges()
+	if room_editor_menu_hover_label.text.length() > 0:
+		room_editor_menu_hover_label.visible = true
+
+
+func _on_room_editor_menu_after_menu_closed() -> void:
+	print("Menu closed")
+	update_room_editor_menu_hover_label_position()
+
+
+func _on_room_editor_menu_after_menu_opened() -> void:
+	print("Menu opened")
+	update_room_editor_menu_hover_label_position()
+
+
+func _on_room_editor_menu_after_submenu_closed() -> void:
+	print("Submenu closed")
+	update_room_editor_menu_hover_label_position()
+
+
+func _on_room_editor_menu_after_submenu_opened() -> void:
+	print("Submenu opened")
+	update_room_editor_menu_hover_label_position()

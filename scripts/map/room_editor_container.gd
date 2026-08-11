@@ -211,20 +211,16 @@ func _on_room_editor_menu_selection_changed(item: Variant) -> void:
 
 
 func _on_room_editor_menu_after_menu_closed() -> void:
-	print("Menu closed")
 	update_room_editor_menu_hover_label_position()
 
 
 func _on_room_editor_menu_after_menu_opened() -> void:
-	print("Menu opened")
 	update_room_editor_menu_hover_label_position()
 
 
 func _on_room_editor_menu_after_submenu_closed() -> void:
-	print("Submenu closed")
 	update_room_editor_menu_hover_label_position()
 
 
 func _on_room_editor_menu_after_submenu_opened() -> void:
-	print("Submenu opened")
 	update_room_editor_menu_hover_label_position()

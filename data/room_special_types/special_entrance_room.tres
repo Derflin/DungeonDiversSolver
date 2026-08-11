@@ -8,6 +8,6 @@
 script = ExtResource("3_um7mt")
 kind = 30
 id = &"special_entrance_room"
-display_name = "Entracne Room"
+display_name = "Entrance Room"
 icon = ExtResource("2_cnrvh")
 background = ExtResource("1_l8alo")

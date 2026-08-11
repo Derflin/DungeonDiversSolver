@@ -141,6 +141,7 @@ radius = 130
 width = 60
 center_radius = 0
 circle_coverage = 1.0
+center_angle = 1.5705
 show_animation = true
 outside_selection_factor = 0.0
 icon_scale = 2.5

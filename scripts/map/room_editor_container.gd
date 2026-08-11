@@ -1,6 +1,25 @@
 extends Node2D
 
 
+var barricade_direction_menu_order: Array[RoomInstanceData.BarricadeDirectionFlags] = [
+	RoomInstanceData.BarricadeDirectionFlags.UP,
+	RoomInstanceData.BarricadeDirectionFlags.RIGHT,
+	RoomInstanceData.BarricadeDirectionFlags.DOWN,
+	RoomInstanceData.BarricadeDirectionFlags.LEFT,
+]
+
+const connection_direction_menu_order: Array[RoomInstanceData.ConnectionDirectionFlags] = [
+	RoomInstanceData.ConnectionDirectionFlags.UP,
+	RoomInstanceData.ConnectionDirectionFlags.UPPER_RIGHT,
+	RoomInstanceData.ConnectionDirectionFlags.RIGHT,
+	RoomInstanceData.ConnectionDirectionFlags.DOWN_RIGHT,
+	RoomInstanceData.ConnectionDirectionFlags.DOWN,
+	RoomInstanceData.ConnectionDirectionFlags.DOWN_LEFT,
+	RoomInstanceData.ConnectionDirectionFlags.LEFT,
+	RoomInstanceData.ConnectionDirectionFlags.UPPER_LEFT,
+]
+
+
 @onready var room_editor_menu = $RoomEditorMenu
 
 
@@ -40,7 +59,7 @@ func _ready() -> void:
 	
 	# Populate barricades submenu.
 	submenu_barricades.menu_items = []
-	for barricade_direction: RoomInstanceData.BarricadeDirectionFlags in room_corridor_type.BARRICADE_FRAME_BY_DIRECTION:
+	for barricade_direction: RoomInstanceData.BarricadeDirectionFlags in barricade_direction_menu_order:
 		submenu_barricades.menu_items.append(
 			{
 				"texture": get_frame_texture(
@@ -53,10 +72,13 @@ func _ready() -> void:
 				"id": "action_barricade_" + str(barricade_direction),
 			}
 		)
+	submenu_barricades.submenu_angle_mode = RoomEditorRadialMenu.SubmenuAngleMode.FIXED
+	submenu_barricades.align_first_item_up()
+	submenu_barricades.fixed_center_angle = submenu_barricades.center_angle
 	
 	# Populate connections submenu.
 	submenu_connections.menu_items = []
-	for connection_direction: RoomInstanceData.ConnectionDirectionFlags in room_corridor_type.CONNECTION_FRAME_BY_DIRECTION:
+	for connection_direction: RoomInstanceData.ConnectionDirectionFlags in connection_direction_menu_order:
 		submenu_connections.menu_items.append(
 			{
 				"texture": get_frame_texture(
@@ -69,6 +91,9 @@ func _ready() -> void:
 				"id": "action_connection_" + str(connection_direction),
 			}
 		)
+	submenu_connections.submenu_angle_mode = RoomEditorRadialMenu.SubmenuAngleMode.FIXED
+	submenu_connections.align_first_item_up()
+	submenu_connections.fixed_center_angle = submenu_connections.center_angle
 	
 	# Populate specials submenu.
 	submenu_specials.menu_items = []
@@ -80,6 +105,9 @@ func _ready() -> void:
 				"id": "action_special_" + room_special_type.get_id(),
 			}
 		)
+	submenu_specials.submenu_angle_mode = RoomEditorRadialMenu.SubmenuAngleMode.FIXED
+	submenu_specials.align_first_item_up()
+	submenu_specials.fixed_center_angle = submenu_specials.center_angle
 	
 	# Populate secrets submenu.
 	submenu_secrets.menu_items = []
@@ -91,14 +119,17 @@ func _ready() -> void:
 				"id": "action_secret_" + room_secret_type.get_id(),
 			}
 		)
+	submenu_secrets.submenu_angle_mode = RoomEditorRadialMenu.SubmenuAngleMode.FIXED
+	submenu_secrets.align_first_item_up()
+	submenu_secrets.fixed_center_angle = submenu_secrets.center_angle
 	
 	# Initialize menu items.
 	room_editor_menu.menu_items = [
-		{"texture": icon_delete_room_texture, "title": "Remove room", "id": "action_remove_room"},
-		{"texture": icon_barricades_texture, "title": "Room Barricades", "id": submenu_barricades},
-		{"texture": icon_connections_texture, "title": "Room Connections", "id": submenu_connections},
 		{"texture": icon_specials_texture, "title": "Specials Setup", "id": submenu_specials},
 		{"texture": icon_secrets_texture, "title": "Secrets Setup", "id": submenu_secrets},
+		{"texture": icon_delete_room_texture, "title": "Remove room", "id": "action_remove_room"},
+		{"texture": icon_connections_texture, "title": "Room Connections", "id": submenu_connections},
+		{"texture": icon_barricades_texture, "title": "Room Barricades", "id": submenu_barricades},
 	]
 
 

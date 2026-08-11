@@ -5,6 +5,16 @@ signal outside_click_menu_closed
 signal inside_click_menu_closed
 
 
+enum SubmenuAngleMode {
+	ALIGN_TO_PARENT,
+	FIXED,
+}
+
+
+var submenu_angle_mode: SubmenuAngleMode = SubmenuAngleMode.ALIGN_TO_PARENT
+var fixed_center_angle := -PI / 2.0
+
+
 func _ready() -> void:
 	super()
 
@@ -112,3 +122,53 @@ func get_offset_transformed_rect() -> Rect2:
 		menu_center + visual_min,
 		visual_max - visual_min,
 	)
+
+
+# Changed from the orig: Changed center_angle parameter assignment, so that it would allow different button placement in submenus
+func open_submenu(submenu, idx):
+	active_submenu_idx = idx
+	last_selected_submenu_idx = -1
+	queue_redraw()
+	
+	var ring_width = submenu.get_total_ring_width()
+	
+	if submenu is RoomEditorRadialMenu and submenu.submenu_angle_mode == RoomEditorRadialMenu.SubmenuAngleMode.FIXED:
+		submenu.center_angle = submenu.fixed_center_angle
+	else:
+		submenu.center_angle = center_angle - (menu_items.size()/2.0*item_angle) + idx * item_angle + item_angle/2.0
+	
+	submenu.decorator_ring_position = decorator_ring_position
+	submenu.radius = radius + ring_width + gap_size*2
+	submenu.center_radius = center_radius  # submenu needs this to determine whether to draw labels
+	submenu.is_submenu = true
+	submenu.position = moved_to_position - submenu.center_offset
+			
+	get_parent().add_child(submenu)
+	_connect_submenu_signals(submenu)
+	
+	# now make sure we have room to display the menu
+	var move = calc_move_to_fit(submenu)
+	if not move:
+		submenu.open_menu(moved_to_position)
+		return
+	
+	if show_animation:
+		state = MenuState.moving
+		set_tween("position", position+move)
+	else: 
+		moved_to_position += move
+		position = moved_to_position - center_offset
+		queue_redraw()
+		submenu.open_menu(moved_to_position)
+
+
+# Custom function called outside to set center_angle so that first element would be put centered at the top of the radial menu
+func align_first_item_up() -> void:
+	var count = menu_items.size()
+	
+	if count == 0:
+		return
+		
+	var angle_per_item = TAU / count
+	
+	center_angle = PI / 2.0 - angle_per_item / 2.0

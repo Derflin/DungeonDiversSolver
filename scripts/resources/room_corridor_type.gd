@@ -40,11 +40,29 @@ const CONNECTION_FRAME_BY_DIRECTION: Dictionary[RoomInstanceData.ConnectionDirec
 	RoomInstanceData.ConnectionDirectionFlags.DOWN_RIGHT: 7,
 }
 
+const CONNECTION_DISPLAY_NAME_BY_DIRECTION: Dictionary[RoomInstanceData.ConnectionDirectionFlags, String] = {
+	RoomInstanceData.ConnectionDirectionFlags.UP: "Up",
+	RoomInstanceData.ConnectionDirectionFlags.DOWN: "Down",
+	RoomInstanceData.ConnectionDirectionFlags.LEFT: "Left",
+	RoomInstanceData.ConnectionDirectionFlags.RIGHT: "Right",
+	RoomInstanceData.ConnectionDirectionFlags.UPPER_LEFT: "Upper Left",
+	RoomInstanceData.ConnectionDirectionFlags.UPPER_RIGHT: "Upper Right",
+	RoomInstanceData.ConnectionDirectionFlags.DOWN_LEFT: "Down Left",
+	RoomInstanceData.ConnectionDirectionFlags.DOWN_RIGHT: "Down Right",
+}
+
 const BARRICADE_FRAME_BY_DIRECTION: Dictionary[RoomInstanceData.BarricadeDirectionFlags, int] = {
 	RoomInstanceData.BarricadeDirectionFlags.UP: 0,
 	RoomInstanceData.BarricadeDirectionFlags.DOWN: 2,
 	RoomInstanceData.BarricadeDirectionFlags.LEFT: 3,
 	RoomInstanceData.BarricadeDirectionFlags.RIGHT: 1,
+}
+
+const BARRICADE_DISPLAY_NAME_BY_DIRECTION: Dictionary[RoomInstanceData.BarricadeDirectionFlags, String] = {
+	RoomInstanceData.BarricadeDirectionFlags.UP: "Up",
+	RoomInstanceData.BarricadeDirectionFlags.DOWN: "Down",
+	RoomInstanceData.BarricadeDirectionFlags.LEFT: "Left",
+	RoomInstanceData.BarricadeDirectionFlags.RIGHT: "Right",
 }
 
 

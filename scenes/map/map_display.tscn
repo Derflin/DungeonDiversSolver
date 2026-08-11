@@ -14,6 +14,8 @@
 [ext_resource type="Texture2D" uid="uid://dpdtn7e3s1phw" path="res://assets/icons/room_editor_menu/DungeonSolvers-RoomEditor-Connections.png" id="10_bstpx"]
 [ext_resource type="Texture2D" uid="uid://c1yldd6nv7wu1" path="res://assets/icons/room_editor_menu/DungeonSolvers-RoomEditor-Specials.png" id="11_lhxh2"]
 [ext_resource type="Texture2D" uid="uid://hhj72w5juo4e" path="res://assets/icons/room_editor_menu/DungeonSolvers-RoomEditor-Secrets-v2.png" id="12_134i6"]
+[ext_resource type="Texture2D" uid="uid://dh5cqs7puhpav" path="res://assets/icons/room_editor_menu/DungeonSolvers-RoomEditor-BarricadesDirections.png" id="13_bstpx"]
+[ext_resource type="Texture2D" uid="uid://b7yq2sj7dhgj0" path="res://assets/icons/room_editor_menu/DungeonSolvers-RoomEditor-ConnectionsDirections.png" id="14_lhxh2"]
 
 [sub_resource type="Animation" id="Animation_ilqgx"]
 length = 0.001
@@ -118,6 +120,8 @@ icon_barricades_texture = ExtResource("9_2qoeq")
 icon_connections_texture = ExtResource("10_bstpx")
 icon_specials_texture = ExtResource("11_lhxh2")
 icon_secrets_texture = ExtResource("12_134i6")
+icon_barricades_directions_spritesheet_texture = ExtResource("13_bstpx")
+icon_connections_directions_spritesheet_texture = ExtResource("14_lhxh2")
 
 [node name="RoomEditorMenu" type="Control" parent="GridSpace/GridInteractionOverlay/RoomEditorContainer" unique_id=637577446]
 visible = false

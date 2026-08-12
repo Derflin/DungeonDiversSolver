@@ -139,10 +139,13 @@ static func _extract_frame_image(texture: Texture2D, hframes: int, vframes: int,
 	var sheet := texture.get_image()
 	sheet.convert(Image.FORMAT_RGBA8)
 	
+	@warning_ignore("integer_division")
 	var frame_width := sheet.get_width() / hframes
+	@warning_ignore("integer_division")
 	var frame_height := sheet.get_height() / vframes
 	
 	var frame_x := (frame % hframes) * frame_width
+	@warning_ignore("integer_division")
 	var frame_y := int(frame / hframes) * frame_height
 	
 	return sheet.get_region(Rect2i(frame_x, frame_y, frame_width, frame_height))

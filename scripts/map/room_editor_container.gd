@@ -237,6 +237,7 @@ func get_frame_texture(texture: Texture2D, frame: int, hframes: int, vframes: in
 	var frame_size = Vector2(texture_size.x / hframes, texture_size.y / vframes)
 	
 	var column = frame % hframes
+	@warning_ignore("integer_division")
 	var row = frame / hframes
 	
 	var atlas = AtlasTexture.new()

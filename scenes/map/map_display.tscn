@@ -61,7 +61,7 @@ font_size = 36
 texture_filter = 1
 script = ExtResource("1_pnlec")
 fit_padding = -18.0
-maximum_zoom = 6.0
+maximum_zoom = 5.0
 
 [node name="BackgroundLayer" type="CanvasLayer" parent="." unique_id=1121686894]
 layer = -10

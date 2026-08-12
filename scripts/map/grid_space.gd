@@ -2,7 +2,7 @@ class_name GridSpace
 extends Node2D
 
 signal grid_space_parameters_changed
-signal selected_room_changed(room_coords: Vector2i, room_center_position: Vector2)
+signal selected_room_changed(room_center_position: Vector2)
 
 
 var _room_cell_scene
@@ -112,7 +112,7 @@ func _update_selected_room_cursor() -> void:
 		grid_interaction_overlay.show_room_selection_cursor(map_cursor_position)
 		grid_interaction_overlay.show_room_editor_menu(map_cursor_position)
 		
-		selected_room_changed.emit(coords, map_cursor_position)
+		selected_room_changed.emit(map_cursor_position)
 
 
 func hide_selected_room_cursor() -> bool:

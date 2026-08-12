@@ -280,6 +280,7 @@ func open_room_editor(cursor_position: Vector2) -> void:
 
 func close_room_editor() -> void:
 	room_editor_menu.close_menu()
+	room_editor_menu_hover_label.visible = false
 
 
 func get_room_editor_visible_status() -> bool:

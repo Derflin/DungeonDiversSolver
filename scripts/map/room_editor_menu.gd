@@ -142,11 +142,11 @@ func open_submenu(submenu: Variant, idx: Variant):
 	# Changed from the orig: Replaced submenu radius assignment, so that it would include proper radius calculation including the offset_transform parameters
 	submenu.radius = radius + ring_width + gap_size * 2.0
 	if submenu.offset_transform_enabled:
-		var scale = submenu.offset_transform_scale.x
-		var visual_radius = submenu.radius * scale
+		var local_scale = submenu.offset_transform_scale.x
+		var visual_radius = submenu.radius * local_scale
 		var center_phase := fposmod(moved_to_position.x, 1.0)
 		visual_radius = roundf(visual_radius - center_phase) + center_phase
-		submenu.radius = visual_radius / scale
+		submenu.radius = visual_radius / local_scale
 	
 	submenu.center_radius = center_radius  # submenu needs this to determine whether to draw labels
 	submenu.is_submenu = true
@@ -259,8 +259,8 @@ func _on_submenu_selection_changed(item: Variant) -> void:
 	selection_changed.emit(item)
 
 
-func _on_submenu_item_toggled(id, is_toggled, position) -> void:
-	item_toggled.emit(id, is_toggled, position)
+func _on_submenu_item_toggled(id, is_toggled, _position) -> void:
+	item_toggled.emit(id, is_toggled, _position)
 
 
 # Overloaded from RadialMenu

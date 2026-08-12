@@ -5,7 +5,6 @@
 
 [node name="RoomCell" type="Node2D" unique_id=889635569]
 script = ExtResource("1_qcwte")
-room_coords = null
 
 [node name="Shadow" type="Sprite2D" parent="." unique_id=1263625526]
 visible = false

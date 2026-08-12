@@ -70,7 +70,6 @@ func activate_selected() -> void:
 		
 		queue_redraw()
 		
-		item_selected.emit(item.id, opened_at_position)
 		item_toggled.emit(item.id, item["is_toggled"], opened_at_position)
 		return
 

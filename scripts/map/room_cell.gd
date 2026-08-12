@@ -153,19 +153,50 @@ func _refresh_room_content_background() -> void:
 	apply_sprite_from_visual_data($Content/Background, background_data)
 
 
-func _refresh_room_content_connections() -> void:
-	var connections_data = room_instance_data.get_room_connections_visual_data()
-	
-	if connections_data == null:
-		return
+func _refresh_room_content_connections(generate_connection_based_on_neighbour_pixels: bool = true) -> void:
+	if generate_connection_based_on_neighbour_pixels:
+		if room_instance_data == null:
+			return
 		
-	for direction_flag: RoomInstanceData.ConnectionDirectionFlags in connection_sprites:
-		if room_instance_data.has_connection(direction_flag):
+		if room_instance_data.corridor_type == null:
+			return
+		
+		var floor_data := room_instance_data.get_room_floor_visual_data()
+		if floor_data == null:
+			return
+		
+		for direction_flag in connection_sprites.keys():
+			if not room_instance_data.has_connection(direction_flag):
+				continue
+			
 			var connection_sprite: Sprite2D = connection_sprites[direction_flag]
-			var frame_index: int = connections_data.dictionary_frame_per_direction[direction_flag]
-			connections_data.frame = frame_index
+			
+			var generated_texture := RoomConnectionTextureGenerator.generate_for_direction(
+				floor_data,
+				room_instance_data.corridor_type,
+				room_instance_data.barricade_directions_mask,
+				direction_flag,
+			)
+			
+			connection_sprite.texture = generated_texture
+			connection_sprite.hframes = 1
+			connection_sprite.vframes = 1
+			connection_sprite.frame = 0
+			connection_sprite.visible = generated_texture != null
+	
+	else:
+		var connections_data = room_instance_data.get_room_connections_visual_data()
 		
-			apply_sprite_from_visual_data(connection_sprite, connections_data)
+		if connections_data == null:
+			return
+			
+		for direction_flag: RoomInstanceData.ConnectionDirectionFlags in connection_sprites:
+			if room_instance_data.has_connection(direction_flag):
+				var connection_sprite: Sprite2D = connection_sprites[direction_flag]
+				var frame_index: int = connections_data.dictionary_frame_per_direction[direction_flag]
+				connections_data.frame = frame_index
+			
+				apply_sprite_from_visual_data(connection_sprite, connections_data)
 
 
 func _refresh_room_content_barricades() -> void:

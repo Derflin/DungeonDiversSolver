@@ -167,9 +167,13 @@ func set_room_editor_menu_toggle_action_state(selected_room_cell: RoomCell) -> v
 				if submenu_item_action.begins_with("action_barricade_"):
 					var filter_split_count = 2
 					var action_barricade_direction_id = submenu_item_action.split("_", true, filter_split_count)
-					var action_barricade_direction: RoomInstanceData.BarricadeDirectionFlags = -1 if action_barricade_direction_id == null or action_barricade_direction_id.size() <= filter_split_count  else int(action_barricade_direction_id[filter_split_count])
+					var action_barricade_direction: RoomInstanceData.BarricadeDirectionFlags = (
+						RoomInstanceData.BarricadeDirectionFlags.NONE
+						if action_barricade_direction_id == null or action_barricade_direction_id.size() <= filter_split_count
+						else int(action_barricade_direction_id[filter_split_count])
+					)
 					
-					if action_barricade_direction == -1:
+					if action_barricade_direction == RoomInstanceData.BarricadeDirectionFlags.NONE:
 						continue
 
 					submenu_item["is_toggled"] = room_instance_data.has_barricade(action_barricade_direction)
@@ -177,9 +181,13 @@ func set_room_editor_menu_toggle_action_state(selected_room_cell: RoomCell) -> v
 				elif submenu_item_action.begins_with("action_connection_"):
 					var filter_split_count = 2
 					var action_connection_direction_id = submenu_item_action.split("_", true, filter_split_count)
-					var action_connection_direction: RoomInstanceData.ConnectionDirectionFlags = -1 if action_connection_direction_id == null or action_connection_direction_id.size() <= filter_split_count else int(action_connection_direction_id[filter_split_count])
+					var action_connection_direction: RoomInstanceData.ConnectionDirectionFlags = (
+						RoomInstanceData.ConnectionDirectionFlags.NONE
+						if action_connection_direction_id == null or action_connection_direction_id.size() <= filter_split_count
+						else int(action_connection_direction_id[filter_split_count])
+					)
 					
-					if action_connection_direction == -1:
+					if action_connection_direction == RoomInstanceData.ConnectionDirectionFlags.NONE:
 						continue
 
 					submenu_item["is_toggled"] = room_instance_data.has_connection(action_connection_direction)
@@ -333,9 +341,13 @@ func _on_room_editor_menu_item_toggled(id: Variant, is_toggled: Variant, positio
 	if action_id.begins_with("action_barricade_"):
 		var filter_split_count = 2
 		var action_barricade_direction_id = action_id.split("_", true, filter_split_count)
-		var action_barricade_direction: RoomInstanceData.BarricadeDirectionFlags = -1 if action_barricade_direction_id == null or action_barricade_direction_id.size() <= filter_split_count  else int(action_barricade_direction_id[filter_split_count])
+		var action_barricade_direction: RoomInstanceData.BarricadeDirectionFlags = (
+			RoomInstanceData.BarricadeDirectionFlags.NONE
+			if action_barricade_direction_id == null or action_barricade_direction_id.size() <= filter_split_count
+			else int(action_barricade_direction_id[filter_split_count])
+		)
 		
-		if action_barricade_direction == -1:
+		if action_barricade_direction == RoomInstanceData.BarricadeDirectionFlags.NONE:
 			return
 		
 		room_editor_action_barricade_change_triggered.emit(action_barricade_direction, is_toggled)
@@ -343,9 +355,13 @@ func _on_room_editor_menu_item_toggled(id: Variant, is_toggled: Variant, positio
 	elif action_id.begins_with("action_connection_"):
 		var filter_split_count = 2
 		var action_connection_direction_id = action_id.split("_", true, filter_split_count)
-		var action_connection_direction: RoomInstanceData.ConnectionDirectionFlags = -1 if action_connection_direction_id == null or action_connection_direction_id.size() <= filter_split_count else int(action_connection_direction_id[filter_split_count])
+		var action_connection_direction: RoomInstanceData.ConnectionDirectionFlags = (
+			RoomInstanceData.ConnectionDirectionFlags.NONE
+			if action_connection_direction_id == null or action_connection_direction_id.size() <= filter_split_count
+			else int(action_connection_direction_id[filter_split_count])
+		)
 		
-		if action_connection_direction == -1:
+		if action_connection_direction == RoomInstanceData.ConnectionDirectionFlags.NONE:
 			return
 
 		room_editor_action_connection_change_triggered.emit(action_connection_direction, is_toggled)

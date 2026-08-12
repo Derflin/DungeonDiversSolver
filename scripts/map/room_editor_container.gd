@@ -323,18 +323,16 @@ func _on_room_editor_menu_after_submenu_opened() -> void:
 	update_room_editor_menu_hover_label_position()
 
 
-func _on_room_editor_menu_item_selected(id: Variant, _position: Variant) -> void:
-	print("Item Selected - %s at pos %s" % [id, _position])
-	
-	if id == "action_remove_room":
+func _on_room_editor_menu_item_selected(action_id: Variant, _position: Variant) -> void:
+	if action_id is not String:
+		return
+		
+	if action_id == "action_remove_room":
 		room_editor_action_delete_triggered.emit()
 		room_editor_menu.close_all_menus()
 
 
-func _on_room_editor_menu_item_toggled(id: Variant, is_toggled: Variant, _position: Variant) -> void:
-	print("Item Toggled - %s set to %s at pos %s" % [id ,is_toggled, _position])
-	
-	var action_id = id
+func _on_room_editor_menu_item_toggled(action_id: Variant, is_toggled: Variant, _position: Variant) -> void:
 	if action_id is not String:
 		return
 	

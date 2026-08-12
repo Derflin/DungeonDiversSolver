@@ -193,8 +193,8 @@ func _on_submenu_cancelled() -> void:
 	
 	# Changed from the orig: Added get_selected_by_mouse true flag to preserve original selection when the submenu is closed, so that the custom always highlighted submenu option wouldn't conflict with this function 
 	set_selected_item(get_selected_by_mouse(true))
-	if selected == -1 or selected == active_submenu_idx:
-		get_viewport().set_input_as_handled()
+	# Changed from the orig: Removed conditional in order to stop submenu mouse selection to affect main menu during the process of closing the submenu
+	get_viewport().set_input_as_handled()
 	
 	active_submenu_idx = -1
 	queue_redraw()

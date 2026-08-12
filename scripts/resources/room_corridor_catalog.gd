@@ -23,6 +23,20 @@ func get_type(kind: RoomCorridorType.Kind) -> RoomCorridorType:
 	return null
 
 
+func get_type_by_id(type_id: String) -> RoomCorridorType:
+	for room_type in room_types:
+		if room_type == null:
+			continue
+			
+		if room_type.id == type_id:
+			return room_type
+			
+	push_error(
+		"%s does not contain room type with id: %d" % [get_script().get_global_name(), type_id]
+	)
+	return null
+
+
 func has_type(kind: RoomCorridorType.Kind) -> bool:
 	return get_type(kind) != null
 	

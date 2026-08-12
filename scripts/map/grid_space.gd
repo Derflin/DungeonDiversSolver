@@ -147,6 +147,15 @@ func create_room(room_coords: Vector2i) -> RoomCell:
 	return room_cell_instance
 
 
+func delete_room(room_coords: Vector2i) -> void:
+	var room_cell = room_cells[room_coords]
+	room_cells[room_coords] = null
+	
+	room_cell.queue_free()
+	
+	room_instances[room_coords] = null
+
+
 func append_room(room: RoomCell) -> void:
 	rooms_container.add_child(room)
 	
@@ -207,3 +216,88 @@ func _on_room_editor_menu_outside_click_menu_closed() -> void:
 
 func _on_room_editor_menu_inside_click_menu_closed() -> void:
 	hide_selected_room_cursor()
+
+
+func _on_room_editor_container_room_editor_action_delete_triggered() -> void:
+	var selected_room_cell = grid_interaction_overlay.selected_room_cell
+	if selected_room_cell == null:
+		return
+	
+	delete_room(selected_room_cell.room_coords)
+
+	grid_interaction_overlay.hide_room_selection_cursor()
+	grid_interaction_overlay.set_selected_room_cell(null)
+
+
+func _on_room_editor_container_room_editor_action_barricade_change_triggered(barricade_direction: RoomInstanceData.BarricadeDirectionFlags, state: bool) -> void:
+	var selected_room_cell = grid_interaction_overlay.selected_room_cell
+	if selected_room_cell == null:
+		return
+	
+	var changed: bool = false
+	var room_instance_data = selected_room_cell.room_instance_data
+	
+	if state and not room_instance_data.has_barricade(barricade_direction):
+		room_instance_data.enable_barricade(barricade_direction)
+		changed = true
+	elif not state and room_instance_data.has_barricade(barricade_direction):
+		room_instance_data.disable_barricade(barricade_direction)
+		changed = true
+	
+	if changed:
+		selected_room_cell.refresh_visuals()
+	
+	grid_interaction_overlay.update_selected_room_cell()
+
+
+func _on_room_editor_container_room_editor_action_connection_change_triggered(connection_direction: RoomInstanceData.ConnectionDirectionFlags, state: bool) -> void:
+	var selected_room_cell = grid_interaction_overlay.selected_room_cell
+	if selected_room_cell == null:
+		return
+	
+	var changed: bool = false
+	var room_instance_data = selected_room_cell.room_instance_data
+	
+	if state and not room_instance_data.has_connection(connection_direction):
+		room_instance_data.enable_connection(connection_direction)
+		changed = true
+	elif not state and room_instance_data.has_connection(connection_direction):
+		room_instance_data.disable_connection(connection_direction)
+		changed = true
+	
+	if changed:
+		selected_room_cell.refresh_visuals()
+	
+	grid_interaction_overlay.update_selected_room_cell()
+
+
+func _on_room_editor_container_room_editor_action_special_set_triggered(special_room_kind: RoomSpecialType.Kind, state: bool) -> void:
+	var selected_room_cell = grid_interaction_overlay.selected_room_cell
+	if selected_room_cell == null:
+		return
+	
+	var changed: bool = false
+	var room_instance_data = selected_room_cell.room_instance_data
+	
+	changed = room_instance_data.set_special_type(RoomSpecialType.Kind.NONE if not state else special_room_kind)
+	
+	if changed:
+		selected_room_cell.refresh_visuals()
+	
+	grid_interaction_overlay.update_selected_room_cell()
+
+
+func _on_room_editor_container_room_editor_action_secret_set_triggered(secret_room_kind: RoomSecretType.Kind, state: bool) -> void:
+	var selected_room_cell = grid_interaction_overlay.selected_room_cell
+	if selected_room_cell == null:
+		return
+	
+	var changed: bool = false
+	var room_instance_data = selected_room_cell.room_instance_data
+	
+	changed = room_instance_data.set_secret_type(RoomSecretType.Kind.NONE if not state else secret_room_kind)
+	
+	if changed:
+		selected_room_cell.refresh_visuals()
+	
+	grid_interaction_overlay.update_selected_room_cell()

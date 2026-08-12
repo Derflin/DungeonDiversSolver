@@ -204,16 +204,16 @@ func enable_connection(direction: ConnectionDirectionFlags) -> void:
 	
 func disable_connection(direction: ConnectionDirectionFlags) -> void:
 	connection_directions_mask &= ~direction
-	
-	
+
+
 func has_barricade(direction: BarricadeDirectionFlags) -> bool:
 	return (barricade_directions_mask & direction) != 0
-	
-	
+
+
 func enable_barricade(direction: BarricadeDirectionFlags) -> void:
 	barricade_directions_mask |= direction
-	
-	
+
+
 func disable_barricade(direction: BarricadeDirectionFlags) -> void:
 	barricade_directions_mask &= ~direction
 
@@ -224,3 +224,39 @@ func has_special_type_by_id(special_id: String) -> bool:
 
 func has_secret_type_by_id(secret_id: String) -> bool:
 	return secret_type != null and secret_type.id == secret_id 
+
+
+func set_special_type(special_kind: RoomSpecialType.Kind) -> bool:
+	if (special_kind == null or special_kind == RoomSpecialType.Kind.NONE) and special_type == null:
+		return false
+	
+	if special_kind == null or special_kind == RoomSpecialType.Kind.NONE:
+		special_type = null
+		return true
+	
+	if special_type == null or special_type.kind != special_kind:
+		var room_special_type = GameData.room_special_types.get_type(special_kind)
+		special_type = room_special_type
+		return true
+	
+	return false
+
+
+func set_secret_type(secret_kind: RoomSecretType.Kind) -> bool:
+	if (secret_kind == null or secret_kind == RoomSecretType.Kind.NONE) and secret_type == null:
+		return false
+	
+	if secret_kind == null or secret_kind == RoomSecretType.Kind.NONE:
+		secret_type = null
+		
+		return true
+	
+	if secret_type == null or secret_type.kind != secret_kind:
+		var room_secret_type = GameData.room_secret_types.get_type(secret_kind)
+		secret_type = room_secret_type
+		
+		return true
+	
+	return false
+
+#TODO: remember to add constraints - if secret is set, remove connection + barricades + special, if any of them is changed, remove special

@@ -2,6 +2,7 @@ class_name RoomSecretType
 extends Resource
 
 enum Kind {
+	NONE = -1,
 	COMMON_ROOM = 10,
 	HERMIT_ROOM = 20,
 	GUEST_ROOM = 30,
@@ -107,6 +108,10 @@ func generate_secret_backround_icon_pair_timer_interval(seed_id: int, triggered_
 		return random_interval
 	else:
 		return animation_static_timer_interval
+
+
+func get_kind() -> Kind:
+	return kind
 
 
 func get_id() -> StringName:

@@ -3,6 +3,7 @@ extends Resource
 
 
 enum Kind {
+	NONE = -1,
 	ARENA = 10,
 	BOSS = 20,
 	ENTRANCE = 30,
@@ -36,6 +37,10 @@ var background_hframes: int = 1
 var background_vframes: int = 1
 @export_range(0.0, 127.0, 1.0)
 var background_frame: int = 0
+
+
+func get_kind() -> Kind:
+	return kind
 
 
 func get_id() -> StringName:

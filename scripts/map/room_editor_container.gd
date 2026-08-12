@@ -1,6 +1,13 @@
 extends Node2D
 
 
+signal room_editor_action_delete_triggered
+signal room_editor_action_barricade_change_triggered(barricade_direction: RoomInstanceData.BarricadeDirectionFlags, state: bool)
+signal room_editor_action_connection_change_triggered(connection_direction: RoomInstanceData.ConnectionDirectionFlags, state: bool)
+signal room_editor_action_special_set_triggered(special_room_kind: RoomSpecialType.Kind, state: bool)
+signal room_editor_action_secret_set_triggered(secret_room_kind: RoomSecretType.Kind, state: bool)
+
+
 const barricade_direction_menu_order: Array[RoomInstanceData.BarricadeDirectionFlags] = [
 	RoomInstanceData.BarricadeDirectionFlags.UP,
 	RoomInstanceData.BarricadeDirectionFlags.RIGHT,
@@ -182,12 +189,18 @@ func set_room_editor_menu_toggle_action_state(selected_room_cell: RoomCell) -> v
 					var action_special_id = submenu_item_action.split("_", true, filter_split_count)
 					action_special_id = null if action_special_id == null or action_special_id.size() <= filter_split_count else action_special_id[filter_split_count]
 					
+					if action_special_id == null:
+						continue
+					
 					submenu_item["is_toggled"] = room_instance_data.has_special_type_by_id(action_special_id)
 				
 				elif submenu_item_action.begins_with("action_secret_"):
 					var filter_split_count = 2
 					var action_secret_id = submenu_item_action.split("_", true, filter_split_count)
 					action_secret_id = null if action_secret_id == null or action_secret_id.size() <= filter_split_count else action_secret_id[filter_split_count]
+					
+					if action_secret_id == null:
+						continue
 					
 					submenu_item["is_toggled"] = room_instance_data.has_secret_type_by_id(action_secret_id)
 					
@@ -286,3 +299,67 @@ func _on_room_editor_menu_after_submenu_closed() -> void:
 
 func _on_room_editor_menu_after_submenu_opened() -> void:
 	update_room_editor_menu_hover_label_position()
+
+
+func _on_room_editor_menu_item_selected(id: Variant, position: Variant) -> void:
+	print("Item Selected - %s at pos %s" % [id ,position])
+	
+	if id == "action_remove_room":
+		room_editor_action_delete_triggered.emit()
+		room_editor_menu.close_all_menus()
+
+
+func _on_room_editor_menu_item_toggled(id: Variant, is_toggled: Variant, position: Variant) -> void:
+	print("Item Toggled - %s set to %s at pos %s" % [id ,is_toggled, position])
+	
+	var action_id = id
+	if action_id is not String:
+		return
+	
+	if action_id.begins_with("action_barricade_"):
+		var filter_split_count = 2
+		var action_barricade_direction_id = action_id.split("_", true, filter_split_count)
+		var action_barricade_direction: RoomInstanceData.BarricadeDirectionFlags = -1 if action_barricade_direction_id == null or action_barricade_direction_id.size() <= filter_split_count  else int(action_barricade_direction_id[filter_split_count])
+		
+		if action_barricade_direction == -1:
+			return
+		
+		room_editor_action_barricade_change_triggered.emit(action_barricade_direction, is_toggled)
+	
+	elif action_id.begins_with("action_connection_"):
+		var filter_split_count = 2
+		var action_connection_direction_id = action_id.split("_", true, filter_split_count)
+		var action_connection_direction: RoomInstanceData.ConnectionDirectionFlags = -1 if action_connection_direction_id == null or action_connection_direction_id.size() <= filter_split_count else int(action_connection_direction_id[filter_split_count])
+		
+		if action_connection_direction == -1:
+			return
+
+		room_editor_action_connection_change_triggered.emit(action_connection_direction, is_toggled)
+	
+	elif action_id.begins_with("action_special_"):
+		var filter_split_count = 2
+		var action_special_id = action_id.split("_", true, filter_split_count)
+		action_special_id = null if action_special_id == null or action_special_id.size() <= filter_split_count else action_special_id[filter_split_count]
+		
+		if action_special_id == null:
+			return
+		
+		var room_special_type = GameData.room_special_types.get_type_by_id(action_special_id)
+		if room_special_type == null:
+			return
+		
+		room_editor_action_special_set_triggered.emit(room_special_type.get_kind(), is_toggled)
+	
+	elif action_id.begins_with("action_secret_"):
+		var filter_split_count = 2
+		var action_secret_id = action_id.split("_", true, filter_split_count)
+		action_secret_id = null if action_secret_id == null or action_secret_id.size() <= filter_split_count else action_secret_id[filter_split_count]
+		
+		if action_secret_id == null:
+			return
+		
+		var room_secret_type = GameData.room_secret_types.get_type_by_id(action_secret_id)
+		if room_secret_type == null:
+			return
+		
+		room_editor_action_secret_set_triggered.emit(room_secret_type.get_kind(), is_toggled)

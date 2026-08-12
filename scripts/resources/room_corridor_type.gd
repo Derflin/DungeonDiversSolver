@@ -2,6 +2,7 @@ class_name RoomCorridorType
 extends Resource
 
 enum Kind {
+	NONE = -1,
 	BASE = 10,
 }
 

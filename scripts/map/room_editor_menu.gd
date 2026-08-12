@@ -324,3 +324,8 @@ func _draw():
 	
 	if DEBUG:
 		_debug_draw()
+
+
+func close_all_menus() -> void:
+	active_submenu_idx = -1
+	close_menu()

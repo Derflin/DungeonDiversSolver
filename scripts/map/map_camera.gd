@@ -58,9 +58,11 @@ func get_camera_position() -> Vector2:
 
 
 func set_camera_position(_position: Vector2, instant: bool = false) -> void:
+	var aligned_position = _align_position_to_screen_pixels(_position, target_zoom)
+	
+	target_position = aligned_position
 	if instant:
-		position = _position
-	target_position = _position
+		position = aligned_position
 
 
 func get_camera_zoom() -> Vector2:
@@ -71,6 +73,18 @@ func get_camera_zoom() -> Vector2:
 
 
 func set_camera_zoom(_zoom: float, instant: bool = false) -> void:
+	target_zoom = Vector2.ONE * _zoom
+	target_position = _align_position_to_screen_pixels(target_position, target_zoom)
 	if instant:
 		zoom = Vector2.ONE * _zoom
-	target_zoom = Vector2.ONE * _zoom
+		position = target_position
+
+
+func _align_position_to_screen_pixels(world_position: Vector2, zoom_value: Vector2) -> Vector2:
+	var viewport_center = get_viewport().get_visible_rect().size * 0.5
+	
+	var canvas_translation = viewport_center - world_position * zoom_value
+	
+	canvas_translation = canvas_translation.round()
+	
+	return (viewport_center - canvas_translation) / zoom_value

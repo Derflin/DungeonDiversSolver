@@ -76,10 +76,9 @@ func activate_selected() -> void:
 
 
 # Overloaded from RadialMenu
-func _on_submenu_item_selected(id, position) -> void:
-	var submenu = get_open_submenu()
-	
+func _on_submenu_item_selected(id, _position) -> void:	
 	# Changed from the orig: Removed code responsible for automated closing of the radial menu after selecting any option 
+	#var submenu = get_open_submenu()
 	#_disconnect_submenu_signals(submenu)
 	#active_submenu_idx = -1	
 	#close_menu()
@@ -119,7 +118,7 @@ func get_selected_by_mouse(check_open_submenu_hover: bool = false) -> int:
 
 
 # Overloaded from RadialMenu
-func calc_move_to_fit(submenu: Variant):
+func calc_move_to_fit(_submenu: Variant):
 	# Changed from the orig: Removed entire calculation, since the radial menu is meant to be centered at a certain point without any adjustment to fit the screen
 	return null
 

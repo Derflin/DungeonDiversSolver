@@ -47,6 +47,10 @@ var icon_connections_directions_spritesheet_texture_vframe: int = 1
 
 
 func _ready() -> void:
+	initialize_room_editor_menu()
+
+
+func initialize_room_editor_menu() -> void:
 	# Initialize submenu items.
 	var submenu_barricades = create_submenu(room_editor_menu)
 	var submenu_connections = create_submenu(room_editor_menu)
@@ -72,7 +76,6 @@ func _ready() -> void:
 				"title": "Barricade - " + room_corridor_type.BARRICADE_DISPLAY_NAME_BY_DIRECTION[barricade_direction],
 				"id": "action_barricade_" + str(barricade_direction),
 				"toggleable": true,
-				"is_toggled": false,
 			}
 		)
 	submenu_barricades.submenu_angle_mode = RoomEditorRadialMenu.SubmenuAngleMode.FIXED
@@ -93,7 +96,6 @@ func _ready() -> void:
 				"title": "Connection - " + room_corridor_type.CONNECTION_DISPLAY_NAME_BY_DIRECTION[connection_direction],
 				"id": "action_connection_" + str(connection_direction),
 				"toggleable": true,
-				"is_toggled": false,
 			}
 		)
 	submenu_connections.submenu_angle_mode = RoomEditorRadialMenu.SubmenuAngleMode.FIXED
@@ -109,7 +111,6 @@ func _ready() -> void:
 				"title": "Special - " + room_special_type.get_display_name(),
 				"id": "action_special_" + room_special_type.get_id(),
 				"toggleable": true,
-				"is_toggled": false,
 			}
 		)
 	submenu_specials.submenu_angle_mode = RoomEditorRadialMenu.SubmenuAngleMode.FIXED
@@ -125,7 +126,6 @@ func _ready() -> void:
 				"title": "Secret - " + room_secret_type.get_display_name(),
 				"id": "action_secret_" + room_secret_type.get_id(),
 				"toggleable": true,
-				"is_toggled": false,
 			}
 		)
 	submenu_secrets.submenu_angle_mode = RoomEditorRadialMenu.SubmenuAngleMode.FIXED
@@ -140,6 +140,58 @@ func _ready() -> void:
 		{"texture": icon_connections_texture, "title": "Room Connections", "id": submenu_connections},
 		{"texture": icon_barricades_texture, "title": "Room Barricades", "id": submenu_barricades},
 	]
+
+
+func set_room_editor_menu_toggle_action_state(selected_room_cell: RoomCell) -> void:
+	var room_instance_data = selected_room_cell.room_instance_data
+	
+	for menu_item in room_editor_menu.menu_items:
+		var menu_item_action = menu_item["id"]
+		if menu_item_action is RoomEditorRadialMenu:
+			for submenu_item in menu_item_action.menu_items:
+				var submenu_item_action = submenu_item["id"]
+				
+				if not submenu_item.get("toggleable", false):
+					continue
+				
+				if submenu_item_action is not String:
+					continue
+				
+				if submenu_item_action.begins_with("action_barricade_"):
+					var filter_split_count = 2
+					var action_barricade_direction_id = submenu_item_action.split("_", true, filter_split_count)
+					var action_barricade_direction: RoomInstanceData.BarricadeDirectionFlags = -1 if action_barricade_direction_id == null or action_barricade_direction_id.size() <= filter_split_count  else int(action_barricade_direction_id[filter_split_count])
+					
+					if action_barricade_direction == -1:
+						continue
+
+					submenu_item["is_toggled"] = room_instance_data.has_barricade(action_barricade_direction)
+				
+				elif submenu_item_action.begins_with("action_connection_"):
+					var filter_split_count = 2
+					var action_connection_direction_id = submenu_item_action.split("_", true, filter_split_count)
+					var action_connection_direction: RoomInstanceData.ConnectionDirectionFlags = -1 if action_connection_direction_id == null or action_connection_direction_id.size() <= filter_split_count else int(action_connection_direction_id[filter_split_count])
+					
+					if action_connection_direction == -1:
+						continue
+
+					submenu_item["is_toggled"] = room_instance_data.has_connection(action_connection_direction)
+				
+				elif submenu_item_action.begins_with("action_special_"):
+					var filter_split_count = 2
+					var action_special_id = submenu_item_action.split("_", true, filter_split_count)
+					action_special_id = null if action_special_id == null or action_special_id.size() <= filter_split_count else action_special_id[filter_split_count]
+					
+					submenu_item["is_toggled"] = room_instance_data.has_special_type_by_id(action_special_id)
+				
+				elif submenu_item_action.begins_with("action_secret_"):
+					var filter_split_count = 2
+					var action_secret_id = submenu_item_action.split("_", true, filter_split_count)
+					action_secret_id = null if action_secret_id == null or action_secret_id.size() <= filter_split_count else action_secret_id[filter_split_count]
+					
+					submenu_item["is_toggled"] = room_instance_data.has_secret_type_by_id(action_secret_id)
+					
+	room_editor_menu.queue_redraw()
 
 
 func create_submenu(parent_menu: RoomEditorRadialMenu) -> RoomEditorRadialMenu:

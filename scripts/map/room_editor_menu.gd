@@ -240,22 +240,28 @@ func close_menu():
 func _connect_submenu_signals(submenu : RadialMenu):
 	super._connect_submenu_signals(submenu)
 	
-	# Changed from the orig: Connected custom selection_changed signal
+	# Changed from the orig: Connected custom selection_changed and item_toggled signals
 	if submenu is RoomEditorRadialMenu:
 		submenu.selection_changed.connect(_on_submenu_selection_changed)
+		submenu.item_toggled.connect(_on_submenu_item_toggled)
 
 
 # Overloaded from RadialMenu
 func _disconnect_submenu_signals(submenu: RadialMenu):
-	# Changed from the orig: Disconnected custom selection_changed signal
+	# Changed from the orig: Disconnected custom selection_changed and item_toggled signals
 	if submenu is RoomEditorRadialMenu:
 		submenu.selection_changed.disconnect(_on_submenu_selection_changed)
+		submenu.item_toggled.disconnect(_on_submenu_item_toggled)
 	
 	super._disconnect_submenu_signals(submenu)
 
 
 func _on_submenu_selection_changed(item: Variant) -> void:
 	selection_changed.emit(item)
+
+
+func _on_submenu_item_toggled(id, is_toggled, position) -> void:
+	item_toggled.emit(id, is_toggled, position)
 
 
 # Overloaded from RadialMenu

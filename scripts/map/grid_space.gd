@@ -107,6 +107,8 @@ func _update_selected_room_cursor() -> void:
 	
 	var is_selected_coords_valid = is_valid_coords(coords)
 	if is_selected_coords_valid and (not was_selected_room_cursor_visible or not grid_interaction_overlay.is_room_selection_cursor_position(map_cursor_position)):
+		grid_interaction_overlay.set_selected_room_cell(room_cells[coords])
+		
 		grid_interaction_overlay.show_room_selection_cursor(map_cursor_position)
 		grid_interaction_overlay.show_room_editor_menu(map_cursor_position)
 		
@@ -117,6 +119,8 @@ func hide_selected_room_cursor() -> bool:
 	var is_selected_room_cursor_visible = grid_interaction_overlay.is_room_selection_cursor_visible()
 	if is_selected_room_cursor_visible:
 		grid_interaction_overlay.hide_room_selection_cursor()
+		
+		grid_interaction_overlay.set_selected_room_cell(null)
 	return is_selected_room_cursor_visible
 
 

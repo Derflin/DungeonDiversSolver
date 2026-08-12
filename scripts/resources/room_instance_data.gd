@@ -216,4 +216,11 @@ func enable_barricade(direction: BarricadeDirectionFlags) -> void:
 	
 func disable_barricade(direction: BarricadeDirectionFlags) -> void:
 	barricade_directions_mask &= ~direction
-	
+
+
+func has_special_type_by_id(special_id: String) -> bool:
+	return special_type != null and special_type.id == special_id 
+
+
+func has_secret_type_by_id(secret_id: String) -> bool:
+	return secret_type != null and secret_type.id == secret_id 

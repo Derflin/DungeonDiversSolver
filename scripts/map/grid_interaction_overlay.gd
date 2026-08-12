@@ -7,6 +7,9 @@ enum MapCursorKind {
 }
 
 
+var selected_room_cell: RoomCell = null 
+
+
 @onready var map_cursor: Sprite2D = $MapCursor
 @onready var map_cursor_animation_player: AnimationPlayer = $MapCursor/CursorAnimation
 
@@ -17,6 +20,7 @@ enum MapCursorKind {
 
 @onready var room_selection_cursor: Sprite2D = $RoomSelectionCursor
 
+@onready var room_editor_container: Node2D = $RoomEditorContainer
 @onready var room_editor_menu: RadialMenu = $RoomEditorContainer/RoomEditorMenu
 
 
@@ -75,3 +79,13 @@ func is_map_cursor_locked() -> bool:
 
 func is_room_selection_cursor_locked() -> bool:
 	return room_editor_menu.visible
+
+
+func set_selected_room_cell(_selected_room_cell: RoomCell) -> void:
+	selected_room_cell = _selected_room_cell
+	if selected_room_cell != null:
+		room_editor_container.set_room_editor_menu_toggle_action_state(selected_room_cell)
+
+
+func _on_room_editor_menu_item_toggled(id: Variant, is_toggled: Variant, position: Variant) -> void:
+	room_editor_container.set_room_editor_menu_toggle_action_state(selected_room_cell)

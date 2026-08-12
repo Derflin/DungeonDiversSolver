@@ -172,15 +172,19 @@ func has_connection(direction: ConnectionDirectionFlags) -> bool:
 	return (connection_directions_mask & direction) != 0
 
 
-func enable_connection(direction: ConnectionDirectionFlags) -> void:
-	connection_directions_mask |= direction
+## Enables all directions contained in [param directions_mask].
+## Combine values from [enum ConnectionDirectionFlags] using the bitwise operators.
+func enable_connection(directions_mask: int) -> void:
+	connection_directions_mask |= directions_mask
 	
 	# Apply connection contraints on other room instance data parameters
 	set_secret_type(RoomSecretType.Kind.NONE)
 
 
-func disable_connection(direction: ConnectionDirectionFlags) -> void:
-	connection_directions_mask &= ~direction
+## Disables all directions contained in [param directions_mask].
+## Combine values from [enum ConnectionDirectionFlags] using the bitwise operators.
+func disable_connection(directions_mask: int) -> void:
+	connection_directions_mask &= ~directions_mask
 
 
 func disable_connections_all() -> void:
@@ -191,15 +195,19 @@ func has_barricade(direction: BarricadeDirectionFlags) -> bool:
 	return (barricade_directions_mask & direction) != 0
 
 
-func enable_barricade(direction: BarricadeDirectionFlags) -> void:
-	barricade_directions_mask |= direction
+## Enables all directions contained in [param directions_mask].
+## Combine values from [enum BarricadeDirectionFlags] using the bitwise operators.
+func enable_barricade(directions_mask: int) -> void:
+	barricade_directions_mask |= directions_mask
 	
 	# Apply barricade contraints on other room instance data parameters
 	set_secret_type(RoomSecretType.Kind.NONE)
 
 
-func disable_barricade(direction: BarricadeDirectionFlags) -> void:
-	barricade_directions_mask &= ~direction
+## Disables all directions contained in [param directions_mask].
+## Combine values from [enum BarricadeDirectionFlags] using the bitwise operators.
+func disable_barricade(directions_mask: int) -> void:
+	barricade_directions_mask &= ~directions_mask
 
 
 func disable_barricades_all() -> void:

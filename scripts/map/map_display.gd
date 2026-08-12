@@ -250,8 +250,6 @@ func _handle_pan_input(event: InputEvent) -> bool:
 		if not event is InputEventMouse:
 			return false
 			
-		var mouse_map_position = make_canvas_position_local(event.position)
-			
 		_pan_candidate = true
 		_is_panning = false
 		_pan_start_screen_position = event.position

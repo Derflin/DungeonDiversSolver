@@ -1,14 +1,8 @@
 extends Node2D
 
 
-#TODO: fully implement RoomEditorMenu:
-#TODO: --- populate submenus with correct options from GameData and textures
-#TODO: --- add custom label under the RoomEditorMenu that will be wide as the menu and display current hovered option name
-#TODO: --- implement option to set toggle buttons inside the RoomEditorMenu, maybe set them with the decorator ring or somehow hightlight the button
-#TODO: --- make sure that toggle buttons won't close the RoomEditorMenu, but rather update it accordingly
-#TODO: --- implement event listeners on RoomEditorMenu options clicked and handle them to modify room instance and room cells content
-#TODO: --- implement constraints on what options can be set at a same time for a room (for example turn off every other option if secret type is applied to room)
-#TODO: make sure that each room type is correctly displayed on the map
+#TODO: look through debugger warnings and check if any of them could be easily removed
+#TODO: look through defined functions and check if any of them could be renamed to internal (_ at the begginging of the function names)
 #TODO: add readme file and mark TODOs in it
 #TODO: add comments
 #TODO: add asserts if everything needed is assigned on the start (mostly in case of export variables that need to be populated for everything to work correctly)

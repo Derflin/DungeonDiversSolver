@@ -7,8 +7,7 @@ enum Kind {
 }
 
 
-@export var kind: Kind
-
+@export var kind: Kind = Kind.NONE
 @export var id: StringName
 @export var display_name: String
 

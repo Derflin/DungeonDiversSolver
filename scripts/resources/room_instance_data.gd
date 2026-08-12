@@ -23,37 +23,11 @@ enum BarricadeDirectionFlags {
 
 
 var instance_seed_value: int = -1
-var old_special_type: RoomSpecialType = null
-var old_secret_type: RoomSecretType = null
 
 
 @export var corridor_type: RoomCorridorType
-@export var special_type: RoomSpecialType = null:
-	set(value):
-		if special_type == value:
-			return
-			
-		special_type = value
-		if value == null:
-			if old_secret_type != null and secret_type == null:
-				secret_type = old_secret_type
-				old_secret_type = null
-		else:
-			old_secret_type = secret_type
-			secret_type = null
-@export var secret_type: RoomSecretType = null:
-	set(value):
-		if secret_type == value:
-			return
-			
-		secret_type = value
-		if value == null:
-			if old_special_type != null and special_type == null:
-				special_type = old_special_type
-				old_special_type = null
-		else:
-			old_special_type = special_type
-			special_type = null
+@export var special_type: RoomSpecialType = null
+@export var secret_type: RoomSecretType = null
 
 @export_group("Connections", "connection_")
 @export_flags(
@@ -196,14 +170,21 @@ func get_room_icon_visual_data(refresh_room_id: int) -> ResolvedVisualData:
 
 func has_connection(direction: ConnectionDirectionFlags) -> bool:
 	return (connection_directions_mask & direction) != 0
-	
-	
+
+
 func enable_connection(direction: ConnectionDirectionFlags) -> void:
 	connection_directions_mask |= direction
 	
-	
+	# Apply connection contraints on other room instance data parameters
+	set_secret_type(RoomSecretType.Kind.NONE)
+
+
 func disable_connection(direction: ConnectionDirectionFlags) -> void:
 	connection_directions_mask &= ~direction
+
+
+func disable_connections_all() -> void:
+	connection_directions_mask = ConnectionDirectionFlags.NONE
 
 
 func has_barricade(direction: BarricadeDirectionFlags) -> bool:
@@ -212,10 +193,17 @@ func has_barricade(direction: BarricadeDirectionFlags) -> bool:
 
 func enable_barricade(direction: BarricadeDirectionFlags) -> void:
 	barricade_directions_mask |= direction
+	
+	# Apply barricade contraints on other room instance data parameters
+	set_secret_type(RoomSecretType.Kind.NONE)
 
 
 func disable_barricade(direction: BarricadeDirectionFlags) -> void:
 	barricade_directions_mask &= ~direction
+
+
+func disable_barricades_all() -> void:
+	barricade_directions_mask = BarricadeDirectionFlags.NONE
 
 
 func has_special_type_by_id(special_id: String) -> bool:
@@ -237,6 +225,10 @@ func set_special_type(special_kind: RoomSpecialType.Kind) -> bool:
 	if special_type == null or special_type.kind != special_kind:
 		var room_special_type = GameData.room_special_types.get_type(special_kind)
 		special_type = room_special_type
+		
+		# Apply special type contraints on other room instance data parameters
+		set_secret_type(RoomSecretType.Kind.NONE)
+		
 		return true
 	
 	return false
@@ -248,12 +240,16 @@ func set_secret_type(secret_kind: RoomSecretType.Kind) -> bool:
 	
 	if secret_kind == null or secret_kind == RoomSecretType.Kind.NONE:
 		secret_type = null
-		
 		return true
 	
 	if secret_type == null or secret_type.kind != secret_kind:
 		var room_secret_type = GameData.room_secret_types.get_type(secret_kind)
 		secret_type = room_secret_type
+		
+		# Apply secret type contraints on other room instance data parameters
+		disable_connections_all()
+		disable_barricades_all()
+		set_special_type(RoomSpecialType.Kind.NONE)
 		
 		return true
 	

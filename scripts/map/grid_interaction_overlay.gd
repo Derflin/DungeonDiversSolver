@@ -21,7 +21,6 @@ var selected_room_cell: RoomCell = null
 @onready var room_selection_cursor: Sprite2D = $RoomSelectionCursor
 
 @onready var room_editor_container: Node2D = $RoomEditorContainer
-@onready var room_editor_menu: RadialMenu = $RoomEditorContainer/RoomEditorMenu
 
 
 func _ready() -> void:
@@ -66,19 +65,19 @@ func is_room_selection_cursor_position(cursor_position: Vector2) -> bool:
 
 
 func hide_room_editor_menu() -> void:
-	room_editor_menu.close_menu()
+	room_editor_container.close_room_editor()
 
 
 func show_room_editor_menu(cursor_position: Vector2) -> void:
-	room_editor_menu.open_menu(cursor_position)
+	room_editor_container.open_room_editor(cursor_position)
 	
 	
 func is_map_cursor_locked() -> bool:
-	return room_editor_menu.visible
+	return room_editor_container.get_room_editor_visible_status()
 
 
 func is_room_selection_cursor_locked() -> bool:
-	return room_editor_menu.visible
+	return room_editor_container.get_room_editor_visible_status()
 
 
 func set_selected_room_cell(_selected_room_cell: RoomCell) -> void:

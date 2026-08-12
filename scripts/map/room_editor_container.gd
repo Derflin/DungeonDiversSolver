@@ -274,6 +274,18 @@ func update_room_editor_menu_hover_label_position() -> void:
 	)
 
 
+func open_room_editor(cursor_position: Vector2) -> void:
+	room_editor_menu.open_menu(cursor_position)
+
+
+func close_room_editor() -> void:
+	room_editor_menu.close_menu()
+
+
+func get_room_editor_visible_status() -> bool:
+	return room_editor_menu.visible
+
+
 func _on_room_editor_menu_selection_changed(item: Variant) -> void:
 	if item == null:
 		room_editor_menu_hover_label.text = ""

@@ -149,11 +149,11 @@ func create_room(room_coords: Vector2i) -> RoomCell:
 
 func delete_room(room_coords: Vector2i) -> void:
 	var room_cell = room_cells[room_coords]
-	room_cells[room_coords] = null
+	room_cells.erase(room_coords)
 	
 	room_cell.queue_free()
 	
-	room_instances[room_coords] = null
+	room_instances.erase(room_coords)
 
 
 func append_room(room: RoomCell) -> void:

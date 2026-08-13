@@ -16,6 +16,7 @@
 [ext_resource type="Texture2D" uid="uid://hhj72w5juo4e" path="res://assets/icons/room_editor_menu/DungeonSolvers-RoomEditor-Secrets-v2.png" id="12_134i6"]
 [ext_resource type="Texture2D" uid="uid://dh5cqs7puhpav" path="res://assets/icons/room_editor_menu/DungeonSolvers-RoomEditor-BarricadesDirections.png" id="13_bstpx"]
 [ext_resource type="Texture2D" uid="uid://b7yq2sj7dhgj0" path="res://assets/icons/room_editor_menu/DungeonSolvers-RoomEditor-ConnectionsDirections.png" id="14_lhxh2"]
+[ext_resource type="Script" uid="uid://c4ut8eay2p53j" path="res://scripts/map/map_camera_manager.gd" id="16_134i6"]
 
 [sub_resource type="Animation" id="Animation_ilqgx"]
 length = 0.001
@@ -60,8 +61,6 @@ font_size = 36
 [node name="MapDisplay" type="Node2D" unique_id=1905427388]
 texture_filter = 1
 script = ExtResource("1_pnlec")
-fit_padding = -18.0
-maximum_zoom = 5.0
 
 [node name="BackgroundLayer" type="CanvasLayer" parent="." unique_id=1121686894]
 layer = -10
@@ -127,12 +126,12 @@ icon_connections_directions_spritesheet_texture = ExtResource("14_lhxh2")
 
 [node name="RoomEditorMenu" type="Control" parent="GridSpace/GridInteractionOverlay/RoomEditorContainer" unique_id=637577446]
 visible = false
-custom_minimum_size = Vector2(80, 80)
+custom_minimum_size = Vector2(260, 260)
 layout_mode = 3
 anchors_preset = 0
-offset_right = 80.0
-offset_bottom = 80.0
-pivot_offset = Vector2(40, 40)
+offset_right = 260.0
+offset_bottom = 260.0
+pivot_offset = Vector2(130, 130)
 size_flags_horizontal = 0
 size_flags_vertical = 0
 offset_transform_enabled = true
@@ -164,7 +163,12 @@ label_settings = SubResource("LabelSettings_lhxh2")
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="MapCamera" type="Camera2D" parent="." unique_id=888741653]
+[node name="MapCameraManager" type="Node2D" parent="." unique_id=1102045684]
+script = ExtResource("16_134i6")
+fit_padding = -18.0
+maximum_zoom = 5.0
+
+[node name="MapCamera" type="Camera2D" parent="MapCameraManager" unique_id=888741653]
 position_smoothing_speed = 10.0
 script = ExtResource("4_1umrj")
 smoothing_position_speed = 15.0

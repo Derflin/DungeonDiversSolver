@@ -52,6 +52,10 @@ func _on_game_settings_map_grid_size_parameter_changed(_map_grid_size: Vector2i)
 
 
 func _on_game_settings_map_grid_room_size_parameter_changed(_map_grid_room_size: Vector2i) -> void:
+	# Update each room cell display
+	for room_coords in room_cells:
+		update_room_position(room_cells[room_coords])
+	
 	# Hide selected room cursor
 	hide_selected_room_cursor()
 	
@@ -146,7 +150,7 @@ func create_room(room_coords: Vector2i) -> RoomCell:
 	var room_cell_instance = _room_cell_scene.instantiate()
 	
 	room_cell_instance.room_coords = room_coords
-	room_cell_instance.position = get_room_center_from_coords(room_coords)
+	update_room_position(room_cell_instance)
 	
 	var room_cell_room_instance_data = room_instances[room_coords]
 	room_cell_instance.create(room_cell_room_instance_data)
@@ -165,6 +169,11 @@ func delete_room(room_coords: Vector2i) -> void:
 	room_cell.queue_free()
 	
 	room_instances.erase(room_coords)
+
+
+## This function updates passed RoomCell position based on the room coordinates saved in it's room_coords parameter
+func update_room_position(room_cell_instance: RoomCell) -> void:
+	room_cell_instance.position = get_room_center_from_coords(room_cell_instance.room_coords)
 
 
 func append_room(room: RoomCell) -> void:

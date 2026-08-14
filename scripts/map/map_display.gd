@@ -26,6 +26,7 @@ func _ready() -> void:
 
 
 func _on_grid_space_grid_space_parameters_changed() -> void:
+	map_camera_manager.set_grid_rect(grid_space.get_map_rect())
 	map_camera_manager.fit_map_to_view()
 
 

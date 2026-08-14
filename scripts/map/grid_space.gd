@@ -15,25 +15,11 @@ var room_cells: Dictionary[Vector2i, RoomCell] = {}
 @onready var grid_interaction_overlay: Node2D = $GridInteractionOverlay
 
 
-@export_group("Grid Parameters")
-@export var grid_size: Vector2i = Vector2i(17, 17):
-	set(value): 
-		grid_size = value
-		if grid_lines != null:
-			grid_lines.grid_size = grid_size
-			grid_lines.queue_redraw()
-			grid_space_parameters_changed.emit()
-
-@export var grid_room_size: Vector2i = Vector2i(15, 15):
-	set(value): 
-		grid_room_size = value
-		if grid_lines != null:
-			grid_lines.grid_room_size = grid_room_size
-			grid_lines.queue_redraw()
-			grid_space_parameters_changed.emit()
-
-
 func _ready() -> void:
+	# Connect map_grid_size and map_grid_room_size settings parameters changed signals
+	GameSettings.map_grid_size_parameter_changed.connect(_on_game_settings_map_grid_size_parameter_changed)
+	GameSettings.map_grid_room_size_parameter_changed.connect(_on_game_settings_map_grid_room_size_parameter_changed)
+	
 	#TODO: remove it later
 	_room_cell_scene = preload("res://scenes/map/room_cell.tscn")
 	var test_room = RoomInstanceData.new()
@@ -48,6 +34,31 @@ func _ready() -> void:
 	room_instances[Vector2i(5, 5)] = test_room
 	for room_coords in room_instances:
 		create_room(room_coords)
+
+
+func _on_game_settings_map_grid_size_parameter_changed(_map_grid_size: Vector2i) -> void:
+	# Delete any room that would be placed outside the map grid
+	for room_coords in room_instances:
+		if room_coords.x >= _map_grid_size.x or room_coords.y >= _map_grid_size.y:
+			delete_room(room_coords)
+	
+	# Hide selected room cursor
+	hide_selected_room_cursor()
+	
+	# Redraw background grid lines
+	if grid_lines != null:
+		grid_lines.queue_redraw()
+		grid_space_parameters_changed.emit()
+
+
+func _on_game_settings_map_grid_room_size_parameter_changed(_map_grid_room_size: Vector2i) -> void:
+	# Hide selected room cursor
+	hide_selected_room_cursor()
+	
+	# Redraw background grid lines
+	if grid_lines != null:
+		grid_lines.queue_redraw()
+		grid_space_parameters_changed.emit()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -166,23 +177,23 @@ func get_room_center_from_coords(coords: Vector2i) -> Vector2:
 
 func convert_coords_to_valid_grid_coords(coords: Vector2i) -> Vector2i:
 	var new_coords = Vector2i(coords)
-	new_coords.x = coords.x % grid_size.x
-	new_coords.y = coords.y % grid_size.y
+	new_coords.x = coords.x % GameSettings.map_grid_size.x
+	new_coords.y = coords.y % GameSettings.map_grid_size.y
 	
 	return new_coords
-	
-	
+
+
 func get_room_rect(coords: Vector2i) -> Rect2:
 	var room_coords = coords
 	#var room_coords = convert_coords_to_valid_grid_coords(coords)
 	
 	var room_position = Vector2(grid_lines.GRID_LINE_WIDTH, grid_lines.GRID_LINE_WIDTH)
-	room_position.x += room_coords.x * (grid_room_size.x + grid_lines.GRID_LINE_WIDTH)
-	room_position.y += room_coords.y * (grid_room_size.y + grid_lines.GRID_LINE_WIDTH)
+	room_position.x += room_coords.x * (GameSettings.map_grid_room_size.x + grid_lines.GRID_LINE_WIDTH)
+	room_position.y += room_coords.y * (GameSettings.map_grid_room_size.y + grid_lines.GRID_LINE_WIDTH)
 	
 	return Rect2(
 		room_position,
-		grid_room_size,
+		GameSettings.map_grid_room_size,
 	)
 
 
@@ -194,19 +205,19 @@ func is_valid_coords(coords: Vector2i) -> bool:
 	return (
 		coords.x >= 0
 		and coords.y >= 0
-		and coords.x < grid_size.x
-		and coords.y < grid_size.y
+		and coords.x < GameSettings.map_grid_size.x
+		and coords.y < GameSettings.map_grid_size.y
 	)
 
 
 func is_local_position_on_grid_lines(local_position: Vector2) -> bool:
-	return int(local_position.x) % (grid_room_size.x + grid_lines.GRID_LINE_WIDTH) == 0 or int(local_position.y) % (grid_room_size.y + grid_lines.GRID_LINE_WIDTH) == 0
+	return int(local_position.x) % (GameSettings.map_grid_room_size.x + grid_lines.GRID_LINE_WIDTH) == 0 or int(local_position.y) % (GameSettings.map_grid_room_size.y + grid_lines.GRID_LINE_WIDTH) == 0
 
 
 func get_coords_at_local_position(local_position: Vector2) -> Vector2i:
 	return Vector2i(
-		floori(local_position.x / (grid_room_size.x + grid_lines.GRID_LINE_WIDTH)),
-		floori(local_position.y / (grid_room_size.y + grid_lines.GRID_LINE_WIDTH)),
+		floori(local_position.x / (GameSettings.map_grid_room_size.x + grid_lines.GRID_LINE_WIDTH)),
+		floori(local_position.y / (GameSettings.map_grid_room_size.y + grid_lines.GRID_LINE_WIDTH)),
 	)
 
 
@@ -225,8 +236,7 @@ func _on_room_editor_container_room_editor_action_delete_triggered() -> void:
 	
 	delete_room(selected_room_cell.room_coords)
 
-	grid_interaction_overlay.hide_room_selection_cursor()
-	grid_interaction_overlay.set_selected_room_cell(null)
+	hide_selected_room_cursor()
 
 
 func _on_room_editor_container_room_editor_action_barricade_change_triggered(barricade_direction: RoomInstanceData.BarricadeDirectionFlags, state: bool) -> void:

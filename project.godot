@@ -18,6 +18,7 @@ config/icon="uid://bj6h6blraau3f"
 [autoload]
 
 GameData="*uid://cot6yfii4sagm"
+GameSettings="*uid://dd85xhhp48e3y"
 
 [display]
 

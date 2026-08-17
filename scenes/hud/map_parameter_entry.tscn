@@ -2,6 +2,10 @@
 
 [ext_resource type="Script" uid="uid://cexom05snbka" path="res://scripts/hud/map_parameter_entry.gd" id="1_ullu6"]
 
+[sub_resource type="LabelSettings" id="LabelSettings_ullu6"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_dh07t"]
+
 [node name="MapParameterEntry" type="HBoxContainer" unique_id=1661880125]
 anchors_preset = 15
 anchor_right = 1.0
@@ -21,10 +25,14 @@ offset_bottom = 40.0
 [node name="CountLabel" type="Label" parent="." unique_id=737538087]
 layout_mode = 2
 text = "0/0"
+label_settings = SubResource("LabelSettings_ullu6")
 
 [node name="DescriptionLabel" type="Label" parent="." unique_id=725659167]
 layout_mode = 2
+label_settings = SubResource("LabelSettings_dh07t")
 
 [node name="ValueEditor" type="SpinBox" parent="." unique_id=1479190779]
 layout_mode = 2
 rounded = true
+
+[connection signal="value_changed" from="ValueEditor" to="." method="_on_value_editor_value_changed"]

@@ -41,7 +41,7 @@ func get_all() -> Array[RoomSecretType]:
  
 
 func get_all_kinds() -> Array[RoomSecretType.Kind]:
-	var result = []
+	var result: Array[RoomSecretType.Kind] = []
 	for room_type in room_types:
 		if room_type == null:
 			continue

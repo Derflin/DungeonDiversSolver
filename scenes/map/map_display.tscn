@@ -57,6 +57,8 @@ _data = {
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_134i6"]
 bg_color = Color(0.025840001, 0, 0, 0.6)
+expand_margin_left = 12.0
+expand_margin_right = 12.0
 
 [sub_resource type="LabelSettings" id="LabelSettings_lhxh2"]
 font_size = 50
@@ -156,9 +158,11 @@ metadata/_custom_type_script = "uid://c6hdaiv58a8pw"
 [node name="HoverLabel" type="Label" parent="GridSpace/GridInteractionOverlay/RoomEditorContainer" unique_id=1557615993]
 visible = false
 custom_minimum_size = Vector2(80, 0)
-custom_maximum_size = Vector2(80, -1)
+anchors_preset = -1
 offset_right = 80.0
 offset_bottom = 50.0
+grow_horizontal = 2
+grow_vertical = 2
 offset_transform_enabled = true
 offset_transform_scale = Vector2(0.25, 0.25)
 offset_transform_visual_only = false

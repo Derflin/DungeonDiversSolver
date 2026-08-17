@@ -35,6 +35,10 @@ version_control/autoload_on_startup=true
 
 enabled=PackedStringArray("res://addons/RadialMenu/plugin.cfg")
 
+[gui]
+
+theme/custom_font="uid://b4rydd3kivwqd"
+
 [input]
 
 map_zoom_in={
@@ -69,4 +73,5 @@ map_select={
 
 [rendering]
 
+textures/canvas_textures/default_texture_filter=0
 rendering_device/driver.windows="d3d12"

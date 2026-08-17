@@ -3,6 +3,7 @@ extends Node2D
 
 signal grid_space_parameters_changed
 signal selected_room_changed(room_center_position: Vector2)
+signal room_state_changed()
 
 
 var _room_cell_scene
@@ -22,7 +23,7 @@ func _ready() -> void:
 	
 	#TODO: remove it later
 	_room_cell_scene = preload("res://scenes/map/room_cell.tscn")
-	var test_room = RoomInstanceData.new()
+	var test_room := RoomInstanceData.new()
 	#test_room.enable_barricade(RoomInstanceData.BarricadeDirectionFlags.UP)
 	#test_room.enable_barricade(RoomInstanceData.BarricadeDirectionFlags.LEFT | RoomInstanceData.BarricadeDirectionFlags.RIGHT)
 	#test_room.enable_barricade(RoomInstanceData.BarricadeDirectionFlags.UP | RoomInstanceData.BarricadeDirectionFlags.LEFT | RoomInstanceData.BarricadeDirectionFlags.RIGHT)
@@ -31,9 +32,8 @@ func _ready() -> void:
 	#test_room.special_type = GameData.room_special_types.get_type(RoomSpecialType.Kind.ENTRANCE)
 	#test_room.special_type = GameData.room_special_types.get_type(RoomSpecialType.Kind.LIBRARY)
 	#test_room.secret_type = GameData.room_secret_types.get_type(RoomSecretType.Kind.ERROR_ROOM)
-	room_instances[Vector2i(5, 5)] = test_room
-	for room_coords in room_instances:
-		create_room(room_coords)
+	var room_coords := Vector2i(5, 5)
+	create_room(room_coords, test_room)
 
 
 func _on_game_settings_map_grid_size_parameter_changed(_map_grid_size: Vector2i) -> void:
@@ -102,8 +102,8 @@ func handle_input_map_select() -> void:
 
 
 func create_and_save_empty_room(room_coords: Vector2i) -> void:
-	room_instances[room_coords] = RoomInstanceData.new()
-	create_room(room_coords)
+	var default_room_instance_data = RoomInstanceData.new()
+	create_room(room_coords, default_room_instance_data)
 
 
 func _update_selected_room_cursor() -> void:
@@ -146,18 +146,20 @@ func get_map_rect() -> Rect2:
 	)
 
 
-func create_room(room_coords: Vector2i) -> RoomCell:
+func create_room(room_coords: Vector2i, room_instance_data: RoomInstanceData) -> RoomCell:
 	var room_cell_instance = _room_cell_scene.instantiate()
 	
 	room_cell_instance.room_coords = room_coords
 	update_room_position(room_cell_instance)
 	
-	var room_cell_room_instance_data = room_instances[room_coords]
-	room_cell_instance.create(room_cell_room_instance_data)
+	room_cell_instance.create(room_instance_data)
 	
+	room_instances[room_coords] = room_instance_data
 	room_cells[room_coords] = room_cell_instance
 	
 	append_room(room_cell_instance)
+	
+	room_state_changed.emit()
 	
 	return room_cell_instance
 
@@ -169,6 +171,8 @@ func delete_room(room_coords: Vector2i) -> void:
 	room_cell.queue_free()
 	
 	room_instances.erase(room_coords)
+	
+	room_state_changed.emit()
 
 
 ## This function updates passed RoomCell position based on the room coordinates saved in it's room_coords parameter
@@ -230,6 +234,26 @@ func get_coords_at_local_position(local_position: Vector2) -> Vector2i:
 	)
 
 
+func _update_game_state() -> void:
+	var secret_count: Dictionary[RoomSecretType.Kind, int] = {}
+	
+	for room_coords in room_instances:
+		var room_instance_data: RoomInstanceData = room_instances[room_coords]
+		var room_secret_type_kind = room_instance_data.get_secret_type_kind()
+		if room_secret_type_kind != null and room_secret_type_kind != RoomSecretType.Kind.NONE:
+			if room_secret_type_kind in secret_count:
+				secret_count[room_secret_type_kind] += 1
+			else:
+				secret_count[room_secret_type_kind] = 1
+	
+	var all_secret_type_kinds = GameData.room_secret_types.get_all_kinds()
+	for room_secret_type_kind in all_secret_type_kinds:
+		if room_secret_type_kind in secret_count:
+			GameState.set_map_secrets_count_current(room_secret_type_kind, secret_count[room_secret_type_kind])
+		else:
+			GameState.set_map_secrets_count_current(room_secret_type_kind, 0)
+
+
 func _on_room_editor_menu_outside_click_menu_closed() -> void:
 	hide_selected_room_cursor()
 
@@ -264,6 +288,7 @@ func _on_room_editor_container_room_editor_action_barricade_change_triggered(bar
 		changed = true
 	
 	if changed:
+		room_state_changed.emit()
 		selected_room_cell.refresh_visuals()
 	
 	grid_interaction_overlay.update_selected_room_cell()
@@ -285,6 +310,7 @@ func _on_room_editor_container_room_editor_action_connection_change_triggered(co
 		changed = true
 	
 	if changed:
+		room_state_changed.emit()
 		selected_room_cell.refresh_visuals()
 	
 	grid_interaction_overlay.update_selected_room_cell()
@@ -301,6 +327,7 @@ func _on_room_editor_container_room_editor_action_special_set_triggered(special_
 	changed = room_instance_data.set_special_type(RoomSpecialType.Kind.NONE if not state else special_room_kind)
 	
 	if changed:
+		room_state_changed.emit()
 		selected_room_cell.refresh_visuals()
 	
 	grid_interaction_overlay.update_selected_room_cell()
@@ -317,6 +344,11 @@ func _on_room_editor_container_room_editor_action_secret_set_triggered(secret_ro
 	changed = room_instance_data.set_secret_type(RoomSecretType.Kind.NONE if not state else secret_room_kind)
 	
 	if changed:
+		room_state_changed.emit()
 		selected_room_cell.refresh_visuals()
 	
 	grid_interaction_overlay.update_selected_room_cell()
+
+
+func _on_room_state_changed() -> void:
+	_update_game_state()

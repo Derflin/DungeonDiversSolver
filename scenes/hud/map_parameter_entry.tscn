@@ -1,0 +1,30 @@
+[gd_scene format=3 uid="uid://b5uhqdwrdt5a0"]
+
+[ext_resource type="Script" uid="uid://cexom05snbka" path="res://scripts/hud/map_parameter_entry.gd" id="1_ullu6"]
+
+[node name="MapParameterEntry" type="HBoxContainer" unique_id=1661880125]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ullu6")
+
+[node name="IconContainer" type="Control" parent="." unique_id=435234217]
+layout_mode = 2
+
+[node name="Icon" type="TextureRect" parent="IconContainer" unique_id=1064478196]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="CountLabel" type="Label" parent="." unique_id=737538087]
+layout_mode = 2
+text = "0/0"
+
+[node name="DescriptionLabel" type="Label" parent="." unique_id=725659167]
+layout_mode = 2
+
+[node name="ValueEditor" type="SpinBox" parent="." unique_id=1479190779]
+layout_mode = 2
+rounded = true

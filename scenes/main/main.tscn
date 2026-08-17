@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://cj2o6bu7lko4k"]
 
 [ext_resource type="PackedScene" uid="uid://byxiaffshj4eo" path="res://scenes/map/map_display.tscn" id="1_hyk8p"]
+[ext_resource type="PackedScene" uid="uid://q8745vdh26mn" path="res://scenes/hud/map_parameters_control.tscn" id="2_iuonh"]
 
 [node name="Main" type="Node" unique_id=107272976]
 
@@ -17,9 +18,15 @@ layer = 10
 
 [node name="HudRoot" type="Control" parent="HudLayer" unique_id=1142900938]
 layout_mode = 3
-anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+
+[node name="MapParametersControl" parent="HudLayer/HudRoot" unique_id=1239913164 instance=ExtResource("2_iuonh")]
+layout_mode = 1
 
 [node name="PauseLayer" type="CanvasLayer" parent="." unique_id=621645473]
 layer = 20

@@ -1,0 +1,82 @@
+[gd_scene format=3 uid="uid://q8745vdh26mn"]
+
+[ext_resource type="Script" uid="uid://6a8yn4wcfxao" path="res://scripts/hud/map_parameters_control.gd" id="1_dh07t"]
+
+[node name="MapParametersControl" type="Control" unique_id=1239913164]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+script = ExtResource("1_dh07t")
+
+[node name="DrawerAnchor" type="Control" parent="." unique_id=1036039146]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -40.0
+offset_top = -20.0
+offset_bottom = 20.0
+grow_horizontal = 0
+grow_vertical = 2
+
+[node name="DrawerRoot" type="Control" parent="DrawerAnchor" unique_id=805357010]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="DrawerPanel" type="PanelContainer" parent="DrawerAnchor/DrawerRoot" unique_id=890344115]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="MarginContainer" type="MarginContainer" parent="DrawerAnchor/DrawerRoot/DrawerPanel" unique_id=1942398570]
+layout_mode = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer" unique_id=766920721]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer" unique_id=695336144]
+layout_mode = 2
+
+[node name="MapGridSettingsLabel" type="Label" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/VBoxContainer" unique_id=2045240294]
+layout_mode = 2
+text = "Grid Settings"
+horizontal_alignment = 1
+
+[node name="MapGridSettingsContainer" type="Control" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/VBoxContainer" unique_id=632209150]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/VBoxContainer/MapGridSettingsContainer" unique_id=1121538743]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="HSeparator" type="HSeparator" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/VBoxContainer" unique_id=389498458]
+layout_mode = 2
+
+[node name="MapSecretSettingsLabel" type="Label" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/VBoxContainer" unique_id=2105255802]
+layout_mode = 2
+text = "Secrets Layous"
+
+[node name="MapSecretSettingsContainer" type="Control" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/VBoxContainer" unique_id=1489410871]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/VBoxContainer/MapSecretSettingsContainer" unique_id=902715217]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="DrawerStrip" type="PanelContainer" parent="DrawerAnchor/DrawerRoot" unique_id=293474430]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="DrawerAnchor/DrawerRoot/DrawerStrip" unique_id=1475303169]
+layout_mode = 2

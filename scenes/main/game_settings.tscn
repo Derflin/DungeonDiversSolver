@@ -1,6 +1,8 @@
 [gd_scene format=3 uid="uid://dd85xhhp48e3y"]
 
 [ext_resource type="Script" uid="uid://dmjweabrj50sn" path="res://scripts/main/game_settings.gd" id="1_o0i75"]
+[ext_resource type="Texture2D" uid="uid://wh63cgy0pvpo" path="res://assets/icons/map_parameters/MapParameters-GridSize-edges.png" id="2_n5vor"]
 
 [node name="GameSettings" type="Node" unique_id=723508784]
 script = ExtResource("1_o0i75")
+map_grid_size_icon = ExtResource("2_n5vor")

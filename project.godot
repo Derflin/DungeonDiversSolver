@@ -19,6 +19,7 @@ config/icon="uid://bj6h6blraau3f"
 
 GameData="*uid://cot6yfii4sagm"
 GameSettings="*uid://dd85xhhp48e3y"
+GameState="*uid://c8tk1ptw1h27o"
 
 [display]
 

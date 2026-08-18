@@ -36,6 +36,11 @@ func _ready() -> void:
 	create_room(room_coords, test_room)
 
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_MOUSE_EXIT:
+		_clear_map_cursor()
+
+
 func _on_game_settings_map_grid_size_parameter_changed(_map_grid_size: Vector2i) -> void:
 	# Delete any room that would be placed outside the map grid
 	for room_coords in room_instances:
@@ -252,6 +257,14 @@ func _update_game_state() -> void:
 			GameState.set_map_secrets_count_current(room_secret_type_kind, secret_count[room_secret_type_kind])
 		else:
 			GameState.set_map_secrets_count_current(room_secret_type_kind, 0)
+
+
+func _clear_map_cursor() -> void:
+	# Hide map cursor unless the room selected cursor is also visible
+	var is_selected_room_cursor_visible = grid_interaction_overlay.is_room_selection_cursor_visible()
+	if not is_selected_room_cursor_visible:
+		grid_interaction_overlay.hide_map_cursor()
+
 
 
 func _on_room_editor_menu_outside_click_menu_closed() -> void:

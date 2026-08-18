@@ -70,17 +70,24 @@ func _on_game_settings_map_grid_room_size_parameter_changed(_map_grid_room_size:
 		grid_space_parameters_changed.emit()
 
 
-func _unhandled_input(event: InputEvent) -> void:
+func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		_update_hovered_map_cursor()
-		
-	elif event.is_action_pressed("map_select"):
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("map_select"):
 		handle_input_map_select()
 		get_viewport().set_input_as_handled()
 
 
 func _update_hovered_map_cursor() -> void:
 	if grid_interaction_overlay.is_map_cursor_locked():
+		return
+	
+	var hovered_control := get_viewport().gui_get_hovered_control()
+	if hovered_control != null:
+		_clear_map_cursor()
 		return
 	
 	var mouse_position = get_local_mouse_position()
@@ -260,9 +267,9 @@ func _update_game_state() -> void:
 
 
 func _clear_map_cursor() -> void:
-	# Hide map cursor unless the room selected cursor is also visible
-	var is_selected_room_cursor_visible = grid_interaction_overlay.is_room_selection_cursor_visible()
-	if not is_selected_room_cursor_visible:
+	# Hide map cursor unless the map cursor is locked
+	var is_map_cursor_locked = grid_interaction_overlay.is_map_cursor_locked()
+	if not is_map_cursor_locked:
 		grid_interaction_overlay.hide_map_cursor()
 
 

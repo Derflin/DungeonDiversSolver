@@ -30,8 +30,37 @@ enum SubmenuAngleMode {
 }
 
 
+const RADIAL_MENU_INPUT_BLOCKER_GROUP: StringName = &"blocks_radial_menu_input"
+
+
 var submenu_angle_mode: SubmenuAngleMode = SubmenuAngleMode.ALIGN_TO_PARENT
 var fixed_center_angle := -PI / 2.0
+
+
+# Overloaded from RadialMenu
+func _input(event: InputEvent) -> void:
+	# Changed from the orig: Added filter for mouse input events if mouse hovers over any nodes in the radial menu input blocker custom global group
+	if event is InputEventMouse and _is_mouse_over_radial_menu_input_blocker():
+		return
+	
+	_radial_input(event)
+
+
+func _is_mouse_over_radial_menu_input_blocker() -> bool:
+	# Get current deepest hovered controled node
+	var hovered_control := get_viewport().gui_get_hovered_control()
+	
+	# Cast it into a Node variable
+	var node: Node = hovered_control
+	
+	# Check if the current node or any of it's parents are set inside the radial menu input blocker custom global group
+	while node != null:
+		if node.is_in_group(RADIAL_MENU_INPUT_BLOCKER_GROUP):
+			return true
+		
+		node = node.get_parent()
+	
+	return false
 
 
 # Overloaded from RadialMenu

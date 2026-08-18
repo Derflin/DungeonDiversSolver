@@ -6,7 +6,8 @@ var _map_parameter_entry = preload("res://scenes/hud/map_parameter_entry.tscn")
 
 var _drawer_open: bool = false
 var _drawer_tween: Tween
-var _effective_ui_scale: int = 1
+var _drawer_collapsed_visible_width: float = 0.0
+var _drawer_effective_ui_scale: int = 1
 
 
 @onready var drawer_root: Control = $DrawerAnchor/DrawerRoot
@@ -21,8 +22,8 @@ var _effective_ui_scale: int = 1
 
 
 @export_group("Drawer Layout", "drawer_")
-@export var drawer_base_width: float = 240.0
-@export var drawer_collapsed_visible_width: float = 70.0
+@export var drawer_width_offset: float = 0.0
+@export var drawer_collapsed_width_offset: float = 0.0
 @export var drawer_slide_duration: float = 0.2
 @export var drawer_screen_vertical_margin: float = 8.0
 @export_range(1, 4, 1)
@@ -97,8 +98,11 @@ func _refresh_drawer_layout() -> void:
 	var strip_size := drawer_strip.get_combined_minimum_size()
 	var natural_total_height := natural_panel_size.y + strip_size.y
 	
+	# Update drawer collapsed visible width
+	_drawer_collapsed_visible_width = _calculate_collapsed_visible_width()
+	
 	# Calculate effective drawer scale
-	_effective_ui_scale = _calculate_ui_scale(natural_total_height)
+	_drawer_effective_ui_scale = _calculate_ui_scale(natural_total_height)
 	
 	# Apply scroll fallback if the height too big to fit into base drawer scale
 	_apply_scroll_fallback(natural_panel_size, strip_size)
@@ -107,7 +111,7 @@ func _refresh_drawer_layout() -> void:
 	_position_drawer_strip()
 	
 	# Set calculated effective drawer scale
-	drawer_root.scale = Vector2.ONE * float(_effective_ui_scale)
+	drawer_root.scale = Vector2.ONE * float(_drawer_effective_ui_scale)
 	
 	# Position DrawerRoot based on the drawer scale
 	_position_drawer_root()
@@ -153,7 +157,7 @@ func _get_drawer_target_x() -> float:
 		return 0.0
 	
 	# If drawer is closed, return size x offset of the drawer that should be hidden from the view
-	return maxf(0.0, drawer_panel.size.x - drawer_collapsed_visible_width)
+	return maxf(0.0, drawer_panel.size.x - _drawer_collapsed_visible_width)
 
 
 func _update_drawer_toggle_button() -> void:
@@ -184,16 +188,23 @@ func _calculate_ui_scale(total_height_1x: float) -> int:
 
 
 func _get_natural_drawer_size() -> Vector2:
+	# Remove any width previously forced by this function.
+	drawer_panel.custom_minimum_size.x = 0.0
+	
 	# Check drawer content size based on the set minimum sizes on it's elements
 	var content_size := drawer_contents.get_combined_minimum_size()
 	
 	# By default disable vertical scrolling by assigning it content height size
 	scroll_container.custom_minimum_size.y = content_size.y
 	
-	# Set drawer panel minimum size based on the drawer_base_width parameter
-	drawer_panel.custom_minimum_size.x = drawer_base_width
+	# Reset drawer panel size in order for it to adjust to just set minimum sizes
+	drawer_panel.reset_size()
 	
-	# Reset drawer panel size in order for it to adjust to jsut set minimum sizes 
+	# Get drawer natural width and add the drawer width offset to it
+	var natural_width := drawer_panel.get_combined_minimum_size().x
+	drawer_panel.custom_minimum_size.x = natural_width + drawer_width_offset
+	
+	# Reset drawer panel size in order for it to adjust to just set minimum sizes 
 	drawer_panel.reset_size()
 	
 	return drawer_panel.get_combined_minimum_size()
@@ -201,7 +212,7 @@ func _get_natural_drawer_size() -> Vector2:
 
 func _apply_scroll_fallback(natural_panel_size: Vector2, strip_size: Vector2) -> void:
 	# Calculate max_panel_height
-	var available_height_1x := (size.y - drawer_screen_vertical_margin * 2.0) / float(_effective_ui_scale)
+	var available_height_1x := (size.y - drawer_screen_vertical_margin * 2.0) / float(_drawer_effective_ui_scale)
 	var max_panel_height := available_height_1x - strip_size.y
 	
 	# If content fits inside max_panel_height, then don't enable scroll behaviour
@@ -238,7 +249,7 @@ func _position_drawer_strip() -> void:
 
 func _position_drawer_root() -> void:
 	# Calculate total height of drawer_root
-	var scale_factor := float(_effective_ui_scale)
+	var scale_factor := float(_drawer_effective_ui_scale)
 	var total_height := drawer_panel.size.y + drawer_strip.size.y
 	
 	# Adjust drawer root position
@@ -246,3 +257,37 @@ func _position_drawer_root() -> void:
 		-drawer_panel.size.x * scale_factor,
 		-total_height * scale_factor * 0.5,
 	)
+
+
+func _calculate_collapsed_visible_width() -> float:
+	# Prepare initial variables
+	var collapsed_width := 0.0
+	var panel_left := drawer_panel.get_global_rect().position.x
+	
+	# Check all map parameter entries visible width
+	var entry_containers: Array[VBoxContainer] = [
+		map_grid_settings_container,
+		map_secret_settings_container,
+	]
+	for entry_container in entry_containers:
+		for child in entry_container.get_children():
+			# Ignore child if it's not map parameter entry
+			if child is not MapParameterEntry:
+				continue
+			
+			# Get last visible node from the map parameter entry that should be visible when drawer closed
+			var parameter_entry := child as MapParameterEntry
+			var count_label = parameter_entry.get_node("CountLabel") as Label
+			
+			# Calculate visible width from drawer start to end on the last visible node
+			var count_right := count_label.get_global_rect().end.x
+			var entry_visible_width := count_right - panel_left
+			
+			# Save the biggest calculated visible width
+			collapsed_width = maxf(
+				collapsed_width,
+				entry_visible_width,
+			)
+	
+	# Return calculated collapsed width with added drawer collapsed width offset to it
+	return collapsed_width + drawer_collapsed_width_offset

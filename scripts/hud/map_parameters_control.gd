@@ -28,6 +28,8 @@ var _drawer_effective_ui_scale: int = 1
 @export var drawer_screen_vertical_margin: float = 8.0
 @export_range(1, 4, 1)
 var drawer_preferred_ui_scale: int = 2
+@export_range(1, 4, 1)
+var drawer_minimum_ui_scale: int = 2
 
 @export_group("Drawer Toggle Button", "drawer_toggle_")
 @export var drawer_toggle_expand_icon: Texture2D
@@ -178,13 +180,16 @@ func _calculate_ui_scale(total_height_1x: float) -> int:
 	# Calculate drawer height
 	var available_height := size.y - drawer_screen_vertical_margin * 2.0
 	
+	# Get drawer minimum ui scale
+	var drawer_minimum_scale := mini(drawer_minimum_ui_scale, drawer_preferred_ui_scale)
+	
 	# Check which biggest ui scale would fit the calculated drawer height after scaling it up
-	for scale_candidate in range(drawer_preferred_ui_scale, 0, -1):
+	for scale_candidate in range(drawer_preferred_ui_scale, drawer_minimum_scale - 1, -1):
 		if total_height_1x * scale_candidate <= available_height:
 			return scale_candidate
 	
 	# Return fallback ui scale value
-	return 1
+	return drawer_minimum_scale
 
 
 func _get_natural_drawer_size() -> Vector2:

@@ -86,15 +86,20 @@ func _unhandled_input(event: InputEvent) -> void:
 		
 	if _handle_pan_input(event):
 		return
-		
+	
+	# Filter out rest of input events if they were performed over the another control node
+	var hovered_control := get_viewport().gui_get_hovered_control()
+	if hovered_control != null:
+		return
+	
 	if event.is_action_pressed("map_zoom_in"):
 		_handle_zoom_input(event, zoom_factor)
 		get_viewport().set_input_as_handled()
-		
+	
 	elif event.is_action_pressed("map_zoom_out"):
 		_handle_zoom_input(event, 1.0 / zoom_factor)
 		get_viewport().set_input_as_handled()
-		
+	
 	elif event.is_action_pressed("map_zoom_reset"):
 		_fit_map_to_view()
 		get_viewport().set_input_as_handled()

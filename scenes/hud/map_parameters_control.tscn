@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://q8745vdh26mn"]
 
 [ext_resource type="Script" uid="uid://6a8yn4wcfxao" path="res://scripts/hud/map_parameters_control.gd" id="1_dh07t"]
+[ext_resource type="Texture2D" uid="uid://bplh4qamws0ll" path="res://assets/icons/map_parameters/MapParameters-GridSettings.png" id="2_n2mvx"]
 
 [node name="MapParametersControl" type="Control" unique_id=1239913164]
 layout_mode = 3
@@ -19,64 +20,66 @@ anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = -40.0
-offset_top = -20.0
-offset_bottom = 20.0
 grow_horizontal = 0
 grow_vertical = 2
 
 [node name="DrawerRoot" type="Control" parent="DrawerAnchor" unique_id=805357010]
 anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
 
 [node name="DrawerPanel" type="PanelContainer" parent="DrawerAnchor/DrawerRoot" unique_id=890344115]
 layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+offset_right = 92.0
 
 [node name="MarginContainer" type="MarginContainer" parent="DrawerAnchor/DrawerRoot/DrawerPanel" unique_id=1942398570]
 layout_mode = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
 
 [node name="ScrollContainer" type="ScrollContainer" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer" unique_id=766920721]
 layout_mode = 2
 horizontal_scroll_mode = 0
 
-[node name="VBoxContainer" type="VBoxContainer" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer" unique_id=695336144]
+[node name="DrawerContents" type="VBoxContainer" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer" unique_id=695336144]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="MapGridSettingsLabel" type="Label" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/DrawerContents" unique_id=2045240294]
+visible = false
+layout_mode = 2
+text = "Grid"
+
+[node name="MapGridSettingsContainer" type="VBoxContainer" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/DrawerContents" unique_id=891340265]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="HSeparator" type="HSeparator" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/DrawerContents" unique_id=389498458]
 layout_mode = 2
 
-[node name="MapGridSettingsLabel" type="Label" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/VBoxContainer" unique_id=2045240294]
+[node name="MapSecretSettingsLabel" type="Label" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/DrawerContents" unique_id=2105255802]
+visible = false
 layout_mode = 2
-text = "Grid Settings"
-horizontal_alignment = 1
+text = "Secrets"
 
-[node name="MapGridSettingsContainer" type="Control" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/VBoxContainer" unique_id=632209150]
+[node name="MapSecretSettingsContainer" type="VBoxContainer" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/DrawerContents" unique_id=1509488749]
 layout_mode = 2
-
-[node name="VBoxContainer" type="VBoxContainer" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/VBoxContainer/MapGridSettingsContainer" unique_id=1121538743]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
-
-[node name="HSeparator" type="HSeparator" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/VBoxContainer" unique_id=389498458]
-layout_mode = 2
-
-[node name="MapSecretSettingsLabel" type="Label" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/VBoxContainer" unique_id=2105255802]
-layout_mode = 2
-text = "Secrets Layous"
-
-[node name="MapSecretSettingsContainer" type="Control" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/VBoxContainer" unique_id=1489410871]
-layout_mode = 2
-
-[node name="VBoxContainer" type="VBoxContainer" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/VBoxContainer/MapSecretSettingsContainer" unique_id=902715217]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+theme_override_constants/separation = 4
 
 [node name="DrawerStrip" type="PanelContainer" parent="DrawerAnchor/DrawerRoot" unique_id=293474430]
 layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+offset_right = 23.0
+offset_bottom = 23.0
 
 [node name="VBoxContainer" type="VBoxContainer" parent="DrawerAnchor/DrawerRoot/DrawerStrip" unique_id=1475303169]
 layout_mode = 2
+
+[node name="DrawerToggleButton" type="Button" parent="DrawerAnchor/DrawerRoot/DrawerStrip/VBoxContainer" unique_id=1673587425]
+custom_minimum_size = Vector2(24, 18)
+layout_mode = 2
+toggle_mode = true
+text = "◀"
+icon = ExtResource("2_n2mvx")
+
+[connection signal="pressed" from="DrawerAnchor/DrawerRoot/DrawerStrip/VBoxContainer/DrawerToggleButton" to="." method="_on_drawer_toggle_button_pressed"]

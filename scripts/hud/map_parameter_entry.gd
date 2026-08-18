@@ -29,6 +29,7 @@ var secret_type_value_max: int = 0
 
 
 func initialize_map_grid_size() -> void:
+	# Initialize parameters
 	parameter_type = ParameterType.MAP_GRID_SIZE
 	
 	# Get initial state of variables that will be managed by this parameter entry scene
@@ -43,6 +44,7 @@ func initialize_map_grid_size() -> void:
 
 
 func initialize_secret_type_count_max(_secret_type_kind: RoomSecretType.Kind) -> void:
+	# Initialize parameters
 	parameter_type = ParameterType.SECRET_TYPE_COUNT_MAX
 	secret_type_kind = _secret_type_kind
 	
@@ -64,6 +66,7 @@ func _get_map_grid_size() -> void:
 	if parameter_type != ParameterType.MAP_GRID_SIZE:
 		return
 	
+	# Gather map_grid_size from the game settings
 	map_grid_size = GameSettings.map_grid_size
 
 
@@ -72,6 +75,7 @@ func _get_secret_type_count_current() -> void:
 	if parameter_type != ParameterType.SECRET_TYPE_COUNT_MAX or secret_type_kind == null or secret_type_kind == RoomSecretType.Kind.NONE:
 		return
 	
+	# Gather secret_type_value_current from the game state
 	secret_type_value_current = GameState.map_secrets_count_current[secret_type_kind]
 
 
@@ -80,6 +84,7 @@ func _get_secret_type_count_max() -> void:
 	if parameter_type != ParameterType.SECRET_TYPE_COUNT_MAX or secret_type_kind == null or secret_type_kind == RoomSecretType.Kind.NONE:
 		return
 	
+	# Gather secret_type_value_max from the game settings
 	secret_type_value_max = GameSettings.map_secrets_count_max[secret_type_kind]
 
 
@@ -111,7 +116,7 @@ func _update_count_label() -> void:
 		var label_text := "%d/%d" % [secret_type_value_current, secret_type_value_max]
 		var label_color := label_default_color
 		label_color = label_invalid_color if secret_type_value_current > secret_type_value_max else label_color
-		label_color = label_valid_color if secret_type_value_current == secret_type_value_max else label_color
+		label_color = label_valid_color if secret_type_value_max != 0 and secret_type_value_current == secret_type_value_max else label_color
 		
 		entry_count_label.text = label_text
 		entry_count_label.label_settings.font_color = label_color
@@ -129,7 +134,6 @@ func _update_description_label() -> void:
 	elif parameter_type == ParameterType.SECRET_TYPE_COUNT_MAX and secret_type_kind != null and secret_type_kind != RoomSecretType.Kind.NONE:
 		var label_text := ""
 		label_text += GameData.room_secret_types.get_type(secret_type_kind).display_name
-		label_text += " - Max Count"
 		var label_color := label_default_color
 		
 		entry_description_label.text = label_text

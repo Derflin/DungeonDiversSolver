@@ -28,6 +28,10 @@ var _effective_ui_scale: int = 1
 @export_range(1, 4, 1)
 var drawer_preferred_ui_scale: int = 2
 
+@export_group("Drawer Toggle Button", "drawer_toggle_")
+@export var drawer_toggle_expand_icon: Texture2D
+@export var drawer_toggle_collapse_icon: Texture2D
+
 
 func _ready() -> void:
 	# Populate static and dynamic map parameter entries
@@ -153,8 +157,13 @@ func _get_drawer_target_x() -> float:
 
 
 func _update_drawer_toggle_button() -> void:
-	# Change drawer toggle button text based on the drawer open status
-	drawer_toggle_button.text = "▶" if _drawer_open else "◀"
+	# Change drawer toggle button text and icon based on the drawer open status
+	if _drawer_open:
+		drawer_toggle_button.text = "▶"
+		drawer_toggle_button.icon = drawer_toggle_collapse_icon
+	else:
+		drawer_toggle_button.text = "◀"
+		drawer_toggle_button.icon = drawer_toggle_expand_icon
 
 
 func _on_control_resized() -> void:

@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://6a8yn4wcfxao" path="res://scripts/hud/map_parameters_control.gd" id="1_dh07t"]
 [ext_resource type="Texture2D" uid="uid://bplh4qamws0ll" path="res://assets/icons/map_parameters/MapParameters-GridSettings.png" id="2_n2mvx"]
+[ext_resource type="Texture2D" uid="uid://0m43f7n0tcbl" path="res://assets/icons/map_parameters/MapParameters-GridSettings-Close.png" id="3_lglyc"]
 
 [node name="MapParametersControl" type="Control" unique_id=1239913164]
 layout_mode = 3
@@ -12,6 +13,8 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1_dh07t")
+drawer_toggle_expand_icon = ExtResource("2_n2mvx")
+drawer_toggle_collapse_icon = ExtResource("3_lglyc")
 
 [node name="DrawerAnchor" type="Control" parent="." unique_id=1036039146]
 layout_mode = 1

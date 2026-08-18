@@ -200,3 +200,7 @@ func _on_value_editor_value_changed(value: float) -> void:
 	
 	elif parameter_type == ParameterType.SECRET_TYPE_COUNT_MAX and secret_type_kind != null and secret_type_kind != RoomSecretType.Kind.NONE:
 		GameSettings.set_map_secrets_count_max(secret_type_kind, entry_value_editor.value)
+	
+	# Manually release focus from the spinbox editor fields
+	entry_value_editor.release_focus()
+	entry_value_editor.get_line_edit().release_focus()

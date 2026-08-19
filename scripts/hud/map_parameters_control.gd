@@ -18,8 +18,8 @@ var _drawer_effective_ui_scale: int = 1
 @onready var scroll_container: ScrollContainer = $DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer
 @onready var drawer_contents: VBoxContainer = $DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/DrawerContents
 
-@onready var map_grid_settings_container := $DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/DrawerContents/MapGridSettingsMarginContainer/MapGridSettingsContainer
-@onready var map_secret_settings_container := $DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/DrawerContents/MapSecretSettingsMarginContainer/MapSecretSettingsContainer
+@onready var map_grid_settings_container := $DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/DrawerContents/MapGridSettingsMarginContainer/ContainerContents/MapGridSettingsContainer
+@onready var map_secret_settings_container := $DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/DrawerContents/MapSecretSettingsMarginContainer/ContainerContents/MapSecretSettingsContainer
 
 
 @export_group("Drawer Layout", "drawer_")

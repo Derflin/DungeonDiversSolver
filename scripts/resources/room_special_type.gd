@@ -51,7 +51,10 @@ func get_display_name() -> String:
 	return display_name
 
 
-func get_static_texture() -> Texture2D:
+func get_static_texture(just_icon: bool = false) -> Texture2D:
+	if just_icon:
+		return icon
+	
 	if _merged_static_texture == null:
 		_merged_static_texture = _create_merged_static_texture()
 

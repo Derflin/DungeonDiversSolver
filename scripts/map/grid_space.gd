@@ -43,9 +43,13 @@ func _notification(what: int) -> void:
 
 func _on_game_settings_map_grid_size_parameter_changed(_map_grid_size: Vector2i) -> void:
 	# Delete any room that would be placed outside the map grid
+	var room_coords_deletion_queue: Array[Vector2i] = []
 	for room_coords in room_instances:
 		if room_coords.x >= _map_grid_size.x or room_coords.y >= _map_grid_size.y:
-			delete_room(room_coords)
+			room_coords_deletion_queue.append(room_coords)
+	
+	for room_coords in room_coords_deletion_queue:
+		delete_room(room_coords)
 	
 	# Hide selected room cursor
 	hide_selected_room_cursor()

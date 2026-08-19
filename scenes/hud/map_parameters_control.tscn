@@ -35,9 +35,7 @@ offset_right = 92.0
 
 [node name="MarginContainer" type="MarginContainer" parent="DrawerAnchor/DrawerRoot/DrawerPanel" unique_id=1942398570]
 layout_mode = 2
-theme_override_constants/margin_left = 4
 theme_override_constants/margin_top = 4
-theme_override_constants/margin_right = 4
 theme_override_constants/margin_bottom = 4
 
 [node name="ScrollContainer" type="ScrollContainer" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer" unique_id=766920721]
@@ -47,16 +45,19 @@ horizontal_scroll_mode = 0
 [node name="DrawerContents" type="VBoxContainer" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer" unique_id=695336144]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 6
 
 [node name="MapGridSettingsLabel" type="Label" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/DrawerContents" unique_id=2045240294]
 visible = false
 layout_mode = 2
 text = "Grid"
 
-[node name="MapGridSettingsContainer" type="VBoxContainer" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/DrawerContents" unique_id=891340265]
+[node name="MapGridSettingsMarginContainer" type="MarginContainer" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/DrawerContents" unique_id=860602732]
 layout_mode = 2
-theme_override_constants/separation = 4
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_right = 8
+
+[node name="MapGridSettingsContainer" type="VBoxContainer" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/DrawerContents/MapGridSettingsMarginContainer" unique_id=891340265]
+layout_mode = 2
 
 [node name="HSeparator" type="HSeparator" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/DrawerContents" unique_id=389498458]
 layout_mode = 2
@@ -66,9 +67,13 @@ visible = false
 layout_mode = 2
 text = "Secrets"
 
-[node name="MapSecretSettingsContainer" type="VBoxContainer" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/DrawerContents" unique_id=1509488749]
+[node name="MapSecretSettingsMarginContainer" type="MarginContainer" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/DrawerContents" unique_id=680089818]
 layout_mode = 2
-theme_override_constants/separation = 4
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_right = 8
+
+[node name="MapSecretSettingsContainer" type="VBoxContainer" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/DrawerContents/MapSecretSettingsMarginContainer" unique_id=1509488749]
+layout_mode = 2
 
 [node name="DrawerScrollBar" type="VScrollBar" parent="DrawerAnchor/DrawerRoot" unique_id=1097460792]
 custom_minimum_size = Vector2(3, 0)

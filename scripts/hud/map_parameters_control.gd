@@ -12,6 +12,7 @@ var _drawer_effective_ui_scale: int = 1
 
 @onready var drawer_root: Control = $DrawerAnchor/DrawerRoot
 @onready var drawer_panel: PanelContainer = $DrawerAnchor/DrawerRoot/DrawerPanel
+@onready var drawer_scroll_bar: VScrollBar = $DrawerAnchor/DrawerRoot/DrawerScrollBar
 @onready var drawer_strip: PanelContainer = $DrawerAnchor/DrawerRoot/DrawerStrip
 @onready var drawer_toggle_button: Button = $DrawerAnchor/DrawerRoot/DrawerStrip/VBoxContainer/DrawerToggleButton
 @onready var scroll_container: ScrollContainer = $DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer
@@ -40,7 +41,10 @@ func _ready() -> void:
 	# Populate static and dynamic map parameter entries
 	_populate_parameter_entries()
 	
-	# Attach node resized signal to handle resizing and refreshing drawer layout
+	# Initialize drawer scrollbar
+	initialize_drawer_scrollbar()
+	
+	# Attach node resized signal to handle resizing and refreshing drawer layout and call it
 	resized.connect(_on_control_resized)
 	
 	# Refresh drawer layout after initializing all the map parameter entries 
@@ -50,6 +54,19 @@ func _ready() -> void:
 func _populate_parameter_entries() -> void:
 	_create_static_map_grid_size_entry()
 	_create_dynamic_secret_settings_entries()
+
+
+func initialize_drawer_scrollbar() -> void:
+	# Hide ScrollContainer scrollbar
+	scroll_container.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	
+	# Sync DrawerScrollBar with the ScrollContainer scrollbar
+	var internal_scroll_bar := scroll_container.get_v_scroll_bar()
+	drawer_scroll_bar.share(internal_scroll_bar)
+	
+	# Connect signals to manage DrawerScrollBar state and update it
+	internal_scroll_bar.changed.connect(_update_drawer_scroll_bar_visibility)
+	call_deferred("_update_drawer_scroll_bar_visibility")
 
 
 func _create_static_map_grid_size_entry() -> void:
@@ -109,8 +126,9 @@ func _refresh_drawer_layout() -> void:
 	# Apply scroll fallback if the height too big to fit into base drawer scale
 	_apply_scroll_fallback(natural_panel_size, strip_size)
 	
-	# Position DrawerStrip directly under DrawerPanel
+	# Position DrawerStrip directly under DrawerPanel and DrawerScrollBar next to it
 	_position_drawer_strip()
+	_position_drawer_scroll_bar()
 	
 	# Set calculated effective drawer scale
 	drawer_root.scale = Vector2.ONE * float(_drawer_effective_ui_scale)
@@ -250,6 +268,23 @@ func _position_drawer_strip() -> void:
 		drawer_panel.size.x - drawer_strip.size.x,
 		drawer_panel.size.y,
 	)
+
+
+func _position_drawer_scroll_bar() -> void:
+	# Adjust DrawerScrollBar position based on the DrawerPanel position
+	drawer_scroll_bar.position = Vector2(
+		drawer_panel.size.x - drawer_scroll_bar.size.x,
+		0.0
+	)
+	
+	# Set DrawerScrollBar size appropriate to the DrawerPanel size
+	drawer_scroll_bar.size.y = drawer_panel.size.y
+
+
+func _update_drawer_scroll_bar_visibility() -> void:
+	# Set DrawerScrollBar visible if the ScrollContainer scrollbar is active and visible
+	var internal_scroll_bar := scroll_container.get_v_scroll_bar()
+	drawer_scroll_bar.visible = internal_scroll_bar.max_value > internal_scroll_bar.page
 
 
 func _position_drawer_root() -> void:

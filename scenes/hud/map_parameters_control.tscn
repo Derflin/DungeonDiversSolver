@@ -70,6 +70,13 @@ text = "Secrets"
 layout_mode = 2
 theme_override_constants/separation = 4
 
+[node name="DrawerScrollBar" type="VScrollBar" parent="DrawerAnchor/DrawerRoot" unique_id=1097460792]
+custom_minimum_size = Vector2(3, 0)
+custom_maximum_size = Vector2(3, -1)
+layout_mode = 0
+offset_right = 8.0
+offset_bottom = 8.0
+
 [node name="DrawerStrip" type="PanelContainer" parent="DrawerAnchor/DrawerRoot" unique_id=293474430]
 layout_mode = 0
 offset_right = 23.0

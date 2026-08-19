@@ -5,6 +5,8 @@ var grid_rect: Rect2 = Rect2(0, 0, 0, 0)
 var _pan_candidate = false
 var _is_panning = false
 var _pan_start_screen_position = Vector2.ZERO
+var _minimum_zoom: float
+var _maximum_zoom: float
 
 
 @onready var map_camera: Camera2D = $MapCamera
@@ -31,6 +33,11 @@ var minimum_visible_fraction_per_axis := 0.5
 ## Distance in screen pixels before a click becomes a drag.
 @export_range(0.0, 20.0, 1.0)
 var pan_drag_threshold = 4.0
+
+
+func _ready() -> void:
+	_minimum_zoom = minimum_zoom
+	_maximum_zoom = maximum_zoom
 
 
 func set_grid_rect(_grid_rect: Rect2) -> void:
@@ -70,8 +77,8 @@ func _fit_map_to_view(instant: bool = false) -> void:
 	
 	fitted_zoom = clampf(
 		fitted_zoom,
-		minimum_zoom,
-		maximum_zoom,
+		_minimum_zoom,
+		_maximum_zoom,
 	)
 	
 	minimum_zoom = fitted_zoom

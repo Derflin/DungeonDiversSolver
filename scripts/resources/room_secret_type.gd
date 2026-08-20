@@ -62,6 +62,9 @@ var animation_random_min_timer_interval: float = 0.25
 @export_range(0.01, 2.0, 0.01)
 var animation_random_max_timer_interval: float = 2.0
 
+@export_group("Placement Config")
+var placement_config: SecretPlacementConfig = null
+
 
 func generate_secret_background_icon_pair_frames(seed_id: int, background_check: bool = false, icon_check: bool = false) -> Dictionary:
 	var result_dict = {"frame": -1, "triggered_base_frame": false}

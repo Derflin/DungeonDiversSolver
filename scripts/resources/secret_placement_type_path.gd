@@ -2,4 +2,11 @@ class_name SecretPlacementTypePath
 extends SecretPlacementType
 
 
-#TODO: define some parameters and functions
+@export var start_room: RoomType = null
+
+
+func _init() -> void:
+	count_type = CountType.SUM_MAX
+
+
+#TODO: define some functions

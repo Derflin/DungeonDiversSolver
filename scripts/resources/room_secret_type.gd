@@ -18,6 +18,23 @@ enum Kind {
 }
 
 
+#TODO: needs to check where the RED_ROOM should be located (it could be set before OUTSIDER_ROOM, rest should be okay, but it would be good to fact check them
+const ROOM_SECRET_TYPE_CREATE_ORDER: Array[Kind] = [
+	Kind.PORTAL_ROOM,
+	Kind.COMMON_ROOM,
+	Kind.GUEST_ROOM,
+	Kind.HERMIT_ROOM,
+	Kind.BOULDER_ROOM,
+	Kind.DEVIL_ROOM,
+	Kind.ANGEL_ROOM,
+	Kind.BLACK_MARKET,
+	Kind.BARRICADE_ROOM,
+	Kind.OUTSIDER_ROOM,
+	Kind.ERROR_ROOM,
+	Kind.RED_ROOM,
+]
+
+
 var _merged_static_texture: Texture2D
 
 

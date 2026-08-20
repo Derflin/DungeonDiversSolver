@@ -84,8 +84,12 @@ func _create_static_map_grid_size_entry() -> void:
 
 func _create_dynamic_secret_settings_entries() -> void:
 	# Prepare secret parameter entries for all secret types
-	var secret_room_type_kinds = GameData.room_secret_types.get_all_kinds()
-	for secret_room_type_kind in secret_room_type_kinds:
+	var secret_room_type_kinds_ordered = RoomSecretType.ROOM_SECRET_TYPE_CREATE_ORDER
+	for secret_room_type_kind in secret_room_type_kinds_ordered:
+		# Check if secret room type exists in the current game data
+		if not GameData.room_secret_types.has_type(secret_room_type_kind):
+			continue
+		
 		# Initialize dynamic map secret parameter entry
 		var parameter_entry_secret_type_count_max := _map_parameter_entry.instantiate()
 		map_secret_settings_container.add_child(parameter_entry_secret_type_count_max)

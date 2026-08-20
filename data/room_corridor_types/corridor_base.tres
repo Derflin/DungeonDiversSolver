@@ -408,8 +408,8 @@ animations = [{
 [resource]
 script = ExtResource("1_dh3b2")
 kind = 10
-id = &"corridor_base"
-display_name = "Corridor Base"
 floor_variants = SubResource("SpriteFrames_drd4b")
 connections_texture = ExtResource("2_bx4w1")
 barricades_texture = ExtResource("1_ekrv3")
+id = &"corridor_base"
+display_name = "Base"

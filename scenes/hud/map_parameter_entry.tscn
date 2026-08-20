@@ -51,5 +51,6 @@ custom_minimum_size = Vector2(60, 0)
 layout_mode = 2
 max_value = 99.0
 rounded = true
+alignment = 2
 
 [connection signal="value_changed" from="ValueEditor" to="." method="_on_value_editor_value_changed"]

@@ -1,5 +1,5 @@
 class_name RoomSpecialType
-extends Resource
+extends RoomType
 
 
 enum Kind {
@@ -17,8 +17,6 @@ var _merged_static_texture: Texture2D
 
 
 @export var kind: Kind = Kind.NONE
-@export var id: StringName
-@export var display_name: String
 
 @export_group("Icon")
 @export var icon: Texture2D

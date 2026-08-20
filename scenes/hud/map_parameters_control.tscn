@@ -24,6 +24,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1_dh07t")
+drawer_collapsed_width_offset = 3.0
 drawer_toggle_expand_icon = ExtResource("2_n2mvx")
 drawer_toggle_collapse_icon = ExtResource("3_lglyc")
 

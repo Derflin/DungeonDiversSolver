@@ -2,6 +2,13 @@ class_name SecretPlacementConfig
 extends Resource
 
 
+enum CountType {
+	NONE = -1,
+	MIN = 10,
+	MAX = 20,
+}
+
+
 @export_group("Room Placement", "room_")
 ## Distance from other non-secret rooms including current position
 @export var room_distance: int = 1
@@ -18,3 +25,6 @@ extends Resource
 
 @export_group("Placement Types")
 @export var placement_types: Array[SecretPlacementType] = []
+
+@export_group("Weight Calculation", "weight_")
+@export var weight_count_type: CountType = CountType.NONE

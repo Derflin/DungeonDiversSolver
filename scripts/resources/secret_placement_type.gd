@@ -5,8 +5,8 @@ extends Resource
 
 enum CountType {
 	NONE = -1,
-	SUM_MAX = 10,
-	SUM_MIN = 20,
+	SUM = 10,
+	SUB = 20,
 }
 
 

@@ -7,6 +7,8 @@ enum CountType {
 	NONE = -1,
 	SUM = 10,
 	SUB = 20,
+	MAX = 30,
+	MIN = 40,
 }
 
 

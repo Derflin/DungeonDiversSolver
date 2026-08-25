@@ -15,7 +15,7 @@ enum NeighbourType {
 
 
 func _init() -> void:
-	count_type = CountType.SUM_MAX
+	count_type = CountType.SUM
 
 
 #TODO: define some functions

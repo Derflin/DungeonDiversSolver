@@ -11,7 +11,7 @@ enum NeighbourType {
 
 @export var check_range_min: int = 1
 @export var check_range_max: int = 1
-@export var neighbor_type: NeighbourType = NeighbourType.ANY
+@export var neighbour_type: NeighbourType = NeighbourType.ANY
 
 
 func _init() -> void:

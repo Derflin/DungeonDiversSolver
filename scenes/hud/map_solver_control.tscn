@@ -1,8 +1,17 @@
 [gd_scene format=3 uid="uid://b65s6cwmlyn4f"]
 
 [ext_resource type="Script" uid="uid://ct41vjd725w25" path="res://scripts/hud/map_solver_control.gd" id="1_cr2eo"]
+[ext_resource type="Texture2D" uid="uid://bev8owoorne83" path="res://assets/icons/map_solver/third_party/kenney/fantasy_ui_borders/panel-transparent-center-029.png" id="2_1fwjt"]
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_l3cfh"]
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_cr2eo"]
+texture = ExtResource("2_1fwjt")
+texture_margin_left = 16.0
+texture_margin_top = 16.0
+texture_margin_right = 16.0
+texture_margin_bottom = 16.0
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+modulate_color = Color(1, 1, 1, 0.24313726)
 
 [node name="MapSolverControl" type="Control" unique_id=195301154]
 texture_filter = 1
@@ -22,47 +31,53 @@ anchor_left = 0.5
 anchor_right = 0.5
 grow_horizontal = 2
 
-[node name="MenuRoot" type="Control" parent="MenuAnchor" unique_id=2025313541 groups=["blocks_radial_menu_input"]]
+[node name="MenuRoot" type="Control" parent="MenuAnchor" unique_id=2025313541]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 grow_horizontal = 2
 
-[node name="MenuPanel" type="PanelContainer" parent="MenuAnchor/MenuRoot" unique_id=1689104075]
+[node name="MenuContents" type="VBoxContainer" parent="MenuAnchor/MenuRoot" unique_id=252195540]
 layout_mode = 0
 offset_right = 32.0
-offset_bottom = 42.0
-theme_override_styles/panel = SubResource("StyleBoxEmpty_l3cfh")
-
-[node name="MenuColumn" type="VBoxContainer" parent="MenuAnchor/MenuRoot/MenuPanel" unique_id=252195540]
-layout_mode = 2
+offset_bottom = 8.0
 size_flags_vertical = 0
 
-[node name="ButtonsRow" type="HBoxContainer" parent="MenuAnchor/MenuRoot/MenuPanel/MenuColumn" unique_id=924984555]
+[node name="MenuPanel" type="PanelContainer" parent="MenuAnchor/MenuRoot/MenuContents" unique_id=1689104075 groups=["blocks_radial_menu_input"]]
+layout_mode = 2
+offset_transform_enabled = true
+offset_transform_position = Vector2(0, -24)
+offset_transform_visual_only = false
+theme_override_styles/panel = SubResource("StyleBoxTexture_cr2eo")
+
+[node name="ButtonsRow" type="HBoxContainer" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel" unique_id=924984555]
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 3
+offset_transform_enabled = true
+offset_transform_position = Vector2(0, 8)
+offset_transform_visual_only = false
 
-[node name="PlacementHintButton" type="MenuButton" parent="MenuAnchor/MenuRoot/MenuPanel/MenuColumn/ButtonsRow" unique_id=574442297]
+[node name="PlacementHintButton" type="MenuButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/ButtonsRow" unique_id=574442297]
 layout_mode = 2
 switch_on_hover = true
 
-[node name="WeightHintButton" type="MenuButton" parent="MenuAnchor/MenuRoot/MenuPanel/MenuColumn/ButtonsRow" unique_id=566857362]
+[node name="WeightHintButton" type="MenuButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/ButtonsRow" unique_id=566857362]
 layout_mode = 2
 switch_on_hover = true
 
-[node name="SolutionShowButton" type="MenuButton" parent="MenuAnchor/MenuRoot/MenuPanel/MenuColumn/ButtonsRow" unique_id=861472696]
+[node name="SolutionShowButton" type="MenuButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/ButtonsRow" unique_id=861472696]
 layout_mode = 2
 switch_on_hover = true
 
-[node name="ModeLabel" type="Label" parent="MenuAnchor/MenuRoot/MenuPanel/MenuColumn" unique_id=564080946]
+[node name="ModeLabel" type="Label" parent="MenuAnchor/MenuRoot/MenuContents" unique_id=564080946]
 visible = false
 layout_mode = 2
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="DescriptionLabel" type="Label" parent="MenuAnchor/MenuRoot/MenuPanel/MenuColumn" unique_id=74600432]
+[node name="DescriptionLabel" type="Label" parent="MenuAnchor/MenuRoot/MenuContents" unique_id=74600432]
 visible = false
 layout_mode = 2
 horizontal_alignment = 1

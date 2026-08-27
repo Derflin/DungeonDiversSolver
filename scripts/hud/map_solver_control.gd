@@ -13,14 +13,14 @@ var _menu_effective_ui_scale: int = 1
 
 
 @onready var menu_root: Control = $MenuAnchor/MenuRoot
-@onready var menu_panel: PanelContainer = $MenuAnchor/MenuRoot/MenuPanel
+@onready var menu_contents: Control = $MenuAnchor/MenuRoot/MenuContents
 
-@onready var menu_button_placement_hint: MenuButton = $MenuAnchor/MenuRoot/MenuPanel/MenuColumn/ButtonsRow/PlacementHintButton
-@onready var menu_button_weight_hint: MenuButton = $MenuAnchor/MenuRoot/MenuPanel/MenuColumn/ButtonsRow/WeightHintButton
-@onready var menu_button_solution_show: MenuButton = $MenuAnchor/MenuRoot/MenuPanel/MenuColumn/ButtonsRow/SolutionShowButton
+@onready var menu_button_placement_hint: MenuButton = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/ButtonsRow/PlacementHintButton
+@onready var menu_button_weight_hint: MenuButton = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/ButtonsRow/WeightHintButton
+@onready var menu_button_solution_show: MenuButton = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/ButtonsRow/SolutionShowButton
 
-@onready var label_solver_mode: Label = $MenuAnchor/MenuRoot/MenuPanel/MenuColumn/ModeLabel
-@onready var label_solver_description: Label = $MenuAnchor/MenuRoot/MenuPanel/MenuColumn/DescriptionLabel
+@onready var label_solver_mode: Label = $MenuAnchor/MenuRoot/MenuContents/ModeLabel
+@onready var label_solver_description: Label = $MenuAnchor/MenuRoot/MenuContents/DescriptionLabel
 
 
 @export_group("Menu Layout", "menu_")
@@ -102,7 +102,7 @@ func _position_menu_root() -> void:
 	
 	# Adjust menu root position
 	menu_root.position = Vector2(
-		-menu_panel.size.x * scale_factor * 0.5,
+		-menu_contents.size.x * scale_factor * 0.5,
 		0,
 	)
 
@@ -125,7 +125,7 @@ func _calculate_ui_scale(total_size_1x: Vector2) -> int:
 
 
 func _get_natural_menu_size() -> Vector2:
-	return menu_panel.get_combined_minimum_size()
+	return menu_contents.get_combined_minimum_size()
 
 
 func _on_control_resized() -> void:

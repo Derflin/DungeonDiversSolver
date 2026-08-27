@@ -1,0 +1,77 @@
+[gd_scene format=3 uid="uid://b65s6cwmlyn4f"]
+
+[ext_resource type="Script" uid="uid://ct41vjd725w25" path="res://scripts/hud/map_solver_control.gd" id="1_cr2eo"]
+[ext_resource type="Texture2D" uid="uid://c0i276rf1dcrl" path="res://assets/icons/map_solver/third_party/kenney/fantasy_ui_borders/panel-029.png" id="2_1fwjt"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_cr2eo"]
+texture = ExtResource("2_1fwjt")
+texture_margin_left = 16.0
+texture_margin_top = 16.0
+texture_margin_right = 16.0
+texture_margin_bottom = 16.0
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+
+[node name="MapSolverControl" type="Control" unique_id=195301154]
+texture_filter = 1
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_cr2eo")
+
+[node name="MenuAnchor" type="Control" parent="." unique_id=1117812363]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+grow_horizontal = 2
+
+[node name="MenuRoot" type="Control" parent="MenuAnchor" unique_id=2025313541]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+grow_horizontal = 2
+
+[node name="MenuContents" type="VBoxContainer" parent="MenuAnchor/MenuRoot" unique_id=252195540]
+layout_mode = 0
+offset_right = 32.0
+offset_bottom = 8.0
+size_flags_vertical = 0
+
+[node name="MenuPanel" type="PanelContainer" parent="MenuAnchor/MenuRoot/MenuContents" unique_id=1689104075 groups=["blocks_radial_menu_input"]]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxTexture_cr2eo")
+
+[node name="ButtonsRow" type="HBoxContainer" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel" unique_id=924984555]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 3
+
+[node name="PlacementHintButton" type="MenuButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/ButtonsRow" unique_id=574442297]
+layout_mode = 2
+switch_on_hover = true
+
+[node name="WeightHintButton" type="MenuButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/ButtonsRow" unique_id=566857362]
+layout_mode = 2
+switch_on_hover = true
+
+[node name="SolutionShowButton" type="MenuButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/ButtonsRow" unique_id=861472696]
+layout_mode = 2
+switch_on_hover = true
+
+[node name="ModeLabel" type="Label" parent="MenuAnchor/MenuRoot/MenuContents" unique_id=564080946]
+visible = false
+layout_mode = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DescriptionLabel" type="Label" parent="MenuAnchor/MenuRoot/MenuContents" unique_id=74600432]
+visible = false
+layout_mode = 2
+horizontal_alignment = 1
+vertical_alignment = 1

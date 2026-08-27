@@ -222,6 +222,13 @@ func has_secret_type_by_id(secret_id: String) -> bool:
 	return secret_type != null and secret_type.id == secret_id 
 
 
+func get_special_type_kind() -> RoomSpecialType.Kind:
+	if special_type == null:
+		return RoomSpecialType.Kind.NONE
+	
+	return special_type.get_kind()
+
+
 func set_special_type(special_kind: RoomSpecialType.Kind) -> bool:
 	if (special_kind == null or special_kind == RoomSpecialType.Kind.NONE) and special_type == null:
 		return false
@@ -270,4 +277,13 @@ func set_secret_type(secret_kind: RoomSecretType.Kind) -> bool:
 	
 	return false
 
-#TODO: remember to add constraints - if secret is set, remove connection + barricades + special, if any of them is changed, remove special
+
+func has_specified_room_type(room_type: RoomType) -> bool:
+	if room_type is RoomCorridorType:
+		return corridor_type != null and corridor_type == room_type
+	elif room_type is RoomSpecialType:
+		return special_type != null and special_type == room_type
+	elif room_type is RoomSecretType:
+		return secret_type != null and secret_type == room_type
+
+	return false

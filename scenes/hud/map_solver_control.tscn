@@ -1,0 +1,69 @@
+[gd_scene format=3 uid="uid://b65s6cwmlyn4f"]
+
+[ext_resource type="Script" uid="uid://ct41vjd725w25" path="res://scripts/hud/map_solver_control.gd" id="1_cr2eo"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_l3cfh"]
+
+[node name="MapSolverControl" type="Control" unique_id=195301154]
+texture_filter = 1
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_cr2eo")
+
+[node name="MenuAnchor" type="Control" parent="." unique_id=1117812363]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+grow_horizontal = 2
+
+[node name="MenuRoot" type="Control" parent="MenuAnchor" unique_id=2025313541 groups=["blocks_radial_menu_input"]]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+grow_horizontal = 2
+
+[node name="MenuPanel" type="PanelContainer" parent="MenuAnchor/MenuRoot" unique_id=1689104075]
+layout_mode = 0
+offset_right = 32.0
+offset_bottom = 42.0
+theme_override_styles/panel = SubResource("StyleBoxEmpty_l3cfh")
+
+[node name="MenuColumn" type="VBoxContainer" parent="MenuAnchor/MenuRoot/MenuPanel" unique_id=252195540]
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="ButtonsRow" type="HBoxContainer" parent="MenuAnchor/MenuRoot/MenuPanel/MenuColumn" unique_id=924984555]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 3
+
+[node name="PlacementHintButton" type="MenuButton" parent="MenuAnchor/MenuRoot/MenuPanel/MenuColumn/ButtonsRow" unique_id=574442297]
+layout_mode = 2
+switch_on_hover = true
+
+[node name="WeightHintButton" type="MenuButton" parent="MenuAnchor/MenuRoot/MenuPanel/MenuColumn/ButtonsRow" unique_id=566857362]
+layout_mode = 2
+switch_on_hover = true
+
+[node name="SolutionShowButton" type="MenuButton" parent="MenuAnchor/MenuRoot/MenuPanel/MenuColumn/ButtonsRow" unique_id=861472696]
+layout_mode = 2
+switch_on_hover = true
+
+[node name="ModeLabel" type="Label" parent="MenuAnchor/MenuRoot/MenuPanel/MenuColumn" unique_id=564080946]
+visible = false
+layout_mode = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DescriptionLabel" type="Label" parent="MenuAnchor/MenuRoot/MenuPanel/MenuColumn" unique_id=74600432]
+visible = false
+layout_mode = 2
+horizontal_alignment = 1
+vertical_alignment = 1

@@ -4,7 +4,17 @@ extends Node
 signal map_secrets_count_current_changed(kind: RoomSecretType.Kind, value: int)
 
 
+enum MapSolverState {
+	NONE,
+	PLACEMENT_HINT,
+	WEIGHT_HINT,
+	SOLUTION_SHOW,
+}
+
+
 var map_secrets_count_current: Dictionary[RoomSecretType.Kind, int]
+var map_solver_state: MapSolverState = MapSolverState.NONE
+var map_solver_secret_kind: RoomSecretType.Kind = RoomSecretType.Kind.NONE
 
 
 func _ready() -> void:

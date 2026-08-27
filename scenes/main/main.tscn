@@ -2,6 +2,7 @@
 
 [ext_resource type="PackedScene" uid="uid://byxiaffshj4eo" path="res://scenes/map/map_display.tscn" id="1_hyk8p"]
 [ext_resource type="PackedScene" uid="uid://q8745vdh26mn" path="res://scenes/hud/map_parameters_control.tscn" id="2_iuonh"]
+[ext_resource type="PackedScene" uid="uid://b65s6cwmlyn4f" path="res://scenes/hud/map_solver_control.tscn" id="3_k2fmo"]
 
 [node name="Main" type="Node" unique_id=107272976]
 
@@ -26,6 +27,9 @@ grow_vertical = 2
 mouse_filter = 2
 
 [node name="MapParametersControl" parent="HudLayer/HudRoot" unique_id=1239913164 instance=ExtResource("2_iuonh")]
+layout_mode = 1
+
+[node name="MapSolverControl" parent="HudLayer/HudRoot" unique_id=195301154 instance=ExtResource("3_k2fmo")]
 layout_mode = 1
 
 [node name="PauseLayer" type="CanvasLayer" parent="." unique_id=621645473]

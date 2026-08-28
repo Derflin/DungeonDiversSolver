@@ -16,6 +16,7 @@ var _animation: Tween
 
 
 @onready var submenu_panel: PanelContainer = %SubmenuPanel
+@onready var scroll_container: ScrollContainer = %ScrollContainer
 @onready var options_list: VBoxContainer = %OptionsList
 
 
@@ -35,6 +36,10 @@ var animation_close_duration: float = 0.12
 @export_group("Selection", "selection_")
 @export var copy_selected_text_to_button: bool = false
 @export var copy_selected_icon_to_button: bool = false
+
+@export_group("Scroll Container", "scroll_")
+@export var scroll_bottom_screen_edge_offset: int = 20
+@export var scroll_bar_vertical_width: float = 3.0
 
 
 func _ready() -> void:
@@ -60,7 +65,36 @@ func _update_submenu_geometry() -> void:
 	# If no animation is active, then set the submenu panel position directly
 	if _animation == null or not _animation.is_valid():
 		submenu_panel.position = _submenu_rest_position
+		
+	# Initialize scroll container
+	call_deferred("_initialize_scroll_container")
 
+
+func _initialize_scroll_container() -> void:
+	# Get effective container scale
+	var effective_scale: Vector2 = get_global_transform().get_scale()
+	
+	# Calculate scroll container min height based on the option list contents and viewport height
+	var scroll_container_max_height := (get_viewport_rect().size.y - _submenu_rest_position.y) / effective_scale.y - scroll_bottom_screen_edge_offset
+	var options_list_height := options_list.size.y
+	var scroll_container_minimum_height: float = min(scroll_container_max_height, options_list_height)
+	
+	# Assign calculated minimum height inside the scroll container
+	scroll_container.custom_minimum_size.y = scroll_container_minimum_height
+	
+	# Hide vertical scroll when it's not necessary to display all the options list, otherwise restore it's base parameters
+	var vertical_scrollbar: VScrollBar = scroll_container.get_v_scroll_bar()
+	if scroll_container_minimum_height > options_list_height:
+		# Set custom vertical scroll bar width
+		vertical_scrollbar.custom_minimum_size.x = 0.0
+		vertical_scrollbar.custom_maximum_size.x = 0.0
+	else:
+		# Set custom veritcal scroll bar width
+		vertical_scrollbar.custom_minimum_size.x = scroll_bar_vertical_width
+		vertical_scrollbar.custom_maximum_size.x = scroll_bar_vertical_width
+	
+	# Force resetting size for submenu panel to adjust it to the changed vertical scrollbar
+	submenu_panel.reset_size()
 
 func clear_options() -> void:
 	# Remove and free every child node listed inside options list

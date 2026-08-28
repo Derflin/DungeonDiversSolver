@@ -67,6 +67,7 @@ func _setup_menu_button(menu: MenuButton, menu_type: GameState.MapSolverState) -
 		var secret_room_type := GameData.room_secret_types.get_type(secret_room_kind)
 		
 		popup.add_item(secret_room_type.get_display_name(), secret_room_kind as int)
+		popup.set_item_icon(popup.item_count - 1, secret_room_type.get_static_texture())
 	
 	# Connect menu button toggled state to function and add menu type as it's parameter
 	menu.toggled.connect(

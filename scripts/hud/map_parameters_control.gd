@@ -49,6 +49,9 @@ func _ready() -> void:
 	
 	# Refresh drawer layout after initializing all the map parameter entries 
 	call_deferred("_refresh_drawer_layout")
+	
+	# Attach signal listener when other submenu opens, to close this submenu if opened
+	GameState.map_solver_submenu_opened.connect(_on_other_menu_submenu_opened)
 
 
 func _populate_parameter_entries() -> void:
@@ -146,6 +149,9 @@ func _refresh_drawer_layout() -> void:
 
 func _on_drawer_toggle_button_pressed() -> void:
 	_set_drawer_open(not _drawer_open)
+	
+	# Emit signal that map parameters submenu was opened
+	GameState.map_parameters_submenu_opened.emit()
 
 
 func _set_drawer_open(open: bool, instant: bool = false) -> void:
@@ -335,3 +341,17 @@ func _calculate_collapsed_visible_width() -> float:
 	
 	# Return calculated collapsed width with added drawer collapsed width offset to it
 	return collapsed_width + drawer_collapsed_width_offset
+
+
+func open_drawer() -> void:
+	if not _drawer_open:
+		_set_drawer_open(not _drawer_open)
+
+
+func close_drawer() -> void:
+	if _drawer_open:
+		_set_drawer_open(not _drawer_open)
+
+
+func _on_other_menu_submenu_opened() -> void:
+	close_drawer()

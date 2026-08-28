@@ -52,6 +52,9 @@ func _ready() -> void:
 	
 	# Refresh menu layout after initializing all the map parameter entries 
 	call_deferred("_refresh_menu_layout")
+	
+	# Attach signal listener when other submenu opens, to close this submenu if opened
+	GameState.map_parameters_submenu_opened.connect(_on_other_menu_submenu_opened)
 
 
 func _setup_dropdowns() -> void:
@@ -83,12 +86,16 @@ func _populate_dropdown(dropdown_instance: MapSolverDropdown) -> void:
 
 
 func _on_dropdown_button_toggled(toggle_on: bool, dropdown_instance: MapSolverDropdown, dropdown_state: GameState.MapSolverState) -> void:
+	# Update button text
 	if toggle_on:
 		if dropdown_state in DROPDOWNS_DISPLAY_TEXTS_OPENED:
 			dropdown_instance.text = DROPDOWNS_DISPLAY_TEXTS_OPENED[dropdown_state]
 	if not toggle_on:
 		if dropdown_state in DROPDOWNS_DISPLAY_TEXTS_CLOSED:
-			dropdown_instance.text = DROPDOWNS_DISPLAY_TEXTS_CLOSED[dropdown_state] 
+			dropdown_instance.text = DROPDOWNS_DISPLAY_TEXTS_CLOSED[dropdown_state]
+	
+	# Emit signal that map solver submenu was opened
+	GameState.map_solver_submenu_opened.emit()
 
 
 func _on_dropdown_option_pressed(option_id, dropdown_state: GameState.MapSolverState) -> void:
@@ -152,3 +159,9 @@ func _get_natural_menu_size() -> Vector2:
 
 func _on_control_resized() -> void:
 	call_deferred("_refresh_menu_layout")
+
+
+func _on_other_menu_submenu_opened() -> void:
+	for dropdown_instance in _dropdowns:
+		if dropdown_instance.is_dropdown_open():
+			dropdown_instance.close_dropdown()

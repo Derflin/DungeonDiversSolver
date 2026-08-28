@@ -2,6 +2,8 @@ extends Node
 
 
 signal map_secrets_count_current_changed(kind: RoomSecretType.Kind, value: int)
+signal map_solver_submenu_opened()
+signal map_parameters_submenu_opened()
 
 
 enum MapSolverState {

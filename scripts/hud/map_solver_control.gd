@@ -15,9 +15,9 @@ var _menu_effective_ui_scale: int = 1
 @onready var menu_root: Control = $MenuAnchor/MenuRoot
 @onready var menu_contents: Control = $MenuAnchor/MenuRoot/MenuContents
 
-@onready var menu_button_placement_hint: MenuButton = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/ButtonsRow/PlacementHintButton
-@onready var menu_button_weight_hint: MenuButton = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/ButtonsRow/WeightHintButton
-@onready var menu_button_solution_show: MenuButton = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/ButtonsRow/SolutionShowButton
+@onready var menu_button_placement_hint: MenuButton = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow/PlacementHintButton
+@onready var menu_button_weight_hint: MenuButton = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow/WeightHintButton
+@onready var menu_button_solution_show: MenuButton = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow/SolutionShowButton
 
 @onready var label_solver_mode: Label = $MenuAnchor/MenuRoot/MenuContents/ModeLabel
 @onready var label_solver_description: Label = $MenuAnchor/MenuRoot/MenuContents/DescriptionLabel

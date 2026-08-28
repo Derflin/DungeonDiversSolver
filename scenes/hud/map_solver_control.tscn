@@ -4,6 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://bev8owoorne83" path="res://assets/icons/map_solver/third_party/kenney/fantasy_ui_borders/panel-transparent-center-029.png" id="2_1fwjt"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_cr2eo"]
+content_margin_bottom = 8.0
 texture = ExtResource("2_1fwjt")
 texture_margin_left = 16.0
 texture_margin_top = 16.0
@@ -11,7 +12,7 @@ texture_margin_right = 16.0
 texture_margin_bottom = 16.0
 axis_stretch_horizontal = 1
 axis_stretch_vertical = 1
-modulate_color = Color(1, 1, 1, 0.24313726)
+modulate_color = Color(0.45882353, 0.34509805, 0.27450982, 1)
 
 [node name="MapSolverControl" type="Control" unique_id=195301154]
 texture_filter = 1
@@ -51,23 +52,30 @@ offset_transform_position = Vector2(0, -24)
 offset_transform_visual_only = false
 theme_override_styles/panel = SubResource("StyleBoxTexture_cr2eo")
 
-[node name="ButtonsRow" type="HBoxContainer" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel" unique_id=924984555]
+[node name="MarginContainer" type="MarginContainer" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel" unique_id=448129323]
+layout_mode = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 2
+
+[node name="ButtonsRow" type="HBoxContainer" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer" unique_id=924984555]
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 3
 offset_transform_enabled = true
-offset_transform_position = Vector2(0, 8)
+offset_transform_position = Vector2(0, 6)
 offset_transform_visual_only = false
+theme_override_constants/separation = 4
 
-[node name="PlacementHintButton" type="MenuButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/ButtonsRow" unique_id=574442297]
+[node name="PlacementHintButton" type="MenuButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow" unique_id=574442297]
 layout_mode = 2
 switch_on_hover = true
 
-[node name="WeightHintButton" type="MenuButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/ButtonsRow" unique_id=566857362]
+[node name="WeightHintButton" type="MenuButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow" unique_id=566857362]
 layout_mode = 2
 switch_on_hover = true
 
-[node name="SolutionShowButton" type="MenuButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/ButtonsRow" unique_id=861472696]
+[node name="SolutionShowButton" type="MenuButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow" unique_id=861472696]
 layout_mode = 2
 switch_on_hover = true
 

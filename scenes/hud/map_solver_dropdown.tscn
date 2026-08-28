@@ -1,0 +1,29 @@
+[gd_scene format=3 uid="uid://dvexut8dssl25"]
+
+[ext_resource type="Script" uid="uid://pf2i81y8emkx" path="res://scripts/hud/map_solver_dropdown.gd" id="1_peo78"]
+
+[node name="MapSolverDropdown" type="Button" unique_id=953268487]
+offset_right = 8.0
+offset_bottom = 8.0
+toggle_mode = true
+icon_alignment = 1
+script = ExtResource("1_peo78")
+submenu_gap = 0.0
+
+[node name="SubmenuPanel" type="PanelContainer" parent="." unique_id=591407929]
+unique_name_in_owner = true
+visible = false
+z_index = 5
+layout_mode = 0
+
+[node name="MarginContainer" type="MarginContainer" parent="SubmenuPanel" unique_id=1261321440]
+layout_mode = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="OptionsList" type="VBoxContainer" parent="SubmenuPanel/MarginContainer" unique_id=976183116]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 0

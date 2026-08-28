@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://ct41vjd725w25" path="res://scripts/hud/map_solver_control.gd" id="1_cr2eo"]
 [ext_resource type="Texture2D" uid="uid://bev8owoorne83" path="res://assets/icons/map_solver/third_party/kenney/fantasy_ui_borders/panel-transparent-center-029.png" id="2_1fwjt"]
+[ext_resource type="PackedScene" uid="uid://dvexut8dssl25" path="res://scenes/hud/map_solver_dropdown.tscn" id="3_8tv3e"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_cr2eo"]
 content_margin_bottom = 8.0
@@ -67,13 +68,13 @@ offset_transform_position = Vector2(0, 6)
 offset_transform_visual_only = false
 theme_override_constants/separation = 4
 
-[node name="PlacementHintButton" type="MenuButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow" unique_id=574442297]
+[node name="PlacementHintButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow" unique_id=953268487 instance=ExtResource("3_8tv3e")]
 layout_mode = 2
 
-[node name="WeightHintButton" type="MenuButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow" unique_id=566857362]
+[node name="WeightHintButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow" unique_id=1142679986 instance=ExtResource("3_8tv3e")]
 layout_mode = 2
 
-[node name="SolutionShowButton" type="MenuButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow" unique_id=861472696]
+[node name="SolutionShowButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow" unique_id=1173696625 instance=ExtResource("3_8tv3e")]
 layout_mode = 2
 
 [node name="ModeLabel" type="Label" parent="MenuAnchor/MenuRoot/MenuContents" unique_id=564080946]

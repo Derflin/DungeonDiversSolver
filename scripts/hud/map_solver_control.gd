@@ -2,12 +2,12 @@ class_name MapSolverControl
 extends Control
 
 
-const MENU_BUTTON_DISPLAY_TEXTS_CLOSED = {
+const DROPDOWNS_DISPLAY_TEXTS_CLOSED = {
 	GameState.MapSolverState.PLACEMENT_HINT: "Hint Placement ▼",
 	GameState.MapSolverState.WEIGHT_HINT: "Hint Weight ▼",
 	GameState.MapSolverState.SOLUTION_SHOW: "Show Solution ▼",
 }
-const MENU_BUTTON_DISPLAY_TEXTS_OPENED = {
+const DROPDOWNS_DISPLAY_TEXTS_OPENED = {
 	GameState.MapSolverState.PLACEMENT_HINT: "Hint Placement ▲",
 	GameState.MapSolverState.WEIGHT_HINT: "Hint Weight ▲",
 	GameState.MapSolverState.SOLUTION_SHOW: "Show Solution ▲",
@@ -15,14 +15,15 @@ const MENU_BUTTON_DISPLAY_TEXTS_OPENED = {
 
 
 var _menu_effective_ui_scale: int = 1
+var _dropdowns: Dictionary[MapSolverDropdown, GameState.MapSolverState]
 
 
 @onready var menu_root: Control = $MenuAnchor/MenuRoot
 @onready var menu_contents: Control = $MenuAnchor/MenuRoot/MenuContents
 
-@onready var menu_button_placement_hint: MenuButton = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow/PlacementHintButton
-@onready var menu_button_weight_hint: MenuButton = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow/WeightHintButton
-@onready var menu_button_solution_show: MenuButton = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow/SolutionShowButton
+@onready var menu_button_placement_hint: MapSolverDropdown = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow/PlacementHintButton
+@onready var menu_button_weight_hint: MapSolverDropdown = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow/WeightHintButton
+@onready var menu_button_solution_show: MapSolverDropdown = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow/SolutionShowButton
 
 @onready var label_solver_mode: Label = $MenuAnchor/MenuRoot/MenuContents/ModeLabel
 @onready var label_solver_description: Label = $MenuAnchor/MenuRoot/MenuContents/DescriptionLabel
@@ -38,10 +39,13 @@ var menu_minimum_ui_scale: int = 2
 
 
 func _ready() -> void:
-	# Populate menu buttons
-	_setup_menu_button(menu_button_placement_hint, GameState.MapSolverState.PLACEMENT_HINT)
-	_setup_menu_button(menu_button_weight_hint, GameState.MapSolverState.WEIGHT_HINT)
-	_setup_menu_button(menu_button_solution_show, GameState.MapSolverState.SOLUTION_SHOW)
+	# Initialize dropdown instances
+	_dropdowns = {
+		menu_button_placement_hint: GameState.MapSolverState.PLACEMENT_HINT,
+		menu_button_weight_hint: GameState.MapSolverState.WEIGHT_HINT,
+		menu_button_solution_show: GameState.MapSolverState.SOLUTION_SHOW,
+	}
+	_setup_dropdowns()
 	
 	# Attach node resized signal to handle resizing and refreshing menu layout
 	resized.connect(_on_control_resized)
@@ -50,52 +54,46 @@ func _ready() -> void:
 	call_deferred("_refresh_menu_layout")
 
 
-func _setup_menu_button(menu: MenuButton, menu_type: GameState.MapSolverState) -> void:
-	# Initialize button display text
-	if menu_type in MENU_BUTTON_DISPLAY_TEXTS_CLOSED:
-		menu.text = MENU_BUTTON_DISPLAY_TEXTS_CLOSED[menu_type]
+func _setup_dropdowns() -> void:
+	for dropdown_instance in _dropdowns:
+		var dropdown_state := _dropdowns[dropdown_instance]
+		
+		# Initialize dropdown button text
+		if dropdown_state in DROPDOWNS_DISPLAY_TEXTS_CLOSED:
+			dropdown_instance.text = DROPDOWNS_DISPLAY_TEXTS_CLOSED[dropdown_state]
+		
+		# Populate dropdown options
+		_populate_dropdown(dropdown_instance)
+		
+		# Connect signals dropdown toggled and option selected signals and add relevant parameters to them
+		dropdown_instance.toggled.connect(_on_dropdown_button_toggled.bind(dropdown_instance, dropdown_state))
+		dropdown_instance.option_selected.connect(_on_dropdown_option_pressed.bind(dropdown_state))
+
+
+func _populate_dropdown(dropdown_instance: MapSolverDropdown) -> void:
+	# Make sure that a dropdown doesn't have any other options initialized
+	dropdown_instance.clear_options()
 	
-	# Get menu button popup
-	var popup := menu.get_popup()
-	
-	# Clear exisiting options in the popup menu
-	popup.clear()
-	
-	# Populate popup menu with data about secret room types
+	# Populate dropdown options with data about secret room types
 	var secret_room_kinds := GameData.room_secret_types.get_all_kinds()
 	for secret_room_kind in secret_room_kinds:
 		var secret_room_type := GameData.room_secret_types.get_type(secret_room_kind)
 		
-		popup.add_item(secret_room_type.get_display_name(), secret_room_kind as int)
-		popup.set_item_icon(popup.item_count - 1, secret_room_type.get_static_texture())
-	
-	# Connect menu button toggled state to function and add menu type as it's parameter
-	menu.toggled.connect(
-		_on_menu_button_toggled.bind(menu, menu_type)
-	)
-	
-	# Connect popup menu option pressed to function and add menu type as it's parameter
-	popup.id_pressed.connect(
-		_on_menu_button_option_pressed.bind(menu_type)
-	)
+		dropdown_instance.add_option(secret_room_kind as int, secret_room_type.get_display_name(), secret_room_type.get_static_texture())
 
 
-func _on_menu_button_toggled(toggle_on: bool, menu_button: MenuButton, menu_type: GameState.MapSolverState) -> void:
-	print("========================")
-	print(toggle_on)
-	print(menu_button)
-	print(menu_type)
+func _on_dropdown_button_toggled(toggle_on: bool, dropdown_instance: MapSolverDropdown, dropdown_state: GameState.MapSolverState) -> void:
 	if toggle_on:
-		if menu_type in MENU_BUTTON_DISPLAY_TEXTS_OPENED:
-			menu_button.text = MENU_BUTTON_DISPLAY_TEXTS_OPENED[menu_type]
+		if dropdown_state in DROPDOWNS_DISPLAY_TEXTS_OPENED:
+			dropdown_instance.text = DROPDOWNS_DISPLAY_TEXTS_OPENED[dropdown_state]
 	if not toggle_on:
-		if menu_type in MENU_BUTTON_DISPLAY_TEXTS_CLOSED:
-			menu_button.text = MENU_BUTTON_DISPLAY_TEXTS_CLOSED[menu_type] 
+		if dropdown_state in DROPDOWNS_DISPLAY_TEXTS_CLOSED:
+			dropdown_instance.text = DROPDOWNS_DISPLAY_TEXTS_CLOSED[dropdown_state] 
 
 
-func _on_menu_button_option_pressed(option_id: int, menu_type: GameState.MapSolverState) -> void:
+func _on_dropdown_option_pressed(option_id, dropdown_state: GameState.MapSolverState) -> void:
 	#TODO: add some signals inside GameState and connect them here
-	print("Menu: ", menu_type)
+	print("Menu: ", dropdown_state)
 	print("Option: ", option_id)
 
 

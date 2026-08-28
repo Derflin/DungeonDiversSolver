@@ -2,10 +2,15 @@ class_name MapSolverControl
 extends Control
 
 
-const MENU_BUTTON_DISPLAY_TEXTS = {
-	GameState.MapSolverState.PLACEMENT_HINT: "Hint Placement",
-	GameState.MapSolverState.WEIGHT_HINT: "Hint Weight",
-	GameState.MapSolverState.SOLUTION_SHOW: "Show Solution",
+const MENU_BUTTON_DISPLAY_TEXTS_CLOSED = {
+	GameState.MapSolverState.PLACEMENT_HINT: "Hint Placement ▼",
+	GameState.MapSolverState.WEIGHT_HINT: "Hint Weight ▼",
+	GameState.MapSolverState.SOLUTION_SHOW: "Show Solution ▼",
+}
+const MENU_BUTTON_DISPLAY_TEXTS_OPENED = {
+	GameState.MapSolverState.PLACEMENT_HINT: "Hint Placement ▲",
+	GameState.MapSolverState.WEIGHT_HINT: "Hint Weight ▲",
+	GameState.MapSolverState.SOLUTION_SHOW: "Show Solution ▲",
 }
 
 
@@ -47,8 +52,8 @@ func _ready() -> void:
 
 func _setup_menu_button(menu: MenuButton, menu_type: GameState.MapSolverState) -> void:
 	# Initialize button display text
-	if menu_type in MENU_BUTTON_DISPLAY_TEXTS:
-		menu.text = MENU_BUTTON_DISPLAY_TEXTS[menu_type]
+	if menu_type in MENU_BUTTON_DISPLAY_TEXTS_CLOSED:
+		menu.text = MENU_BUTTON_DISPLAY_TEXTS_CLOSED[menu_type]
 	
 	# Get menu button popup
 	var popup := menu.get_popup()
@@ -63,10 +68,28 @@ func _setup_menu_button(menu: MenuButton, menu_type: GameState.MapSolverState) -
 		
 		popup.add_item(secret_room_type.get_display_name(), secret_room_kind as int)
 	
+	# Connect menu button toggled state to function and add menu type as it's parameter
+	menu.toggled.connect(
+		_on_menu_button_toggled.bind(menu, menu_type)
+	)
+	
 	# Connect popup menu option pressed to function and add menu type as it's parameter
 	popup.id_pressed.connect(
 		_on_menu_button_option_pressed.bind(menu_type)
 	)
+
+
+func _on_menu_button_toggled(toggle_on: bool, menu_button: MenuButton, menu_type: GameState.MapSolverState) -> void:
+	print("========================")
+	print(toggle_on)
+	print(menu_button)
+	print(menu_type)
+	if toggle_on:
+		if menu_type in MENU_BUTTON_DISPLAY_TEXTS_OPENED:
+			menu_button.text = MENU_BUTTON_DISPLAY_TEXTS_OPENED[menu_type]
+	if not toggle_on:
+		if menu_type in MENU_BUTTON_DISPLAY_TEXTS_CLOSED:
+			menu_button.text = MENU_BUTTON_DISPLAY_TEXTS_CLOSED[menu_type] 
 
 
 func _on_menu_button_option_pressed(option_id: int, menu_type: GameState.MapSolverState) -> void:

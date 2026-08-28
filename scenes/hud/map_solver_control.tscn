@@ -69,15 +69,12 @@ theme_override_constants/separation = 4
 
 [node name="PlacementHintButton" type="MenuButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow" unique_id=574442297]
 layout_mode = 2
-switch_on_hover = true
 
 [node name="WeightHintButton" type="MenuButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow" unique_id=566857362]
 layout_mode = 2
-switch_on_hover = true
 
 [node name="SolutionShowButton" type="MenuButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow" unique_id=861472696]
 layout_mode = 2
-switch_on_hover = true
 
 [node name="ModeLabel" type="Label" parent="MenuAnchor/MenuRoot/MenuContents" unique_id=564080946]
 visible = false

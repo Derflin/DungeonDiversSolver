@@ -2,10 +2,14 @@ extends Node
 
 
 signal map_secrets_count_current_changed(kind: RoomSecretType.Kind, value: int)
+
 @warning_ignore("unused_signal")
 signal map_solver_submenu_opened()
 @warning_ignore("unused_signal")
 signal map_parameters_submenu_opened()
+
+signal map_solver_state_change_triggered(state: MapSolverState, secret_room_kind: RoomSecretType.Kind)
+signal map_solver_state_changed()
 
 
 enum MapSolverState {
@@ -32,3 +36,16 @@ func set_map_secrets_count_current(kind: RoomSecretType.Kind, value: int) -> voi
 	if kind not in map_secrets_count_current or map_secrets_count_current[kind] != value:
 		map_secrets_count_current[kind] = value
 		map_secrets_count_current_changed.emit(kind, value)
+
+
+func _on_map_solver_state_change_triggered(state: MapSolverState, secret_room_kind: RoomSecretType.Kind) -> void:
+	# Reset map solver state if same map solver parameter were passed, otherwise save them as current ones
+	if map_solver_state == state and map_solver_secret_kind == secret_room_kind:
+		map_solver_state = MapSolverState.NONE
+		map_solver_secret_kind = RoomSecretType.Kind.NONE
+	else:
+		map_solver_state = state
+		map_solver_secret_kind = secret_room_kind
+	
+	# Emit signal that map solver state has been changed
+	map_solver_state_changed.emit()

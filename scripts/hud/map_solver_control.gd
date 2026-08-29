@@ -1,17 +1,15 @@
 class_name MapSolverControl
 extends Control
 
+const MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS = {
+	GameState.MapSolverState.PLACEMENT_HINT: "Hint Placement",
+	GameState.MapSolverState.WEIGHT_HINT: "Hint Weight",
+	GameState.MapSolverState.SOLUTION_SHOW: "Show Solution",
+}
+const DROPDOWNS_DISPLAY_TEXTS_CLOSED = "▼"
 
-const DROPDOWNS_DISPLAY_TEXTS_CLOSED = {
-	GameState.MapSolverState.PLACEMENT_HINT: "Hint Placement ▼",
-	GameState.MapSolverState.WEIGHT_HINT: "Hint Weight ▼",
-	GameState.MapSolverState.SOLUTION_SHOW: "Show Solution ▼",
-}
-const DROPDOWNS_DISPLAY_TEXTS_OPENED = {
-	GameState.MapSolverState.PLACEMENT_HINT: "Hint Placement ▲",
-	GameState.MapSolverState.WEIGHT_HINT: "Hint Weight ▲",
-	GameState.MapSolverState.SOLUTION_SHOW: "Show Solution ▲",
-}
+const DROPDOWNS_DISPLAY_TEXTS_OPENED = "▲"
+
 
 
 var _menu_effective_ui_scale: int = 1
@@ -25,7 +23,10 @@ var _dropdowns: Dictionary[MapSolverDropdown, GameState.MapSolverState]
 @onready var menu_button_weight_hint: MapSolverDropdown = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow/WeightHintButton
 @onready var menu_button_solution_show: MapSolverDropdown = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow/SolutionShowButton
 
-@onready var label_solver_mode: Label = $MenuAnchor/MenuRoot/MenuContents/ModeLabel
+@onready var solver_state_panel: PanelContainer = $MenuAnchor/MenuRoot/MenuContents/StatePanel
+@onready var solver_state_label: Label = $MenuAnchor/MenuRoot/MenuContents/StatePanel/MarginContainer/StateContainer/StateLabel
+@onready var solver_state_icon: TextureRect = $MenuAnchor/MenuRoot/MenuContents/StatePanel/MarginContainer/StateContainer/StateIcon
+@onready var solver_state_room_type_label: Label = $MenuAnchor/MenuRoot/MenuContents/StatePanel/MarginContainer/StateContainer/StateRoomTypeLabel
 @onready var label_solver_description: Label = $MenuAnchor/MenuRoot/MenuContents/DescriptionLabel
 
 
@@ -55,6 +56,9 @@ func _ready() -> void:
 	
 	# Attach signal listener when other submenu opens, to close this submenu if opened
 	GameState.map_parameters_submenu_opened.connect(_on_other_menu_submenu_opened)
+	
+	# Attach signal listener when the map solver state changes
+	GameState.map_solver_state_changed.connect(_on_game_state_map_solver_state_changed)
 
 
 func _setup_dropdowns() -> void:
@@ -62,8 +66,8 @@ func _setup_dropdowns() -> void:
 		var dropdown_state := _dropdowns[dropdown_instance]
 		
 		# Initialize dropdown button text
-		if dropdown_state in DROPDOWNS_DISPLAY_TEXTS_CLOSED:
-			dropdown_instance.text = DROPDOWNS_DISPLAY_TEXTS_CLOSED[dropdown_state]
+		if dropdown_state in MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS:
+			dropdown_instance.text = " ".join([MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS[dropdown_state], DROPDOWNS_DISPLAY_TEXTS_CLOSED])
 		
 		# Populate dropdown options
 		_populate_dropdown(dropdown_instance)
@@ -88,20 +92,20 @@ func _populate_dropdown(dropdown_instance: MapSolverDropdown) -> void:
 func _on_dropdown_button_toggled(toggle_on: bool, dropdown_instance: MapSolverDropdown, dropdown_state: GameState.MapSolverState) -> void:
 	# Update button text
 	if toggle_on:
-		if dropdown_state in DROPDOWNS_DISPLAY_TEXTS_OPENED:
-			dropdown_instance.text = DROPDOWNS_DISPLAY_TEXTS_OPENED[dropdown_state]
+		if dropdown_state in MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS:
+			dropdown_instance.text = " ".join([MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS[dropdown_state], DROPDOWNS_DISPLAY_TEXTS_OPENED])
 	if not toggle_on:
-		if dropdown_state in DROPDOWNS_DISPLAY_TEXTS_CLOSED:
-			dropdown_instance.text = DROPDOWNS_DISPLAY_TEXTS_CLOSED[dropdown_state]
+		if dropdown_state in MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS:
+			dropdown_instance.text = " ".join([MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS[dropdown_state], DROPDOWNS_DISPLAY_TEXTS_CLOSED])
 	
 	# Emit signal that map solver submenu was opened
 	GameState.map_solver_submenu_opened.emit()
 
 
-func _on_dropdown_option_pressed(option_id, dropdown_state: GameState.MapSolverState) -> void:
-	#TODO: add some signals inside GameState and connect them here
-	print("Menu: ", dropdown_state)
-	print("Option: ", option_id)
+func _on_dropdown_option_pressed(option_id, map_solver_state: GameState.MapSolverState) -> void:
+	# Emit signal that map solver state was triggered to be changed
+	var option_secret_room_kind := option_id as RoomSecretType.Kind
+	GameState.map_solver_state_change_triggered.emit(map_solver_state, option_secret_room_kind)
 
 
 func _refresh_menu_layout() -> void:
@@ -165,3 +169,25 @@ func _on_other_menu_submenu_opened() -> void:
 	for dropdown_instance in _dropdowns:
 		if dropdown_instance.is_dropdown_open():
 			dropdown_instance.close_dropdown()
+
+
+func _on_game_state_map_solver_state_changed() -> void:
+	# Get data from game state regarding map solver state
+	var cur_map_solver_state := GameState.map_solver_state
+	var cur_map_solver_secret_kind := GameState.map_solver_secret_kind
+	
+	# Gather data about secret room type
+	var selected_secret_room_type: RoomSecretType = null
+	if GameData.room_secret_types.has_type(cur_map_solver_secret_kind):
+		selected_secret_room_type = GameData.room_secret_types.get_type(cur_map_solver_secret_kind)
+	
+	if selected_secret_room_type == null or cur_map_solver_state == GameState.MapSolverState.NONE:
+		solver_state_panel.visible = false
+		label_solver_description.visible = false
+	else:
+		solver_state_panel.visible = true
+		label_solver_description.visible = true
+		solver_state_label.text = " - ".join(["Solver", MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS[cur_map_solver_state], ""]).strip_edges()
+		solver_state_icon.texture = selected_secret_room_type.get_static_texture()
+		solver_state_room_type_label.text = selected_secret_room_type.get_display_name()
+	

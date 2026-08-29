@@ -4,3 +4,5 @@
 
 [node name="GameState" type="Node" unique_id=1770506389]
 script = ExtResource("1_44n2a")
+
+[connection signal="map_solver_state_change_triggered" from="." to="." method="_on_map_solver_state_change_triggered"]

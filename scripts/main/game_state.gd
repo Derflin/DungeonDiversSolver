@@ -2,7 +2,9 @@ extends Node
 
 
 signal map_secrets_count_current_changed(kind: RoomSecretType.Kind, value: int)
+@warning_ignore("unused_signal")
 signal map_solver_submenu_opened()
+@warning_ignore("unused_signal")
 signal map_parameters_submenu_opened()
 
 

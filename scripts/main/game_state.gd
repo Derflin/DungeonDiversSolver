@@ -8,6 +8,7 @@ signal map_solver_submenu_opened()
 @warning_ignore("unused_signal")
 signal map_parameters_submenu_opened()
 
+@warning_ignore("unused_signal")
 signal map_solver_state_change_triggered(state: MapSolverState, secret_room_kind: RoomSecretType.Kind)
 signal map_solver_state_changed()
 

@@ -153,3 +153,5 @@ visible = false
 layout_mode = 2
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[connection signal="pressed" from="MenuAnchor/MenuRoot/MenuContents/StatePanel/MarginContainer/StateContainer/CancelButton" to="." method="_on_cancel_button_pressed"]

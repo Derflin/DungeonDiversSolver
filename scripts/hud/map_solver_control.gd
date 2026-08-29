@@ -190,4 +190,8 @@ func _on_game_state_map_solver_state_changed() -> void:
 		solver_state_label.text = " - ".join(["Solver", MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS[cur_map_solver_state], ""]).strip_edges()
 		solver_state_icon.texture = selected_secret_room_type.get_static_texture()
 		solver_state_room_type_label.text = selected_secret_room_type.get_display_name()
-	
+
+
+func _on_cancel_button_pressed() -> void:
+	# Emit signal that map solver state was triggered to reset
+	GameState.map_solver_state_change_triggered.emit(GameState.MapSolverState.NONE, RoomSecretType.Kind.NONE)

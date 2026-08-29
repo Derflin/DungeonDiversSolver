@@ -110,7 +110,7 @@ func clear_options() -> void:
 	selected_option_id = -1
 
 
-func add_option(option_id: int, option_text: String, option_icon: Texture2D = null, is_disabled: bool = false) -> void:
+func add_option(option_id: int, option_text: String, option_icon: Texture2D = null, _is_disabled: bool = false) -> void:
 	# Instantiate the option scene
 	var option := OPTION_SCENE.instantiate() as MapSolverDropdownOption
 	
@@ -118,7 +118,7 @@ func add_option(option_id: int, option_text: String, option_icon: Texture2D = nu
 	options_list.add_child(option)
 	
 	# Initialize the option instance
-	option.setup(option_id, option_text, option_icon, is_disabled)
+	option.setup(option_id, option_text, option_icon, _is_disabled)
 	
 	# Connect selected signal from option to local function
 	option.selected.connect(_on_option_selected)

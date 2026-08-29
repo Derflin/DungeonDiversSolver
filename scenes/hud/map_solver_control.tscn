@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://ct41vjd725w25" path="res://scripts/hud/map_solver_control.gd" id="1_cr2eo"]
 [ext_resource type="Texture2D" uid="uid://bev8owoorne83" path="res://assets/icons/map_solver/third_party/kenney/fantasy_ui_borders/panel-transparent-center-029.png" id="2_1fwjt"]
 [ext_resource type="PackedScene" uid="uid://dvexut8dssl25" path="res://scenes/hud/map_solver_dropdown.tscn" id="3_8tv3e"]
+[ext_resource type="Script" uid="uid://s0xvwjemblta" path="res://scripts/hud/map_solver_state_panel.gd" id="4_iirtx"]
 [ext_resource type="Texture2D" uid="uid://bn1xlytmmwobf" path="res://assets/icons/map_solver/MapSolver-Cancel.png" id="4_ngmy0"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_cr2eo"]
@@ -113,6 +114,7 @@ layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_iirtx")
+script = ExtResource("4_iirtx")
 
 [node name="MarginContainer" type="MarginContainer" parent="MenuAnchor/MenuRoot/MenuContents/StatePanel" unique_id=897164137]
 layout_mode = 2

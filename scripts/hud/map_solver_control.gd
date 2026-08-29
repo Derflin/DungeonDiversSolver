@@ -13,15 +13,6 @@ const DROPDOWNS_DISPLAY_TEXTS_OPENED = "▲"
 
 var _menu_effective_ui_scale: int = 1
 var _dropdowns: Dictionary[MapSolverDropdown, GameState.MapSolverState]
-var _state_animation: Tween
-
-
-@export_group("State Pannel Animation", "state_animation_")
-@export var state_animation_enabled: bool = true
-@export_range(0.0, 1.0, 0.01)
-var state_animation_show_duration: float = 0.12
-@export_range(0.0, 1.0, 0.01)
-var state_animation_hide_duration: float = 0.12
 
 
 @onready var menu_root: Control = $MenuAnchor/MenuRoot
@@ -32,9 +23,6 @@ var state_animation_hide_duration: float = 0.12
 @onready var menu_button_solution_show: MapSolverDropdown = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow/SolutionShowButton
 
 @onready var solver_state_panel: PanelContainer = $MenuAnchor/MenuRoot/MenuContents/StatePanel
-@onready var solver_state_label: Label = $MenuAnchor/MenuRoot/MenuContents/StatePanel/MarginContainer/StateContainer/StateLabel
-@onready var solver_state_icon: TextureRect = $MenuAnchor/MenuRoot/MenuContents/StatePanel/MarginContainer/StateContainer/StateIcon
-@onready var solver_state_room_type_label: Label = $MenuAnchor/MenuRoot/MenuContents/StatePanel/MarginContainer/StateContainer/StateRoomTypeLabel
 
 
 @export_group("Menu Layout", "menu_")
@@ -47,10 +35,6 @@ var menu_minimum_ui_scale: int = 2
 
 
 func _ready() -> void:
-	# Initialize state panel initial state
-	solver_state_panel.hide()
-	solver_state_panel.modulate.a = 0.0
-	
 	# Initialize dropdown instances
 	_dropdowns = {
 		menu_button_placement_hint: GameState.MapSolverState.PLACEMENT_HINT,
@@ -189,79 +173,18 @@ func _on_game_state_map_solver_state_changed() -> void:
 	
 	# Hide state panel if either the map solver state is none or map solver secret kind is none
 	if cur_map_solver_secret_kind == RoomSecretType.Kind.NONE or cur_map_solver_state == GameState.MapSolverState.NONE:
-		_hide_state_panel()
+		solver_state_panel.hide_state_panel()
 	else:
 		# Gather data about secret room type
 		var selected_secret_room_type: RoomSecretType = null
 		if GameData.room_secret_types.has_type(cur_map_solver_secret_kind):
 			selected_secret_room_type = GameData.room_secret_types.get_type(cur_map_solver_secret_kind)
 		
-		_show_state_panel(
+		solver_state_panel.show_state_panel(
 			" - ".join(["Solver", MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS[cur_map_solver_state], ""]).strip_edges(),
 			selected_secret_room_type.get_static_texture(),
 			selected_secret_room_type.get_display_name(),
 		)
-
-
-func _show_state_panel(state_text: String, state_icon: Texture, state_room_type_text: String) -> void:
-	# Initialize state panel data
-	solver_state_label.text = state_text
-	solver_state_icon.texture = state_icon
-	solver_state_room_type_label.text = state_room_type_text
-	
-	# Filter out processing if the state panel is already visible
-	if solver_state_panel.visible:
-		return
-	
-	# Show state panel
-	solver_state_panel.show()
-	
-	# Stop existing animation
-	_kill_state_animation()
-	
-	# If animation is disabled, then simply set the desired state
-	if not state_animation_enabled:
-		solver_state_panel.modulate.a = 1.0
-		return
-	
-	# Initialize animation with animated opacity transition
-	_state_animation = create_tween().set_parallel(true).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	_state_animation.tween_property(solver_state_panel, "modulate:a", 1.0, state_animation_show_duration)
-
-
-func _hide_state_panel() -> void:
-	# Filter out processing if the state panel is already hidden
-	if not solver_state_panel.visible:
-		return
-	
-	# Stop existing animation
-	_kill_state_animation()
-	
-	# If animation is disabled, then simply set the desired state
-	if not state_animation_enabled:
-		_on_state_panel_close_animation_finished()
-		return
-	
-	# Initialize animation with animated opacity transition
-	_state_animation = create_tween().set_parallel(true).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	_state_animation.tween_property(solver_state_panel, "modulate:a", 0.0, state_animation_hide_duration)
-	
-	# Prepare signal connection after animation ends to finalize hiding submenu
-	if _state_animation != null and _state_animation.is_valid():
-		_state_animation.finished.connect(_on_state_panel_close_animation_finished)
-
-
-func _on_state_panel_close_animation_finished() -> void:
-	# Hide submenu panel and set it's state
-	solver_state_panel.hide()
-	solver_state_panel.modulate.a = 0.0
-
-
-func _kill_state_animation() -> void:
-	if _state_animation != null and _state_animation.is_valid():
-		_state_animation.kill()
-	
-	_state_animation = null
 
 
 func _on_cancel_button_pressed() -> void:

@@ -107,7 +107,7 @@ submenu_overlay_container = NodePath("../../../../../../../DropdownOverlay")
 layout_mode = 2
 submenu_overlay_container = NodePath("../../../../../../../DropdownOverlay")
 
-[node name="StatePanel" type="PanelContainer" parent="MenuAnchor/MenuRoot/MenuContents" unique_id=1947067750]
+[node name="StatePanel" type="PanelContainer" parent="MenuAnchor/MenuRoot/MenuContents" unique_id=1947067750 groups=["blocks_radial_menu_input"]]
 visible = false
 layout_mode = 2
 size_flags_horizontal = 4

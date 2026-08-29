@@ -11,7 +11,7 @@ script = ExtResource("1_peo78")
 submenu_gap = 0.0
 scroll_bottom_screen_edge_offset = 30
 
-[node name="SubmenuPanel" type="PanelContainer" parent="." unique_id=591407929]
+[node name="SubmenuPanel" type="PanelContainer" parent="." unique_id=591407929 groups=["blocks_radial_menu_input"]]
 unique_name_in_owner = true
 visible = false
 z_index = 5

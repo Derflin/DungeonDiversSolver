@@ -151,12 +151,6 @@ keep_pressed_outside = true
 icon = ExtResource("4_ngmy0")
 icon_alignment = 1
 
-[node name="DescriptionLabel" type="Label" parent="MenuAnchor/MenuRoot/MenuContents" unique_id=74600432]
-visible = false
-layout_mode = 2
-horizontal_alignment = 1
-vertical_alignment = 1
-
 [node name="DropdownOverlay" type="Control" parent="." unique_id=1243617166]
 layout_mode = 1
 anchors_preset = 15

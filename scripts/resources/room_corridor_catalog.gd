@@ -10,6 +10,9 @@ func get_default_type() -> RoomCorridorType:
 	
 
 func get_type(kind: RoomCorridorType.Kind) -> RoomCorridorType:
+	if kind == RoomCorridorType.Kind.NONE:
+		return null
+	
 	for room_type in room_types:
 		if room_type == null:
 			continue

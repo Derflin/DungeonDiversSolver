@@ -5,6 +5,9 @@ extends Resource
 
 
 func get_type(kind: RoomSpecialType.Kind) -> RoomSpecialType:
+	if kind == RoomSpecialType.Kind.NONE:
+		return null
+	
 	for room_type in room_types:
 		if room_type == null:
 			continue

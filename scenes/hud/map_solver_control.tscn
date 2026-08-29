@@ -95,14 +95,17 @@ layout_mode = 2
 size_flags_horizontal = 4
 theme_override_constants/separation = 4
 
-[node name="PlacementHintButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow" unique_id=953268487 instance=ExtResource("3_8tv3e")]
+[node name="PlacementHintButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow" unique_id=953268487 node_paths=PackedStringArray("submenu_overlay_container") instance=ExtResource("3_8tv3e")]
 layout_mode = 2
+submenu_overlay_container = NodePath("../../../../../../../DropdownOverlay")
 
-[node name="WeightHintButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow" unique_id=1142679986 instance=ExtResource("3_8tv3e")]
+[node name="WeightHintButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow" unique_id=1142679986 node_paths=PackedStringArray("submenu_overlay_container") instance=ExtResource("3_8tv3e")]
 layout_mode = 2
+submenu_overlay_container = NodePath("../../../../../../../DropdownOverlay")
 
-[node name="SolutionShowButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow" unique_id=1173696625 instance=ExtResource("3_8tv3e")]
+[node name="SolutionShowButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow" unique_id=1173696625 node_paths=PackedStringArray("submenu_overlay_container") instance=ExtResource("3_8tv3e")]
 layout_mode = 2
+submenu_overlay_container = NodePath("../../../../../../../DropdownOverlay")
 
 [node name="StatePanel" type="PanelContainer" parent="MenuAnchor/MenuRoot/MenuContents" unique_id=1947067750]
 visible = false
@@ -153,5 +156,16 @@ visible = false
 layout_mode = 2
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="DropdownOverlay" type="Control" parent="." unique_id=1243617166]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 576.0
+offset_right = 576.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
 [connection signal="pressed" from="MenuAnchor/MenuRoot/MenuContents/StatePanel/MarginContainer/StateContainer/CancelButton" to="." method="_on_cancel_button_pressed"]

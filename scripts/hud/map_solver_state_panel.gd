@@ -2,52 +2,97 @@ class_name MapSolverStatePanel
 extends PanelContainer
 
 
-var _animation: Tween
+var _panel_animation: Tween
 
-
-@onready var state_label: Label = $MarginContainer/StateContainer/StateLabel
-@onready var state_icon: TextureRect = $MarginContainer/StateContainer/StateIcon
-@onready var state_room_type_label: Label = $MarginContainer/StateContainer/StateRoomTypeLabel
+@onready var content_root: Control = $ContentRoot
+@onready var margin_container: MarginContainer = $ContentRoot/MarginContainer
+@onready var state_label: Label = $ContentRoot/MarginContainer/StateContainer/StateLabel
+@onready var state_icon: TextureRect = $ContentRoot/MarginContainer/StateContainer/StateIcon
+@onready var state_room_type_label: Label = $ContentRoot/MarginContainer/StateContainer/StateRoomTypeLabel
 
 
 @export_group("Animation", "animation_")
 @export var animation_enabled: bool = true
 @export_range(0.0, 1.0, 0.01)
-var animation_show_duration: float = 0.12
+var animation_show_duration: float = 0.2
 @export_range(0.0, 1.0, 0.01)
-var animation_hide_duration: float = 0.12
+var animation_hide_duration: float = 0.2
+@export_range(0.0, 1.0, 0.01)
+var animation_resize_duration: float = 0.2
 
 
 func _ready() -> void:
 	# Initialize initial state
 	hide()
 	modulate.a = 0.0
+	
+	# Connect content changed signals to cause manual update propagation to content size
+	state_label.minimum_size_changed.connect(_update_content_size)
+	state_icon.minimum_size_changed.connect(_update_content_size)
+	state_room_type_label.minimum_size_changed.connect(_update_content_size)
 
 
-func show_state_panel(state_text: String, state_icon_texture: Texture, state_room_type_text: String) -> void:
+func show_state_panel(state_text: String, state_icon_texture: Texture2D, state_room_type_text: String) -> void:
+	# Stop existing animation
+	_kill_panel_animation()
+	
+	# Calculate panel target width for animating it
+	var target_size := _measure_target_size(state_text, state_icon_texture, state_room_type_text)
+	
+	# Show state panel or change it's state if it's already visible
+	if not visible:
+		_show_state(state_text, state_icon_texture, state_room_type_text, target_size)
+	else:
+		_change_state(state_text, state_icon_texture, state_room_type_text, target_size)
+
+
+func _show_state(state_text: String, state_icon_texture: Texture2D, state_room_type_text: String, target_size: Vector2) -> void:
+	# Show state panel
+	show()
+	
 	# Initialize state panel data
 	state_label.text = state_text
 	state_icon.texture = state_icon_texture
 	state_room_type_label.text = state_room_type_text
-	
-	# Filter out processing if the state panel is already visible
-	if visible:
-		return
-	
-	# Show state panel
-	show()
-	
-	# Stop existing animation
-	_kill_state_animation()
+	# Height of panel state is not animated, so it's also immediately assigned
+	custom_minimum_size.y = target_size.y
 	
 	# If animation is disabled, then simply set the desired state
 	if not animation_enabled:
 		modulate.a = 1.0
+		custom_minimum_size.x = target_size.x
+		
+		_update_content_size()
+		return
+	
+	# Initialize state panel styles before animation
+	modulate.a = 0.0
+	custom_minimum_size.x = _get_collapsed_width()
+	
+	# Initialize animation with animated opacity transition
+	_panel_animation = create_tween().set_parallel(true).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_panel_animation.tween_property(self, "modulate:a", 1.0, animation_show_duration)
+	_panel_animation.tween_property(self, "custom_minimum_size:x", target_size.x, animation_resize_duration)
+
+
+func _change_state(state_text: String, state_icon_texture: Texture2D, state_room_type_text: String, target_size: Vector2) -> void:
+	# Initialize state panel data
+	state_label.text = state_text
+	state_icon.texture = state_icon_texture
+	state_room_type_label.text = state_room_type_text
+	# Height of panel state is not animated, so it's also immediately assigned
+	custom_minimum_size.y = target_size.y
+	
+	# If animation is disabled, then simply set the desired state
+	if not animation_enabled:
+		custom_minimum_size.x = target_size.x
+		
+		_update_content_size()
 		return
 	
 	# Initialize animation with animated opacity transition
-	_animation = create_tween().set_parallel(true).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	_animation.tween_property(self, "modulate:a", 1.0, animation_show_duration)
+	_panel_animation = create_tween().set_parallel(true).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_panel_animation.tween_property(self, "custom_minimum_size:x", target_size.x, animation_resize_duration)
 
 
 func hide_state_panel() -> void:
@@ -56,30 +101,77 @@ func hide_state_panel() -> void:
 		return
 	
 	# Stop existing animation
-	_kill_state_animation()
+	_kill_panel_animation()
+	
+	# Calculate collapsed width of the state panel
+	var collapsed_target_width := _get_collapsed_width()
 	
 	# If animation is disabled, then simply set the desired state
 	if not animation_enabled:
-		_on_hide_animation_finished()
+		_on_hide_animation_finished(collapsed_target_width)
 		return
 	
 	# Initialize animation with animated opacity transition
-	_animation = create_tween().set_parallel(true).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	_animation.tween_property(self, "modulate:a", 0.0, animation_hide_duration)
+	_panel_animation = create_tween().set_parallel(true).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	_panel_animation.tween_property(self, "modulate:a", 0.0, animation_hide_duration)
+	_panel_animation.tween_property(self, "custom_minimum_size:x", collapsed_target_width, animation_hide_duration)
 	
 	# Prepare signal connection after animation ends to finalize hiding submenu
-	if _animation != null and _animation.is_valid():
-		_animation.finished.connect(_on_hide_animation_finished)
+	if _panel_animation != null and _panel_animation.is_valid():
+		_panel_animation.finished.connect(_on_hide_animation_finished.bind(collapsed_target_width))
 
 
-func _on_hide_animation_finished() -> void:
+func _on_hide_animation_finished(target_width: float) -> void:
 	# Hide submenu panel and set it's state
 	hide()
 	modulate.a = 0.0
+	custom_minimum_size.x = target_width
 
 
-func _kill_state_animation() -> void:
-	if _animation != null and _animation.is_valid():
-		_animation.kill()
+func _measure_target_size(state_text: String, state_icon_texture: Texture2D, state_room_type_text: String) -> Vector2:
+	# Gather previously used data
+	var previous_state_text := state_label.text
+	var previous_icon := state_icon.texture
+	var previous_room_type_text := state_room_type_label.text
 	
-	_animation = null
+	# Simulate putting new data
+	state_label.text = state_text
+	state_icon.texture = state_icon_texture
+	state_room_type_label.text = state_room_type_text
+	_update_content_size()
+	
+	# Calculate content width with simulated contents
+	var content_size := margin_container.get_combined_minimum_size()
+	var panel_style := get_theme_stylebox("panel")
+	var panel_style_size := panel_style.get_minimum_size() if panel_style != null else Vector2.ZERO
+	var target_size := content_size + panel_style_size
+	
+	# Restore old data before simulation
+	state_label.text = previous_state_text
+	state_icon.texture = previous_icon
+	state_room_type_label.text =  previous_room_type_text
+	_update_content_size()
+	
+	return target_size
+
+
+func _update_content_size() -> void:
+	# Required since ContentRoot control node doesn't propagate contents minimum sizes from MarginContainer node back to the PanelContainer above ContentRoot
+	margin_container.reset_size()
+
+
+func _get_collapsed_width() -> float:
+	# Get state panel style
+	var panel_style := get_theme_stylebox("panel")
+	if panel_style == null:
+		return 0.0
+	
+	# Return state panel minimum size from it's style
+	return panel_style.get_minimum_size().x
+
+
+func _kill_panel_animation() -> void:
+	if _panel_animation != null and _panel_animation.is_valid():
+		_panel_animation.kill()
+	
+	_panel_animation = null

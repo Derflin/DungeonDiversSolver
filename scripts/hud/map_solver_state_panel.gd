@@ -74,7 +74,8 @@ func _show_state(state_text: String, state_icon_texture: Texture2D, state_room_t
 	# Height of panel state is not animated, so it's also immediately assigned
 	custom_minimum_size.y = target_size.y
 	
-	# Reset labels content to empty
+	# Reset labels and texture rect content to empty
+	state_icon.set_texture_immediate(null)
 	solver_label.set_text_immediate("")
 	first_separator_label.set_text_immediate("")
 	state_label.set_text_immediate("")

@@ -113,7 +113,7 @@ func set_text_immediate(new_text: String) -> void:
 	text = new_text
 
 
-## Returns a random character from the scramble_characters parameter if it's not empty, otherwise it returns empty space char.
+## Returns a random character from the [member scramble_characters] parameter if it's not empty, otherwise it returns empty space char.
 func _get_random_character() -> String:
 	if scramble_characters.is_empty():
 		return " "

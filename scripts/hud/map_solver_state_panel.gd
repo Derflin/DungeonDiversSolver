@@ -13,7 +13,7 @@ var _second_separator_static_text: String
 @onready var first_separator_label: ScrambleLabel = $ContentRoot/MarginContainer/StateContainer/FirstSeparatorLabel
 @onready var state_label: ScrambleLabel = $ContentRoot/MarginContainer/StateContainer/StateLabel
 @onready var second_separator_label: ScrambleLabel = $ContentRoot/MarginContainer/StateContainer/SecondSeparatorLabel
-@onready var state_icon: TextureRect = $ContentRoot/MarginContainer/StateContainer/StateIcon
+@onready var state_icon: ScrambleTextureRect = $ContentRoot/MarginContainer/StateContainer/StateIcon
 @onready var state_room_type_label: ScrambleLabel = $ContentRoot/MarginContainer/StateContainer/StateRoomTypeLabel
 
 
@@ -69,6 +69,7 @@ func _show_state(state_text: String, state_icon_texture: Texture2D, state_room_t
 	show()
 	
 	# Initialize state panel data
+	#TODO
 	state_icon.texture = state_icon_texture
 	# Height of panel state is not animated, so it's also immediately assigned
 	custom_minimum_size.y = target_size.y
@@ -86,12 +87,18 @@ func _show_state(state_text: String, state_icon_texture: Texture2D, state_room_t
 		modulate.a = 1.0
 		custom_minimum_size.x = target_size.x
 		
+		# Assign icon to scramble texture rect without animations
+		state_icon.set_texture_immediate(state_icon_texture)
+		
 		# Assign text to scramble labels without animations
 		state_label.set_text_immediate(state_text)
 		state_room_type_label.set_text_immediate(state_room_type_text)
 		
 		_update_content_size()
 		return
+	
+	# Assign icon to scramble texture rect
+	state_icon.change_texture(state_icon_texture)
 	
 	# Assign text to scramble labels
 	solver_label.change_text(_solver_label_static_text)
@@ -112,7 +119,6 @@ func _show_state(state_text: String, state_icon_texture: Texture2D, state_room_t
 
 func _change_state(state_text: String, state_icon_texture: Texture2D, state_room_type_text: String, target_size: Vector2) -> void:
 	# Initialize state panel data
-	state_icon.texture = state_icon_texture
 	# Height of panel state is not animated, so it's also immediately assigned
 	custom_minimum_size.y = target_size.y
 	
@@ -121,12 +127,18 @@ func _change_state(state_text: String, state_icon_texture: Texture2D, state_room
 		# Initialize state panel styles
 		custom_minimum_size.x = target_size.x
 		
+		# Assign icon to scramble texture rect without animations
+		state_icon.set_texture_immediate(state_icon_texture)
+		
 		# Assign text to scramble labels without animations
 		state_label.set_text_immediate(state_text)
 		state_room_type_label.set_text_immediate(state_room_type_text)
 		
 		_update_content_size()
 		return
+	
+	# Assign icon to scramble texture rect
+	state_icon.change_texture(state_icon_texture)
 	
 	# Assign text to scramble labels
 	state_label.change_text(state_text)

@@ -6,6 +6,19 @@
 [ext_resource type="Script" uid="uid://s0xvwjemblta" path="res://scripts/hud/map_solver_state_panel.gd" id="4_iirtx"]
 [ext_resource type="Texture2D" uid="uid://bn1xlytmmwobf" path="res://assets/icons/map_solver/MapSolver-Cancel.png" id="4_ngmy0"]
 [ext_resource type="Script" uid="uid://b8x8oocqx8an3" path="res://scripts/hud/scramble_label.gd" id="5_nueyn"]
+[ext_resource type="Script" uid="uid://c6v7ytd4a7med" path="res://scripts/hud/scramble_texture_rect.gd" id="6_20m88"]
+[ext_resource type="Texture2D" uid="uid://dmm3yxa3n54hk" path="res://assets/icons/secrets/static/DungeonSolvers-Secrets-Angel-Full.png" id="7_m2hiy"]
+[ext_resource type="Texture2D" uid="uid://csdro27vm84uf" path="res://assets/icons/secrets/static/DungeonSolvers-Secrets-Barricade-Full.png" id="8_yvpet"]
+[ext_resource type="Texture2D" uid="uid://cp8fkkgs6h0n7" path="res://assets/icons/secrets/static/DungeonSolvers-Secrets-BlackMarket-Full.png" id="9_3oxwh"]
+[ext_resource type="Texture2D" uid="uid://3la70fjkjvyr" path="res://assets/icons/secrets/static/DungeonSolvers-Secrets-Boulder-Full.png" id="10_jv0qu"]
+[ext_resource type="Texture2D" uid="uid://dr2pw0gfsvyyq" path="res://assets/icons/secrets/static/DungeonSolvers-Secrets-Common-Full.png" id="11_cxkgm"]
+[ext_resource type="Texture2D" uid="uid://dtakt22r73p1k" path="res://assets/icons/secrets/static/DungeonSolvers-Secrets-Devil-Full.png" id="12_q6dhg"]
+[ext_resource type="Texture2D" uid="uid://d3440ikx701ta" path="res://assets/icons/secrets/static/DungeonSolvers-Secrets-Error-Full.png" id="13_fot1y"]
+[ext_resource type="Texture2D" uid="uid://dqc3k5e004qw5" path="res://assets/icons/secrets/static/DungeonSolvers-Secrets-Guest-Full.png" id="14_wnqsa"]
+[ext_resource type="Texture2D" uid="uid://dvoew66tgqbey" path="res://assets/icons/secrets/static/DungeonSolvers-Secrets-Hermit-Full.png" id="15_h328o"]
+[ext_resource type="Texture2D" uid="uid://deone0jtkplul" path="res://assets/icons/secrets/static/DungeonSolvers-Secrets-Outsider-Full.png" id="16_2fpcs"]
+[ext_resource type="Texture2D" uid="uid://clpk3j2gnm1fo" path="res://assets/icons/secrets/static/DungeonSolvers-Secrets-Portal-Full.png" id="17_nctgr"]
+[ext_resource type="Texture2D" uid="uid://dcbqyrjgi2218" path="res://assets/icons/secrets/static/DungeonSolvers-Secrets-Red-Full.png" id="18_ixjwy"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_cr2eo"]
 content_margin_top = 8.0
@@ -167,6 +180,9 @@ script = ExtResource("5_nueyn")
 [node name="StateIcon" type="TextureRect" parent="MenuAnchor/MenuRoot/MenuContents/StatePanel/ContentRoot/MarginContainer/StateContainer" unique_id=1308183396]
 layout_mode = 2
 stretch_mode = 5
+script = ExtResource("6_20m88")
+scramble_update_interval = 0.09999999999999999
+scramble_textures = Array[Texture2D]([ExtResource("7_m2hiy"), ExtResource("8_yvpet"), ExtResource("9_3oxwh"), ExtResource("10_jv0qu"), ExtResource("11_cxkgm"), ExtResource("12_q6dhg"), ExtResource("13_fot1y"), ExtResource("14_wnqsa"), ExtResource("15_h328o"), ExtResource("16_2fpcs"), ExtResource("17_nctgr"), ExtResource("18_ixjwy")])
 
 [node name="StateRoomTypeLabel" type="Label" parent="MenuAnchor/MenuRoot/MenuContents/StatePanel/ContentRoot/MarginContainer/StateContainer" unique_id=2008980161]
 layout_mode = 2

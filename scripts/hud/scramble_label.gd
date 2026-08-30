@@ -53,6 +53,16 @@ var scramble_characters_resolve_time_min: float = 0.55
 @export_range(0.0, 1.0, 0.01)
 var scramble_characters_resolve_time_max: float = 0.95
 
+@export_group("Scramble Opacity", "scramble_opacity_")
+## Enables/disables the opacity during scramble animation for the texture rect.
+@export var scramble_opacity_enabled: bool = true
+## Opacity minimum value for selecting a random opacity for a scrambled texture during scramble animation.
+@export_range(0.0, 1.0, 0.01)
+var scramble_opacity_min_value: float = 0.4
+## Opacity maximum value for selecting a random opacity for a scrambled texture during scramble animation.
+@export_range(0.0, 1.0, 0.01)
+var scramble_opacity_max_value: float = 0.6
+
 
 ## Assign new text to a label text along with providing scramble animation handling based on the set parameters.
 func change_text(new_text: String, animate: bool = true) -> void:
@@ -122,6 +132,15 @@ func change_text(new_text: String, animate: bool = true) -> void:
 			else:
 				displayed_text += new_character
 		
+		# Calculate current scramble opacity for the label based on the scramble opacity parameters
+		if scramble_opacity_enabled:
+			if progress < minf(scramble_characters_start_time_new_space_min, scramble_characters_start_time_existing_space_min):
+				modulate.a = 1.0
+			elif progress < scramble_characters_resolve_time_max:
+				modulate.a = randf_range(scramble_opacity_min_value, scramble_opacity_max_value)
+			else:
+				modulate.a = 1.0
+		
 		# Assign prepared display text to the label text parameter
 		text = displayed_text
 		
@@ -129,9 +148,11 @@ func change_text(new_text: String, animate: bool = true) -> void:
 		await get_tree().create_timer(scramble_update_interval).timeout
 		elapsed += scramble_update_interval
 	
-	# If the current animation wasn't cancelled, then assign final text as the new text that was passed
+	# If the current animation wasn't cancelled, then assign final text as the new text that was passed and reset opacity to base value
 	if current_animation_id == _animation_id:
 		text = new_text
+		if scramble_opacity_enabled:
+			modulate.a = 1.0
 
 
 ## Changes internal animation id, causing existing animation to stop.

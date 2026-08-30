@@ -6,7 +6,7 @@ var _animation_id: int = 0
 
 
 @export_group("Scramble", "scramble_")
-## Enables/disables the scramble animation for the label.
+## Enables/disables the scramble animation for the texture rect.
 @export var scramble_enabled: bool = true
 ## Overall duration in seconds of the scramble animation.
 @export_range(0.0, 2.0, 0.01)
@@ -22,6 +22,16 @@ var scramble_start_time: float = 0.15
 var scramble_resolve_time: float = 0.85
 ## List of textures that will be used for scrambling animation.
 @export var scramble_textures: Array[Texture2D] = []
+
+@export_group("Scramble Opacity", "scramble_opacity_")
+## Enables/disables the opacity during scramble animation for the texture rect.
+@export var scramble_opacity_enabled: bool = true
+## Opacity minimum value for selecting a random opacity for a scrambled texture during scramble animation.
+@export_range(0.0, 1.0, 0.01)
+var scramble_opacity_min_value: float = 0.4
+## Opacity maximum value for selecting a random opacity for a scrambled texture during scramble animation.
+@export_range(0.0, 1.0, 0.01)
+var scramble_opacity_max_value: float = 0.6
 
 
 ## Assign new texture to a texture rect texture along with providing scramble animation handling based on the set parameters.
@@ -52,7 +62,7 @@ func change_texture(new_texture: Texture2D, animate: bool = true) -> void:
 		# Calculate current progress percentage from the whole duration and how much time already passed
 		var progress := elapsed / scramble_duration
 		
-		# Get current texture display based on the scramble progress
+		# Get current texture display based on the scramble progress and the scramble opacity parameters
 		if progress < scramble_start_time:
 			texture = old_texture
 			
@@ -62,13 +72,24 @@ func change_texture(new_texture: Texture2D, animate: bool = true) -> void:
 		else:
 			texture = new_texture
 		
+		# Calculate current scramble opacity for the label based on the scramble opacity parameters
+		if scramble_opacity_enabled:
+			if progress < scramble_start_time:
+				modulate.a = 1.0
+			elif progress < scramble_resolve_time:
+				modulate.a = randf_range(scramble_opacity_min_value, scramble_opacity_max_value)
+			else:
+				modulate.a = 1.0
+		
 		# Wait for the next update interval
 		await get_tree().create_timer(scramble_update_interval).timeout
 		elapsed += scramble_update_interval
 	
-	# If the current animation wasn't cancelled, then assign final text as the new text that was passed
+	# If the current animation wasn't cancelled, then assign final text as the new text that was passed and reset opacity to base value
 	if current_animation_id == _animation_id:
 		texture = new_texture
+		if scramble_opacity_enabled:
+			modulate.a = 1.0
 
 
 ## Changes internal animation id, causing existing animation to stop.

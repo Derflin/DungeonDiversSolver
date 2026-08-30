@@ -181,7 +181,6 @@ script = ExtResource("5_nueyn")
 layout_mode = 2
 stretch_mode = 5
 script = ExtResource("6_20m88")
-scramble_update_interval = 0.09999999999999999
 scramble_textures = Array[Texture2D]([ExtResource("7_m2hiy"), ExtResource("8_yvpet"), ExtResource("9_3oxwh"), ExtResource("10_jv0qu"), ExtResource("11_cxkgm"), ExtResource("12_q6dhg"), ExtResource("13_fot1y"), ExtResource("14_wnqsa"), ExtResource("15_h328o"), ExtResource("16_2fpcs"), ExtResource("17_nctgr"), ExtResource("18_ixjwy")])
 
 [node name="StateRoomTypeLabel" type="Label" parent="MenuAnchor/MenuRoot/MenuContents/StatePanel/ContentRoot/MarginContainer/StateContainer" unique_id=2008980161]

@@ -21,6 +21,38 @@ var scramble_update_interval: float = 0.03
 ## Causes scramble animation to not scramble through unchanged characters if they keep the same index and character.
 @export var scramble_unchanged_chars: bool = false
 
+@export_subgroup("Character Start Times", "scramble_characters_start_time_")
+## Start time of scramble animation in animation progress percentage. 
+## Minimum value that will be used for randomizing value in a given range for each scrambled character. 
+## Used for characters placed in existing string spots related to old string text value.
+@export_range(0.0, 1.0, 0.01)
+var scramble_characters_start_time_existing_space_min: float = 0.05
+## Start time of scramble animation in animation progress percentage. 
+## Maximum value that will be used for randomizing value in a given range for each scrambled character. 
+## Used for characters placed in existing string spots related to old string text value.
+@export_range(0.0, 1.0, 0.01)
+var scramble_characters_start_time_existing_space_max: float = 0.30
+## Start time of scramble animation in animation progress percentage. 
+## Minimum value that will be used for randomizing value in a given range for each scrambled character. 
+## Used for characters placed in new string spots related to old string text value.
+@export_range(0.0, 1.0, 0.01)
+var scramble_characters_start_time_new_space_min: float = 0.20
+## Start time of scramble animation in animation progress percentage. 
+## Maximum value that will be used for randomizing value in a given range for each scrambled character. 
+## Used for characters placed in new string spots related to old string text value.
+@export_range(0.0, 1.0, 0.01)
+var scramble_characters_start_time_new_space_max: float = 0.45
+
+@export_subgroup("Character Resolve Times", "scramble_characters_resolve_time_")
+## Resolve time of scramble animation in animation progress percentage.
+## Minimum value that will be used for randomizing value in a given range for each scrambled character. 
+@export_range(0.0, 1.0, 0.01)
+var scramble_characters_resolve_time_min: float = 0.55
+## Resolve time of scramble animation in animation progress percentage.
+## Maximum value that will be used for randomizing value in a given range for each scrambled character. 
+@export_range(0.0, 1.0, 0.01)
+var scramble_characters_resolve_time_max: float = 0.95
+
 
 ## Assign new text to a label text along with providing scramble animation handling based on the set parameters.
 func change_text(new_text: String, animate: bool = true) -> void:
@@ -48,11 +80,11 @@ func change_text(new_text: String, animate: bool = true) -> void:
 	resolve_times.resize(max_length)
 	for i in range(max_length):
 		if i >= old_text.length():
-			scramble_start_times[i] = randf_range(0.20, 0.45)
+			scramble_start_times[i] = randf_range(scramble_characters_start_time_new_space_min, scramble_characters_start_time_new_space_max)
 		else:
-			scramble_start_times[i] = randf_range(0.05, 0.30)
+			scramble_start_times[i] = randf_range(scramble_characters_start_time_existing_space_min, scramble_characters_start_time_existing_space_max)
 		
-		resolve_times[i] = randf_range(0.55, 0.95)
+		resolve_times[i] = randf_range(scramble_characters_resolve_time_min, scramble_characters_resolve_time_max)
 	
 	# Start processing loop for animating the character scramble
 	var elapsed := 0.0

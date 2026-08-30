@@ -14,8 +14,6 @@ var scramble_update_interval: float = 0.03
 @export var scramble_characters: String = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!?#$%"
 @export var scramble_preserve_spaces: bool = true
 @export var scramble_unchanged_chars: bool = false
-@export var scramble_omitted_characters: String = "-"
-@export var scramble_after_before_omitted_characters: String = " "
 
 
 func change_text(new_text: String, animate: bool = true) -> void:
@@ -55,19 +53,12 @@ func change_text(new_text: String, animate: bool = true) -> void:
 		var displayed_text := ""
 		
 		for i in range(max_length):
-			var old_character := _get_character_or_space(old_text, i)
-			var new_character := _get_character_or_space(new_text, i)
+			var old_character := _get_character_or_empty(old_text, i)
+			var new_character := _get_character_or_empty(new_text, i)
 			
-			if (new_character in scramble_omitted_characters) or (not scramble_unchanged_chars and old_character == new_character):
+			if not scramble_unchanged_chars and old_character == new_character:
 				displayed_text += new_character
 				continue
-			
-			var character_not_random_flag: bool = false
-			if new_character in scramble_after_before_omitted_characters and (
-				(i > 0 and _get_character_or_space(new_text, i - 1) in scramble_omitted_characters) 
-				or (i < new_text.length() - 1 and _get_character_or_space(new_text, i + 1) in scramble_omitted_characters)
-			):
-				character_not_random_flag = true
 			
 			if progress < scramble_start_times[i]:
 				displayed_text += old_character
@@ -75,8 +66,6 @@ func change_text(new_text: String, animate: bool = true) -> void:
 			elif progress < resolve_times[i]:
 				if scramble_preserve_spaces and old_character == " " and new_character == " ":
 					displayed_text += " "
-				elif character_not_random_flag:
-					displayed_text += new_character
 				else:
 					displayed_text += _get_random_character()
 				
@@ -111,8 +100,8 @@ func _get_random_character() -> String:
 	return scramble_characters.substr(index, 1)
 
 
-func _get_character_or_space(value: String, index: int) -> String:
-	if index >= value.length():
-		return " "
+func _get_character_or_empty(value: String, index: int) -> String:
+	if index >= value.length() or index < 0:
+		return ""
 	
 	return value.substr(index, 1)

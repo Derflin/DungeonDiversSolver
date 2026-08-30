@@ -134,11 +134,32 @@ theme_override_constants/margin_bottom = 4
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
-theme_override_constants/separation = 4
+theme_override_constants/separation = 5
 alignment = 1
+
+[node name="SolverLabel" type="Label" parent="MenuAnchor/MenuRoot/MenuContents/StatePanel/ContentRoot/MarginContainer/StateContainer" unique_id=89050686]
+layout_mode = 2
+text = "Solver"
+horizontal_alignment = 1
+vertical_alignment = 1
+script = ExtResource("5_nueyn")
+
+[node name="FirstSeparatorLabel" type="Label" parent="MenuAnchor/MenuRoot/MenuContents/StatePanel/ContentRoot/MarginContainer/StateContainer" unique_id=1913015821]
+layout_mode = 2
+text = "-"
+horizontal_alignment = 1
+vertical_alignment = 1
+script = ExtResource("5_nueyn")
 
 [node name="StateLabel" type="Label" parent="MenuAnchor/MenuRoot/MenuContents/StatePanel/ContentRoot/MarginContainer/StateContainer" unique_id=564080946]
 layout_mode = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+script = ExtResource("5_nueyn")
+
+[node name="SecondSeparatorLabel" type="Label" parent="MenuAnchor/MenuRoot/MenuContents/StatePanel/ContentRoot/MarginContainer/StateContainer" unique_id=265174043]
+layout_mode = 2
+text = "-"
 horizontal_alignment = 1
 vertical_alignment = 1
 script = ExtResource("5_nueyn")
@@ -150,8 +171,6 @@ stretch_mode = 5
 [node name="StateRoomTypeLabel" type="Label" parent="MenuAnchor/MenuRoot/MenuContents/StatePanel/ContentRoot/MarginContainer/StateContainer" unique_id=2008980161]
 layout_mode = 2
 script = ExtResource("5_nueyn")
-scramble_omitted_characters = ""
-scramble_after_before_omitted_characters = ""
 
 [node name="VSeparator" type="VSeparator" parent="MenuAnchor/MenuRoot/MenuContents/StatePanel/ContentRoot/MarginContainer/StateContainer" unique_id=1365099496]
 layout_mode = 2

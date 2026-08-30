@@ -181,7 +181,7 @@ func _on_game_state_map_solver_state_changed() -> void:
 			selected_secret_room_type = GameData.room_secret_types.get_type(cur_map_solver_secret_kind)
 		
 		solver_state_panel.show_state_panel(
-			" - ".join(["Solver", MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS[cur_map_solver_state], ""]).strip_edges(),
+			MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS[cur_map_solver_state],
 			selected_secret_room_type.get_static_texture(),
 			selected_secret_room_type.get_display_name(),
 		)

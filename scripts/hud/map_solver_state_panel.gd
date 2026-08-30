@@ -3,10 +3,16 @@ extends PanelContainer
 
 
 var _panel_animation: Tween
+var _solver_label_static_text: String
+var _first_separator_static_text: String
+var _second_separator_static_text: String
 
 @onready var content_root: Control = $ContentRoot
 @onready var margin_container: MarginContainer = $ContentRoot/MarginContainer
+@onready var solver_label: ScrambleLabel = $ContentRoot/MarginContainer/StateContainer/SolverLabel
+@onready var first_separator_label: ScrambleLabel = $ContentRoot/MarginContainer/StateContainer/FirstSeparatorLabel
 @onready var state_label: ScrambleLabel = $ContentRoot/MarginContainer/StateContainer/StateLabel
+@onready var second_separator_label: ScrambleLabel = $ContentRoot/MarginContainer/StateContainer/SecondSeparatorLabel
 @onready var state_icon: TextureRect = $ContentRoot/MarginContainer/StateContainer/StateIcon
 @onready var state_room_type_label: ScrambleLabel = $ContentRoot/MarginContainer/StateContainer/StateRoomTypeLabel
 
@@ -25,6 +31,11 @@ func _ready() -> void:
 	# Initialize initial state
 	hide()
 	modulate.a = 0.0
+	
+	# Save initial text state for labels that are meant to display static texts
+	_solver_label_static_text = solver_label.text
+	_first_separator_static_text = first_separator_label.text
+	_second_separator_static_text = second_separator_label.text
 	
 	# Connect content changed signals to cause manual update propagation to content size
 	state_label.minimum_size_changed.connect(_update_content_size)
@@ -59,6 +70,13 @@ func _show_state(state_text: String, state_icon_texture: Texture2D, state_room_t
 	# Height of panel state is not animated, so it's also immediately assigned
 	custom_minimum_size.y = target_size.y
 	
+	# Reset labels content to empty
+	solver_label.set_text_immediate("")
+	first_separator_label.set_text_immediate("")
+	state_label.set_text_immediate("")
+	second_separator_label.set_text_immediate("")
+	state_room_type_label.set_text_immediate("")
+	
 	# If animation is disabled, then simply set the desired state
 	if not animation_enabled:
 		# Initialize state panel styles
@@ -73,7 +91,10 @@ func _show_state(state_text: String, state_icon_texture: Texture2D, state_room_t
 		return
 	
 	# Assign text to scramble labels
+	solver_label.change_text(_solver_label_static_text)
+	first_separator_label.change_text(_first_separator_static_text)
 	state_label.change_text(state_text)
+	second_separator_label.change_text(_second_separator_static_text)
 	state_room_type_label.change_text(state_room_type_text)
 	
 	# Initialize state panel styles before animation
@@ -129,10 +150,6 @@ func hide_state_panel() -> void:
 		_on_hide_animation_finished(collapsed_target_width)
 		return
 	
-	# Assign empty text to scramble labels
-	state_label.change_text("")
-	state_room_type_label.change_text("")
-	
 	# Initialize animation with animated opacity transition
 	_panel_animation = create_tween().set_parallel(true).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	_panel_animation.tween_property(self, "modulate:a", 0.0, animation_hide_duration)
@@ -148,10 +165,6 @@ func _on_hide_animation_finished(target_width: float) -> void:
 	hide()
 	modulate.a = 0.0
 	custom_minimum_size.x = target_width
-	
-	# Assign empty text to scramble labels
-	state_label.set_text_immediate("")
-	state_room_type_label.set_text_immediate("")
 
 
 func _measure_target_size(state_text: String, state_icon_texture: Texture2D, state_room_type_text: String) -> Vector2:

@@ -6,9 +6,9 @@ var _panel_animation: Tween
 
 @onready var content_root: Control = $ContentRoot
 @onready var margin_container: MarginContainer = $ContentRoot/MarginContainer
-@onready var state_label: Label = $ContentRoot/MarginContainer/StateContainer/StateLabel
+@onready var state_label: ScrambleLabel = $ContentRoot/MarginContainer/StateContainer/StateLabel
 @onready var state_icon: TextureRect = $ContentRoot/MarginContainer/StateContainer/StateIcon
-@onready var state_room_type_label: Label = $ContentRoot/MarginContainer/StateContainer/StateRoomTypeLabel
+@onready var state_room_type_label: ScrambleLabel = $ContentRoot/MarginContainer/StateContainer/StateRoomTypeLabel
 
 
 @export_group("Animation", "animation_")
@@ -36,6 +36,10 @@ func show_state_panel(state_text: String, state_icon_texture: Texture2D, state_r
 	# Stop existing animation
 	_kill_panel_animation()
 	
+	# Stop existing animations for scramble labels
+	state_label.cancel_animation()
+	state_room_type_label.cancel_animation()
+	
 	# Calculate panel target width for animating it
 	var target_size := _measure_target_size(state_text, state_icon_texture, state_room_type_text)
 	
@@ -51,25 +55,32 @@ func _show_state(state_text: String, state_icon_texture: Texture2D, state_room_t
 	show()
 	
 	# Initialize state panel data
-	state_label.text = state_text
 	state_icon.texture = state_icon_texture
-	state_room_type_label.text = state_room_type_text
 	# Height of panel state is not animated, so it's also immediately assigned
 	custom_minimum_size.y = target_size.y
 	
 	# If animation is disabled, then simply set the desired state
 	if not animation_enabled:
+		# Initialize state panel styles
 		modulate.a = 1.0
 		custom_minimum_size.x = target_size.x
 		
+		# Assign text to scramble labels without animations
+		state_label.set_text_immediate(state_text)
+		state_room_type_label.set_text_immediate(state_room_type_text)
+		
 		_update_content_size()
 		return
+	
+	# Assign text to scramble labels
+	state_label.change_text(state_text)
+	state_room_type_label.change_text(state_room_type_text)
 	
 	# Initialize state panel styles before animation
 	modulate.a = 0.0
 	custom_minimum_size.x = _get_collapsed_width()
 	
-	# Initialize animation with animated opacity transition
+	# Initialize animation with animated opacity and size transition
 	_panel_animation = create_tween().set_parallel(true).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	_panel_animation.tween_property(self, "modulate:a", 1.0, animation_show_duration)
 	_panel_animation.tween_property(self, "custom_minimum_size:x", target_size.x, animation_resize_duration)
@@ -77,18 +88,25 @@ func _show_state(state_text: String, state_icon_texture: Texture2D, state_room_t
 
 func _change_state(state_text: String, state_icon_texture: Texture2D, state_room_type_text: String, target_size: Vector2) -> void:
 	# Initialize state panel data
-	state_label.text = state_text
 	state_icon.texture = state_icon_texture
-	state_room_type_label.text = state_room_type_text
 	# Height of panel state is not animated, so it's also immediately assigned
 	custom_minimum_size.y = target_size.y
 	
 	# If animation is disabled, then simply set the desired state
 	if not animation_enabled:
+		# Initialize state panel styles
 		custom_minimum_size.x = target_size.x
+		
+		# Assign text to scramble labels without animations
+		state_label.set_text_immediate(state_text)
+		state_room_type_label.set_text_immediate(state_room_type_text)
 		
 		_update_content_size()
 		return
+	
+	# Assign text to scramble labels
+	state_label.change_text(state_text)
+	state_room_type_label.change_text(state_room_type_text)
 	
 	# Initialize animation with animated opacity transition
 	_panel_animation = create_tween().set_parallel(true).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -111,6 +129,10 @@ func hide_state_panel() -> void:
 		_on_hide_animation_finished(collapsed_target_width)
 		return
 	
+	# Assign empty text to scramble labels
+	state_label.change_text("")
+	state_room_type_label.change_text("")
+	
 	# Initialize animation with animated opacity transition
 	_panel_animation = create_tween().set_parallel(true).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	_panel_animation.tween_property(self, "modulate:a", 0.0, animation_hide_duration)
@@ -126,6 +148,10 @@ func _on_hide_animation_finished(target_width: float) -> void:
 	hide()
 	modulate.a = 0.0
 	custom_minimum_size.x = target_width
+	
+	# Assign empty text to scramble labels
+	state_label.set_text_immediate("")
+	state_room_type_label.set_text_immediate("")
 
 
 func _measure_target_size(state_text: String, state_icon_texture: Texture2D, state_room_type_text: String) -> Vector2:

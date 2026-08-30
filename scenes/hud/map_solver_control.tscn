@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://bn1xlytmmwobf" path="res://assets/icons/map_solver/MapSolver-Cancel.png" id="4_ngmy0"]
 [ext_resource type="Script" uid="uid://b8x8oocqx8an3" path="res://scripts/hud/scramble_label.gd" id="5_nueyn"]
 [ext_resource type="Script" uid="uid://c6v7ytd4a7med" path="res://scripts/hud/scramble_texture_rect.gd" id="6_20m88"]
+[ext_resource type="Shader" uid="uid://datrcc7sm4sf2" path="res://shaders/texture_scramble_noise.gdshader" id="6_m2hiy"]
 [ext_resource type="Texture2D" uid="uid://dmm3yxa3n54hk" path="res://assets/icons/secrets/static/DungeonSolvers-Secrets-Angel-Full.png" id="7_m2hiy"]
 [ext_resource type="Texture2D" uid="uid://csdro27vm84uf" path="res://assets/icons/secrets/static/DungeonSolvers-Secrets-Barricade-Full.png" id="8_yvpet"]
 [ext_resource type="Texture2D" uid="uid://cp8fkkgs6h0n7" path="res://assets/icons/secrets/static/DungeonSolvers-Secrets-BlackMarket-Full.png" id="9_3oxwh"]
@@ -48,6 +49,13 @@ corner_radius_top_right = 3
 corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 corner_detail = 5
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_20m88"]
+shader = ExtResource("6_m2hiy")
+shader_parameter/noise_amount = 0.0
+shader_parameter/noise_seed = 0.0
+shader_parameter/block_size = 1.0
+shader_parameter/noise_color = Color(1, 1, 1, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ngmy0"]
 content_margin_left = 3.0
@@ -178,6 +186,7 @@ vertical_alignment = 1
 script = ExtResource("5_nueyn")
 
 [node name="StateIcon" type="TextureRect" parent="MenuAnchor/MenuRoot/MenuContents/StatePanel/ContentRoot/MarginContainer/StateContainer" unique_id=1308183396]
+material = SubResource("ShaderMaterial_20m88")
 layout_mode = 2
 stretch_mode = 5
 script = ExtResource("6_20m88")

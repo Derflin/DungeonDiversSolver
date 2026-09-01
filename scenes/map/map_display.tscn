@@ -129,7 +129,7 @@ icon_secrets_texture = ExtResource("12_134i6")
 icon_barricades_directions_spritesheet_texture = ExtResource("13_bstpx")
 icon_connections_directions_spritesheet_texture = ExtResource("14_lhxh2")
 
-[node name="RoomEditorMenu" type="Control" parent="GridSpace/GridInteractionOverlay/RoomEditorContainer" unique_id=637577446]
+[node name="RoomEditorMenu" type="Control" parent="GridSpace/GridInteractionOverlay/RoomEditorContainer" unique_id=637577446 groups=["allow_map_camera_input"]]
 visible = false
 custom_minimum_size = Vector2(260, 260)
 layout_mode = 3

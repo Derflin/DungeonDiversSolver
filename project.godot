@@ -38,6 +38,7 @@ enabled=PackedStringArray("res://addons/RadialMenu/plugin.cfg")
 [global_group]
 
 blocks_radial_menu_input=""
+allow_map_camera_input=""
 
 [gui]
 

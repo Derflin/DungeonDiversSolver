@@ -1,6 +1,9 @@
 extends Node2D
 
 
+const MAP_CAMERA_INPUT_ALLOW_GROUP: StringName = &"allow_map_camera_input"
+
+
 var grid_rect: Rect2 = Rect2(0, 0, 0, 0)
 var _pan_candidate = false
 var _is_panning = false
@@ -94,9 +97,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _handle_pan_input(event):
 		return
 	
-	# Filter out rest of input events if they were performed over the another control node
-	var hovered_control := get_viewport().gui_get_hovered_control()
-	if hovered_control != null:
+	# Filter out rest of input events if they were performed over the another control node that don't allow them to pass through
+	if not _check_if_input_events_allowed_to_pass():
 		return
 	
 	if event.is_action_pressed("map_zoom_in"):
@@ -110,6 +112,26 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("map_zoom_reset"):
 		_fit_map_to_view()
 		get_viewport().set_input_as_handled()
+
+
+func _check_if_input_events_allowed_to_pass() -> bool:
+	# Get current deepest hovered controled node
+	var hovered_control := get_viewport().gui_get_hovered_control()
+	
+	# Return true if the current input event isn't hovered above any of the control nodes
+	if hovered_control == null:
+		return true
+	
+	# Check if the current node or any of it's parents are set inside the map camera input allow custom global group and return true if that's the case
+	var node: Node = hovered_control
+	while node != null:
+		if node.is_in_group(MAP_CAMERA_INPUT_ALLOW_GROUP):
+			return true
+		
+		node = node.get_parent()
+	
+	# Otherwise return false
+	return false
 
 
 func _handle_zoom_input(event: InputEvent, multiplier: float) -> void:

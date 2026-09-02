@@ -39,8 +39,16 @@ const DIRECTION_TO_BARRICADE_CONNECTED_ROOM_DIRECTION_FLAGS: Dictionary[Directio
 }
 
 
+var _map_state: MapState
+var _map_state_all_room_coords: Array[Vector2i]
+
+
+func _init() -> void:
+	_map_state = GameState.map_state.copy()
+	_map_state_all_room_coords = _map_state.get_all_room_coords()
+
+
 func find_secret_room_locations(
-	room_instance_grid: Dictionary[Vector2i, RoomInstanceData], 
 	secret_room_kind: RoomSecretType.Kind,
 	only_hint_placement: bool = false,
 	only_hint_placement_weights: bool = false,
@@ -68,12 +76,12 @@ func find_secret_room_locations(
 		return result
 	
 	# Find valid placements and return them if the only_hint_placement flag is true
-	_find_valid_placements(result, room_instance_grid, secret_room_placement_config)
+	_find_valid_placements(result, secret_room_placement_config)
 	if only_hint_placement:
 		return result
 	
 	# Calculate weights for valid placements and return them if the only_hint_placement_weights flag is true
-	_calculate_weights(result, room_instance_grid, secret_room_placement_config)
+	_calculate_weights(result, secret_room_placement_config)
 	if only_hint_placement_weights:
 		return result
 	
@@ -83,7 +91,7 @@ func find_secret_room_locations(
 	return result
 
 
-func _find_valid_placements(result: MapSolverResult, room_instance_grid: Dictionary[Vector2i, RoomInstanceData], placement_config: SecretPlacementConfig) -> void:
+func _find_valid_placements(result: MapSolverResult, placement_config: SecretPlacementConfig) -> void:
 	# Initialize stage state
 	result.stage = MapSolverResult.SolveStage.FOUND_VALID_PLACEMENTS
 	
@@ -92,22 +100,22 @@ func _find_valid_placements(result: MapSolverResult, room_instance_grid: Diction
 		for row in GameSettings.map_grid_room_size.y:
 			# Filter out room coords where the room already exists
 			var room_coords := Vector2i(column, row)
-			if room_coords in room_instance_grid and room_instance_grid[room_coords] != null:
+			if _map_state.has_room_coords(room_coords):
 				continue
 			
 			# Filter out room coords where the specified distance from other rooms isn't kept
-			if not _check_if_room_coords_distance_from_nearest_room(room_coords, placement_config.room_distance, room_instance_grid):
+			if not _check_if_room_coords_distance_from_nearest_room(room_coords, placement_config.room_distance):
 				continue
 			
 			# Filter out room coords that don't keep the neighbours min and max counts
-			var neighbours_count := _get_neighbours_count(room_coords, room_instance_grid)
+			var neighbours_count := _get_neighbours_count(room_coords)
 			if neighbours_count > placement_config.room_neighbours_max or neighbours_count < placement_config.room_neighbours_min:
 				continue
 			
 			# Filter out room coords that don't keep the neighbours restrictions
 			if neighbours_count == 0 and (placement_config.neighbour_require_barricade or placement_config.neighbour_require_secret or placement_config.neighbour_require_special):
 				continue
-			if not _check_if_room_coords_abide_neighbours_restrictions(room_coords, room_instance_grid, placement_config):
+			if not _check_if_room_coords_abide_neighbours_restrictions(room_coords, placement_config):
 				continue
 			
 			# Save coords inside the result
@@ -115,10 +123,10 @@ func _find_valid_placements(result: MapSolverResult, room_instance_grid: Diction
 			
 	# Filter out room coords that don't keep the optional restrictions set in placement config inside the assigned placement types
 	for placement_type in placement_config.placement_types:
-		_filter_results_placement_type_placement_restrictions(result, room_instance_grid, placement_type)
+		_filter_results_placement_type_placement_restrictions(result, placement_type)
 
 
-func _check_if_room_coords_distance_from_nearest_room(room_coords: Vector2i, room_expected_distance: int, room_instance_grid: Dictionary[Vector2i, RoomInstanceData]) -> bool:
+func _check_if_room_coords_distance_from_nearest_room(room_coords: Vector2i, room_expected_distance: int) -> bool:
 	var rooms_at_expected_distance_counter := 0
 	
 	# Check every possible room coords in distance range
@@ -136,7 +144,7 @@ func _check_if_room_coords_distance_from_nearest_room(room_coords: Vector2i, roo
 				continue
 			
 			# Check if room exists for the given coords and if yes, then either count it if it's at the expected range or return false if it's not, since then range is smaller than expected 
-			if current_coords in room_instance_grid and room_instance_grid[current_coords] != null:
+			if _map_state.has_room_coords(current_coords):
 				if coords_distance_from_center < room_expected_distance:
 					return false
 				else:
@@ -156,7 +164,7 @@ func _check_if_room_coords_inside_grid(room_coords: Vector2i) -> bool:
 	return false
 
 
-func _get_neighbours_count(room_coords: Vector2i, room_instance_grid: Dictionary[Vector2i, RoomInstanceData]) -> int:
+func _get_neighbours_count(room_coords: Vector2i) -> int:
 	var result = 0
 	
 	for current_dir in Direction:
@@ -166,13 +174,13 @@ func _get_neighbours_count(room_coords: Vector2i, room_instance_grid: Dictionary
 		
 		# Check if neighbour does exist in a given direction and count it in if it does
 		var neighbour_coords = room_coords + DIRECTION_TO_COORDS_OFFSET[current_dir]
-		if neighbour_coords in room_instance_grid and room_instance_grid[neighbour_coords] != null:
+		if _map_state.has_room_coords(neighbour_coords):
 			result += 1
 	
 	return result
 
 
-func _check_if_room_coords_abide_neighbours_restrictions(room_coords: Vector2i, room_instance_grid: Dictionary[Vector2i, RoomInstanceData], placement_config: SecretPlacementConfig) -> bool:
+func _check_if_room_coords_abide_neighbours_restrictions(room_coords: Vector2i, placement_config: SecretPlacementConfig) -> bool:
 	# Gather data room coords neighbours about the barricade relation to the current room and if they are any special/secret rooms among them
 	var barricade_count := 0
 	var special_count := 0
@@ -185,11 +193,11 @@ func _check_if_room_coords_abide_neighbours_restrictions(room_coords: Vector2i, 
 		
 		# Filter out the coords if neighbour doesn't exist for it
 		var neighbour_coords := room_coords + DIRECTION_TO_COORDS_OFFSET[current_dir]
-		if neighbour_coords not in room_instance_grid or room_instance_grid[neighbour_coords] == null:
+		var room_instance := _map_state.get_room_instance(neighbour_coords)
+		if room_instance == null:
 			continue
 		
 		# Check if neighbour does fulfill the relation requirements and if yes, then count it in
-		var room_instance := room_instance_grid[neighbour_coords]
 		if room_instance.has_barricade(DIRECTION_TO_BARRICADE_CONNECTED_ROOM_DIRECTION_FLAGS[current_dir]):
 			barricade_count += 1
 		if room_instance.get_special_type_kind() != RoomSpecialType.Kind.NONE:
@@ -214,13 +222,13 @@ func _check_if_room_coords_abide_neighbours_restrictions(room_coords: Vector2i, 
 	return true
 
 
-func _filter_results_placement_type_placement_restrictions(result: MapSolverResult, room_instance_grid: Dictionary[Vector2i, RoomInstanceData], placement_type: SecretPlacementType) -> void:
+func _filter_results_placement_type_placement_restrictions(result: MapSolverResult, placement_type: SecretPlacementType) -> void:
 	# Check if placement type should validate placement restrictions, and if yes then prepare initial data needed for filtering
 	var prepared_placement_type_data: Dictionary[String, Variant] = {}
 	if placement_type is SecretPlacementTypeIntersection:
 		# Prepare a list of intersected base rooms coords
-		var intersect_group_coords_1 := _find_room_types_coords(room_instance_grid, placement_type.intersect_room_type_1)
-		var intersect_group_coords_2 := _find_room_types_coords(room_instance_grid, placement_type.intersect_room_type_2)
+		var intersect_group_coords_1 := _find_room_types_coords(placement_type.intersect_room_type_1)
+		var intersect_group_coords_2 := _find_room_types_coords(placement_type.intersect_room_type_2)
 		
 		# Save the data inside the outputted data
 		prepared_placement_type_data = {
@@ -230,7 +238,7 @@ func _filter_results_placement_type_placement_restrictions(result: MapSolverResu
 		
 	elif placement_type is SecretPlacementTypeLoop:
 		# Prepare a dict with coords as key and values represeting each separated room group
-		var room_connections_groups := _find_group_room_connections(room_instance_grid)
+		var room_connections_groups := _find_group_room_connections()
 		
 		# Save the data inside the outputted data
 		prepared_placement_type_data = {
@@ -239,10 +247,10 @@ func _filter_results_placement_type_placement_restrictions(result: MapSolverResu
 		
 	elif placement_type is SecretPlacementTypePath:
 		# Prepare a list of starter base rooms coords
-		var start_room_group_coords := _find_room_types_coords(room_instance_grid, placement_type.start_room)
+		var start_room_group_coords := _find_room_types_coords(placement_type.start_room)
 		
 		# Prepare a dict with coords as key and values represeting each separated room group
-		var room_connections_groups := _find_group_room_connections(room_instance_grid)
+		var room_connections_groups := _find_group_room_connections()
 		
 		# Save the data inside the outputted data
 		prepared_placement_type_data = {
@@ -265,7 +273,7 @@ func _filter_results_placement_type_placement_restrictions(result: MapSolverResu
 			cur_coords_valid = _filter_results_placement_type_placement_restrictions_intersection(prepared_placement_type_data, cur_coords)
 			
 		elif placement_type is SecretPlacementTypeLoop:
-			cur_coords_valid = _filter_results_placement_type_placement_restrictions_loop(room_instance_grid, prepared_placement_type_data, cur_coords)
+			cur_coords_valid = _filter_results_placement_type_placement_restrictions_loop(prepared_placement_type_data, cur_coords)
 			
 		elif placement_type is SecretPlacementTypePath:
 			cur_coords_valid = _filter_results_placement_type_placement_restrictions_path(prepared_placement_type_data, cur_coords)
@@ -293,7 +301,7 @@ func _filter_results_placement_type_placement_restrictions_intersection(prepared
 	return cur_coords_valid
 
 
-func _filter_results_placement_type_placement_restrictions_loop(room_instance_grid: Dictionary[Vector2i, RoomInstanceData], prepared_placement_type_data: Dictionary[String, Variant], cur_coords: Vector2i) -> bool:
+func _filter_results_placement_type_placement_restrictions_loop(prepared_placement_type_data: Dictionary[String, Variant], cur_coords: Vector2i) -> bool:
 	var cur_coords_valid: bool = false
 	
 	# Check if there are at least 2 negihbours to the current room that have the same group other than -1
@@ -307,7 +315,7 @@ func _filter_results_placement_type_placement_restrictions_loop(room_instance_gr
 		var neighbour_coords := cur_coords + DIRECTION_TO_COORDS_OFFSET[current_dir]
 		if neighbour_coords in prepared_placement_type_data["room_connections_groups"]:
 			# Check if the room doesn't have a blockade in the direction of the current coords, if yes then skip counting it
-			var neighbour_room_instance_data := room_instance_grid[neighbour_coords]
+			var neighbour_room_instance_data := _map_state.get_room_instance(neighbour_coords)
 			if neighbour_room_instance_data.has_barricade(DIRECTION_TO_BARRICADE_CONNECTED_ROOM_DIRECTION_FLAGS[current_dir]):
 				continue
 			
@@ -353,30 +361,30 @@ func _filter_results_placement_type_placement_restrictions_path(prepared_placeme
 	return cur_coords_valid
 
 
-func _find_room_types_coords(room_instance_grid: Dictionary[Vector2i, RoomInstanceData], room_type: RoomType) -> Array[Vector2i]:
+func _find_room_types_coords(room_type: RoomType) -> Array[Vector2i]:
 	var found_coords: Array[Vector2i] = []
 	
 	# Check each room if they have a specific room type assigned to themselfes
-	for room_coords in room_instance_grid:
-		var room_instance_data := room_instance_grid[room_coords]
+	for room_coords in _map_state_all_room_coords:
+		var room_instance_data := _map_state.get_room_instance(room_coords)
 		if room_instance_data.has_specified_room_type(room_type):
 			found_coords.append(room_coords)
 	
 	return found_coords
 
 
-func _find_group_room_connections(room_instance_grid: Dictionary[Vector2i, RoomInstanceData]) -> Dictionary[Vector2i, int]:
+func _find_group_room_connections() -> Dictionary[Vector2i, int]:
 	var coords_to_group_id: Dictionary[Vector2i, int] = {}
 	
 	# Assign connection groups to each room in the grid
 	var group_id: int = 0
-	for room_coords in room_instance_grid:
+	for room_coords in _map_state_all_room_coords:
 		# Check if the room wasn't already assigned to other group
 		if room_coords in coords_to_group_id:
 			continue
 		
 		# Assign group to a current room and then recusively assign the same group to it's neighbours that are connected to it
-		_assign_neighbour_group_room_connection(room_instance_grid, coords_to_group_id, group_id, room_coords, Direction.NONE)
+		_assign_neighbour_group_room_connection(coords_to_group_id, group_id, room_coords, Direction.NONE)
 		
 		# Increase the group ID
 		group_id += 1
@@ -384,13 +392,13 @@ func _find_group_room_connections(room_instance_grid: Dictionary[Vector2i, RoomI
 	return coords_to_group_id
 
 
-func _assign_neighbour_group_room_connection(room_instance_grid: Dictionary[Vector2i, RoomInstanceData], coords_to_group_id: Dictionary[Vector2i, int], group_id: int, cur_room_coords: Vector2i, last_room_dir: Direction) -> void:
+func _assign_neighbour_group_room_connection(coords_to_group_id: Dictionary[Vector2i, int], group_id: int, cur_room_coords: Vector2i, last_room_dir: Direction) -> void:
 	# Filter processing room coords that are already grouped
 	if cur_room_coords in coords_to_group_id:
 		return
 	
 	# Assign unassinged group room id if the room is a secret room and stop recursive processing
-	var cur_room_instance_data := room_instance_grid[cur_room_coords]
+	var cur_room_instance_data := _map_state.get_room_instance(cur_room_coords)
 	if cur_room_instance_data.get_secret_type_kind() != RoomSecretType.Kind.NONE:
 		coords_to_group_id[cur_room_coords] = -1
 		return
@@ -410,16 +418,16 @@ func _assign_neighbour_group_room_connection(room_instance_grid: Dictionary[Vect
 		
 		# Filter out the coords if neighbour doesn't exist for it
 		var neighbour_coords := cur_room_coords + DIRECTION_TO_COORDS_OFFSET[current_dir]
-		if neighbour_coords not in room_instance_grid or room_instance_grid[neighbour_coords] == null:
+		if not _map_state.has_room_coords(neighbour_coords):
 			continue
 		
 		# Check if current room has any barricades in the direction of this neighbour room
 		if not cur_room_instance_data.has_barricade(DIRECTION_TO_BARRICADE_CURRENT_ROOM_DIRECTION_FLAGS[current_dir]):
-			_assign_neighbour_group_room_connection(room_instance_grid, coords_to_group_id, group_id, neighbour_coords, current_dir)
+			_assign_neighbour_group_room_connection(coords_to_group_id, group_id, neighbour_coords, current_dir)
 
 
 #TODO: maybe add color coding for weights depending on the placement config count type and the calculated weights min and max values calculated
-func _calculate_weights(result: MapSolverResult, room_instance_grid: Dictionary[Vector2i, RoomInstanceData], placement_config: SecretPlacementConfig) -> void:
+func _calculate_weights(result: MapSolverResult, placement_config: SecretPlacementConfig) -> void:
 	# Initialize stage state
 	result.stage = MapSolverResult.SolveStage.CALCULATED_WEIGHTS
 	
@@ -428,24 +436,24 @@ func _calculate_weights(result: MapSolverResult, room_instance_grid: Dictionary[
 	
 	# Calculate coords weights based on the placement config placement types
 	for placement_type in placement_config.placement_types:
-		_calculate_weight_placement_type(result, room_instance_grid, placement_type)
+		_calculate_weight_placement_type(result, placement_type)
 
 
-func _calculate_weight_placement_type(result: MapSolverResult, room_instance_grid: Dictionary[Vector2i, RoomInstanceData], placement_type: SecretPlacementType) -> void:
+func _calculate_weight_placement_type(result: MapSolverResult, placement_type: SecretPlacementType) -> void:
 	var result_coords_all := result.get_result_coords()
 	
 	# Calculate coords weights based on the placement type
 	if placement_type is SecretPlacementTypeCorridor:
 		# Calculate weights for each coords saved in the result
 		for cur_coords in result_coords_all:
-			var cur_coords_weight := _calculate_weights_placement_type_corridor(room_instance_grid, placement_type, cur_coords)
+			var cur_coords_weight := _calculate_weights_placement_type_corridor(placement_type, cur_coords)
 			result.assign_weight_to_result_coords(cur_coords, cur_coords_weight)
 		
 	elif placement_type is SecretPlacementTypeDistance:
 		# Find all the related room types
 		var related_room_types_coords: Array[Vector2i] = []
 		for room_type in placement_type.related_room_types:
-			var room_type_coords := _find_room_types_coords(room_instance_grid, room_type)
+			var room_type_coords := _find_room_types_coords(room_type)
 			for cur_coords in room_type_coords:
 				if cur_coords not in related_room_types_coords:
 					related_room_types_coords.append(cur_coords)
@@ -463,34 +471,34 @@ func _calculate_weight_placement_type(result: MapSolverResult, room_instance_gri
 		
 	elif placement_type is SecretPlacementTypeLoop:
 		# Prepare a dict with coords as key and values represeting each separated room group
-		var room_connections_groups := _find_group_room_connections(room_instance_grid)
+		var room_connections_groups := _find_group_room_connections()
 	
 		# Calculate weights for each coords saved in the result
 		for cur_coords in result_coords_all:
-			var cur_coords_weight := _calculate_weights_placement_type_loop(room_instance_grid, placement_type, cur_coords, room_connections_groups)
+			var cur_coords_weight := _calculate_weights_placement_type_loop(placement_type, cur_coords, room_connections_groups)
 			result.assign_weight_to_result_coords(cur_coords, cur_coords_weight)
 		
 	elif placement_type is SecretPlacementTypeNeighbour:
 		# Calculate weights for each coords saved in the result
 		for cur_coords in result_coords_all:
-			var cur_coords_weight := _calculate_weights_placement_type_neighbour(room_instance_grid, placement_type, cur_coords)
+			var cur_coords_weight := _calculate_weights_placement_type_neighbour(placement_type, cur_coords)
 			result.assign_weight_to_result_coords(cur_coords, cur_coords_weight)
 		
 	elif placement_type is SecretPlacementTypePath:
 		# Find all the start room types
 		var start_room_types_coords: Array[Vector2i] = []
-		var room_type_coords := _find_room_types_coords(room_instance_grid, placement_type.start_room)
+		var room_type_coords := _find_room_types_coords(placement_type.start_room)
 		for cur_coords in room_type_coords:
 			if cur_coords not in start_room_types_coords:
 				start_room_types_coords.append(cur_coords)
 		
 		# Calculate weights for each coords saved in the result
 		for cur_coords in result_coords_all:
-			var cur_coords_weight := _calculate_weights_placement_type_path(room_instance_grid, placement_type, cur_coords, start_room_types_coords)
+			var cur_coords_weight := _calculate_weights_placement_type_path(placement_type, cur_coords, start_room_types_coords)
 			result.assign_weight_to_result_coords(cur_coords, cur_coords_weight)
 
 
-func _calculate_weights_placement_type_corridor(room_instance_grid: Dictionary[Vector2i, RoomInstanceData], placement_type: SecretPlacementType, cur_room_coords: Vector2i, last_dir: Direction = Direction.NONE, length: int = 0) -> float:
+func _calculate_weights_placement_type_corridor(placement_type: SecretPlacementType, cur_room_coords: Vector2i, last_dir: Direction = Direction.NONE, length: int = 0) -> float:
 	# Prepare array for calculated weights
 	var calculated_weights: Array[float] = []
 	
@@ -503,19 +511,19 @@ func _calculate_weights_placement_type_corridor(room_instance_grid: Dictionary[V
 			
 			# Filter out the coords if neighbour doesn't exist for it
 			var neighbour_coords := cur_room_coords + DIRECTION_TO_COORDS_OFFSET[current_dir]
-			if neighbour_coords not in room_instance_grid or room_instance_grid[neighbour_coords] == null:
+			if not _map_state.has_room_coords(neighbour_coords):
 				continue
 			
 			# Calculate corridor length
-			var cur_dir_weight := _calculate_weights_placement_type_corridor(room_instance_grid, placement_type, neighbour_coords, current_dir, length + 1)
+			var cur_dir_weight := _calculate_weights_placement_type_corridor(placement_type, neighbour_coords, current_dir, length + 1)
 			if cur_dir_weight > 0:
 				calculated_weights.append(cur_dir_weight)
 		
 	else:
 		# If the current room doesn't exist, then return current corridor length - 1 as result (excluding current room)
-		if cur_room_coords not in room_instance_grid or room_instance_grid[cur_room_coords] == null:
+		var room_instance_data := _map_state.get_room_instance(cur_room_coords)
+		if room_instance_data == null:
 			return length - 1
-		var room_instance_data := room_instance_grid[cur_room_coords]
 		
 		# Check if the barricades aren't set in the direction where the last room was located, if yes, then return length - 1 (excluding current room)
 		if room_instance_data.has_barricade(DIRECTION_TO_BARRICADE_CONNECTED_ROOM_DIRECTION_FLAGS[last_dir]):
@@ -527,7 +535,6 @@ func _calculate_weights_placement_type_corridor(room_instance_grid: Dictionary[V
 		
 		# Call this function recursively to calculate weight and return it's return value
 		return _calculate_weights_placement_type_corridor(
-			room_instance_grid,
 			placement_type,
 			cur_room_coords + DIRECTION_TO_COORDS_OFFSET[last_dir],
 			last_dir,
@@ -556,7 +563,7 @@ func _calculate_weights_placement_type_intersection() -> float:
 	return 0
 
 
-func _calculate_weights_placement_type_loop(room_instance_grid: Dictionary[Vector2i, RoomInstanceData], placement_type: SecretPlacementType, cur_coords: Vector2i, room_connections_groups: Dictionary[Vector2i, int]) -> float:
+func _calculate_weights_placement_type_loop(placement_type: SecretPlacementType, cur_coords: Vector2i, room_connections_groups: Dictionary[Vector2i, int]) -> float:
 	# Prepare array for calculated weights
 	var calculated_weights: Array[float] = []
 	
@@ -571,7 +578,7 @@ func _calculate_weights_placement_type_loop(room_instance_grid: Dictionary[Vecto
 		var neighbour_coords := cur_coords + DIRECTION_TO_COORDS_OFFSET[current_dir]
 		if neighbour_coords in room_connections_groups:
 			# Check if the room doesn't have a blockade in the direction of the current coords, if yes then skip counting it
-			var neighbour_room_instance_data := room_instance_grid[neighbour_coords]
+			var neighbour_room_instance_data := _map_state.get_room_instance(neighbour_coords)
 			if neighbour_room_instance_data.has_barricade(DIRECTION_TO_BARRICADE_CONNECTED_ROOM_DIRECTION_FLAGS[current_dir]):
 				continue
 			
@@ -601,19 +608,18 @@ func _calculate_weights_placement_type_loop(room_instance_grid: Dictionary[Vecto
 				break
 		
 		# Find all paths lenghts from the first neighbour coords to the result current coords and save them as calculated weights
-		_find_all_room_paths_lengths(room_instance_grid, first_neighbour_coords, cur_coords, 1, {}, calculated_weights, last_dir)
+		_find_all_room_paths_lengths(first_neighbour_coords, cur_coords, 1, {}, calculated_weights, last_dir)
 	
 	# Aggregate calculated weights according to the placement type config
 	return _placement_type_aggregate_calculated_weights(placement_type, calculated_weights)
 
 
-func _calculate_weights_placement_type_neighbour(room_instance_grid: Dictionary[Vector2i, RoomInstanceData], placement_type: SecretPlacementType, cur_coords: Vector2i) -> float:
+func _calculate_weights_placement_type_neighbour(placement_type: SecretPlacementType, cur_coords: Vector2i) -> float:
 	# Prepare array for calculated weights
 	var calculated_weights: Array[float] = []
 	
 	# Find and check current coords neighbours in placement type specified range and type
 	_find_room_neighbours_placement_type_weights(
-		room_instance_grid,
 		cur_coords,
 		cur_coords,
 		placement_type,
@@ -625,20 +631,19 @@ func _calculate_weights_placement_type_neighbour(room_instance_grid: Dictionary[
 	return _placement_type_aggregate_calculated_weights(placement_type, calculated_weights)
 
 
-func _calculate_weights_placement_type_path(room_instance_grid: Dictionary[Vector2i, RoomInstanceData], placement_type: SecretPlacementType, cur_coords: Vector2i, start_room_types_coords: Array[Vector2i]) -> float:
+func _calculate_weights_placement_type_path(placement_type: SecretPlacementType, cur_coords: Vector2i, start_room_types_coords: Array[Vector2i]) -> float:
 	# Prepare array for calculated weights
 	var calculated_weights: Array[float] = []
 	
 	# Find all room paths lengths for each starter room found
 	for start_room_coords in start_room_types_coords:
-		_find_all_room_paths_lengths(room_instance_grid, start_room_coords, cur_coords, 0, {}, calculated_weights, Direction.NONE)
+		_find_all_room_paths_lengths(start_room_coords, cur_coords, 0, {}, calculated_weights, Direction.NONE)
 	
 	# Aggregate calculated weights according to the placement type config
 	return _placement_type_aggregate_calculated_weights(placement_type, calculated_weights)
 
 
 func _find_room_neighbours_placement_type_weights(
-	room_instance_grid: Dictionary[Vector2i, RoomInstanceData],
 	start_coords: Vector2i,
 	cur_coords: Vector2i,
 	placement_type: SecretPlacementType,
@@ -652,9 +657,9 @@ func _find_room_neighbours_placement_type_weights(
 	# Calculate weights for the current room
 	if last_dir != Direction.NONE and cur_range >= placement_type.check_range_min and cur_range <= placement_type.check_range_max:
 		# Check if the current room exists
-		if cur_coords in room_instance_grid and room_instance_grid[cur_coords] != null:
+		var cur_room_instance_data := _map_state.get_room_instance(cur_coords)
+		if cur_room_instance_data != null:
 			# Gather data about the room instance
-			var cur_room_instance_data = room_instance_grid[cur_coords]
 			var cur_room_has_barricade := cur_room_instance_data.has_barricade(DIRECTION_TO_BARRICADE_CONNECTED_ROOM_DIRECTION_FLAGS[last_dir])
 			var cur_room_has_secret := cur_room_instance_data.get_secret_type_kind() != RoomSecretType.Kind.NONE
 			
@@ -687,11 +692,10 @@ func _find_room_neighbours_placement_type_weights(
 		
 		# Calculate weights for a neighbour
 		var neighbour_coords := cur_coords + DIRECTION_TO_COORDS_OFFSET[current_dir]
-		_find_room_neighbours_placement_type_weights(room_instance_grid, start_coords, neighbour_coords, placement_type, neighbours_weights, checked_neighbours_coords, current_dir)
+		_find_room_neighbours_placement_type_weights(start_coords, neighbour_coords, placement_type, neighbours_weights, checked_neighbours_coords, current_dir)
 
 
 func _find_all_room_paths_lengths(
-	room_instance_grid: Dictionary[Vector2i, RoomInstanceData], 
 	cur_coords: Vector2i,
 	target_coords: Vector2i,
 	length: int, 
@@ -700,12 +704,12 @@ func _find_all_room_paths_lengths(
 	last_dir: Direction = Direction.NONE,
 ) -> void:
 	# Stop further processing if current room is empty and check if they are the target room
-	if cur_coords not in room_instance_grid or room_instance_grid[cur_coords] == null:
+	var cur_room_instance_data := _map_state.get_room_instance(cur_coords)
+	if cur_room_instance_data == null:
 		# Save path length if the current coords are the same as target coords
 		if cur_coords == target_coords:
 			paths_lengths_array.append(length)
 		return
-	var cur_room_instance_data := room_instance_grid[cur_coords]
 	
 	# Check if the current room has a barricade in the same direction made as the last room, if yes then stop further processing
 	if last_dir != Direction.NONE and cur_room_instance_data.has_barricade(DIRECTION_TO_BARRICADE_CONNECTED_ROOM_DIRECTION_FLAGS[last_dir]):
@@ -735,7 +739,7 @@ func _find_all_room_paths_lengths(
 		# Prepare a recursive check for a given direction if it wasn't visited before
 		var neighbour_coords := cur_coords + DIRECTION_TO_COORDS_OFFSET[current_dir]
 		if neighbour_coords not in visited:
-			_find_all_room_paths_lengths(room_instance_grid, neighbour_coords, target_coords, length + 1, visited, paths_lengths_array, current_dir)
+			_find_all_room_paths_lengths(neighbour_coords, target_coords, length + 1, visited, paths_lengths_array, current_dir)
 	
 	# Unmark current coords as visited
 	visited.erase(cur_coords)

@@ -15,12 +15,27 @@ signal map_state_changed()
 var room_instances: Dictionary[Vector2i, RoomInstanceData] = {}
 
 
-func _init() -> void:
+func _init(ignore_default_init: bool = false) -> void:
+	if ignore_default_init:
+		return
+	
 	# Connect internal signal for updating map state
 	map_state_changed.connect(_on_map_state_changed)
 	
 	# Connect game settings map_grid_size_parameter_changed signal
 	GameSettings.map_grid_size_parameter_changed.connect(_on_game_settings_map_grid_size_parameter_changed)
+
+
+func copy() -> MapState:
+	# Create a clean new map state for copying data into without any handles/signals
+	var result := MapState.new(true)
+	
+	# Deep copy all existing room instances 
+	for cur_coords in room_instances:
+		var room_instance_data := room_instances[cur_coords]
+		result.room_instances[cur_coords] = room_instance_data.copy()
+	
+	return result
 
 
 ## Checks if the room instance exists for the provided [param room_coords] coordinates.

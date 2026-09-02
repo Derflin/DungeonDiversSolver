@@ -1,6 +1,7 @@
 class_name RoomInstanceData
 extends Resource
 
+
 enum ConnectionDirectionFlags {
 	NONE = 0,
 	UP = 1 << 0,
@@ -52,10 +53,13 @@ var connection_directions_mask: int = ConnectionDirectionFlags.NONE
 var barricade_directions_mask: int = BarricadeDirectionFlags.NONE
 
 
-func _init() -> void:
+func _init(ignore_default_init: bool = false) -> void:
+	if ignore_default_init:
+		return
+	
 	corridor_type = GameData.room_corridor_types.get_default_type()
 	instance_seed_value = randi()
-		
+
 
 func create(_corridor_type: RoomCorridorType, _special_type: RoomSpecialType = null, _secret_type: RoomSecretType = null, _connection_directions_mask: ConnectionDirectionFlags = ConnectionDirectionFlags.NONE, _barricade_directions_mask: BarricadeDirectionFlags = BarricadeDirectionFlags.NONE) -> void:
 	corridor_type = _corridor_type
@@ -64,7 +68,22 @@ func create(_corridor_type: RoomCorridorType, _special_type: RoomSpecialType = n
 	
 	connection_directions_mask = _connection_directions_mask
 	barricade_directions_mask = _barricade_directions_mask
+
+
+func copy() -> RoomInstanceData:
+	# Create a clean new room instance data for copying data into without any handles/signals
+	var result := RoomInstanceData.new(true)
 	
+	# Copy all of the existing member parameters of the current instance
+	result.instance_seed_value = instance_seed_value
+	result.corridor_type = corridor_type
+	result.special_type = special_type
+	result.secret_type = secret_type
+	result.connection_directions_mask = connection_directions_mask
+	result.barricade_directions_mask = barricade_directions_mask
+	
+	return result
+
 
 func get_room_floor_visual_data() -> ResolvedVisualData:
 	var visual_data: ResolvedVisualData = null
@@ -77,8 +96,8 @@ func get_room_floor_visual_data() -> ResolvedVisualData:
 		visual_data.animated_variants = false
 	
 	return visual_data
-	
-	
+
+
 func get_room_background_visual_data(refresh_room_id: int) -> ResolvedVisualData:
 	var visual_data: ResolvedVisualData = null
 	
@@ -108,11 +127,11 @@ func get_room_background_visual_data(refresh_room_id: int) -> ResolvedVisualData
 			
 		
 	return visual_data
-	
+
 
 func get_room_connections_visual_data() -> ResolvedVisualData:
 	var visual_data: ResolvedVisualData = null
-
+	
 	if corridor_type != null:
 		visual_data = ResolvedTextureVisualData.new()
 		visual_data.texture = corridor_type.connections_texture
@@ -122,8 +141,8 @@ func get_room_connections_visual_data() -> ResolvedVisualData:
 		visual_data.dictionary_frame_per_direction = corridor_type.CONNECTION_FRAME_BY_DIRECTION
 	
 	return visual_data
-	
-	
+
+
 func get_room_barricades_visual_data() -> ResolvedVisualData:
 	var visual_data: ResolvedVisualData = null
 
@@ -137,7 +156,7 @@ func get_room_barricades_visual_data() -> ResolvedVisualData:
 	
 	return visual_data
 
-	
+
 func get_room_icon_visual_data(refresh_room_id: int) -> ResolvedVisualData:
 	var visual_data: ResolvedVisualData = null
 	
@@ -285,5 +304,5 @@ func has_specified_room_type(room_type: RoomType) -> bool:
 		return special_type != null and special_type == room_type
 	elif room_type is RoomSecretType:
 		return secret_type != null and secret_type == room_type
-
+	
 	return false

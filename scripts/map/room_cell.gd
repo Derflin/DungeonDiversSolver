@@ -56,8 +56,6 @@ var icon_last_frame: int = -1
 
 func create(_room_instance_data: RoomInstanceData) -> void:
 	room_instance_data = _room_instance_data
-	
-	print("Room Cell Initialized - %s", str(room_instance_data))
 
 
 func _ready() -> void:
@@ -72,7 +70,7 @@ func _ready() -> void:
 func _connect_room_instance_data() -> void:
 	if room_instance_data == null:
 		return
-		
+	
 	if not room_instance_data.changed.is_connected(refresh_visuals):
 		room_instance_data.changed.connect(refresh_visuals)
 		

@@ -58,3 +58,10 @@ func get_grid_offset() -> Vector2:
 		(GRID_OUTER_CELL_COUNT) * (GameSettings.map_grid_room_size.x + GRID_LINE_WIDTH),
 		(GRID_OUTER_CELL_COUNT) * (GameSettings.map_grid_room_size.y + GRID_LINE_WIDTH),
 	)
+
+
+func get_map_rect() -> Rect2:
+	return Rect2(
+		position - get_grid_offset(),
+		get_grid_size(),
+	)

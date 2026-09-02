@@ -21,20 +21,6 @@ func _init() -> void:
 	
 	# Connect game settings map_grid_size_parameter_changed signal
 	GameSettings.map_grid_size_parameter_changed.connect(_on_game_settings_map_grid_size_parameter_changed)
-	
-	#TODO: remove it later
-	# Testing data initialization
-	var test_room := RoomInstanceData.new()
-	#test_room.enable_barricade(RoomInstanceData.BarricadeDirectionFlags.UP)
-	#test_room.enable_barricade(RoomInstanceData.BarricadeDirectionFlags.LEFT | RoomInstanceData.BarricadeDirectionFlags.RIGHT)
-	#test_room.enable_barricade(RoomInstanceData.BarricadeDirectionFlags.UP | RoomInstanceData.BarricadeDirectionFlags.LEFT | RoomInstanceData.BarricadeDirectionFlags.RIGHT)
-	test_room.enable_barricade(RoomInstanceData.BarricadeDirectionFlags.UP | RoomInstanceData.BarricadeDirectionFlags.DOWN | RoomInstanceData.BarricadeDirectionFlags.RIGHT)
-	#test_room.special_type = GameData.room_special_types.get_type(RoomSpecialType.Kind.ARENA)
-	#test_room.special_type = GameData.room_special_types.get_type(RoomSpecialType.Kind.ENTRANCE)
-	#test_room.special_type = GameData.room_special_types.get_type(RoomSpecialType.Kind.LIBRARY)
-	#test_room.secret_type = GameData.room_secret_types.get_type(RoomSecretType.Kind.ERROR_ROOM)
-	var room_coords := Vector2i(5, 5)
-	create_room(room_coords, test_room)
 
 
 ## Checks if the room instance exists for the provided [param room_coords] coordinates.

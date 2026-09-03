@@ -167,7 +167,7 @@ func _check_if_room_coords_inside_grid(room_coords: Vector2i) -> bool:
 func _get_neighbours_count(room_coords: Vector2i) -> int:
 	var result = 0
 	
-	for current_dir in Direction:
+	for current_dir: Direction in Direction.values():
 		# For each direction apart from the default NONE direction
 		if current_dir == Direction.NONE:
 			continue
@@ -186,7 +186,7 @@ func _check_if_room_coords_abide_neighbours_restrictions(room_coords: Vector2i, 
 	var special_count := 0
 	var secret_count := 0
 	
-	for current_dir in Direction:
+	for current_dir: Direction in Direction.values():
 		# For each direction apart from the default NONE direction
 		if current_dir == Direction.NONE:
 			continue
@@ -306,7 +306,7 @@ func _filter_results_placement_type_placement_restrictions_loop(prepared_placeme
 	
 	# Check if there are at least 2 negihbours to the current room that have the same group other than -1
 	var neighbours_groups_count: Dictionary[int, int] = {}
-	for current_dir in Direction:
+	for current_dir: Direction in Direction.values():
 		# For each direction apart from the default NONE direction
 		if current_dir == Direction.NONE:
 			continue
@@ -340,7 +340,7 @@ func _filter_results_placement_type_placement_restrictions_path(prepared_placeme
 	
 	# Check what groups are assigned to each neighbour of the current coords
 	var neighbours_groups: Array[int] = []
-	for current_dir in Direction:
+	for current_dir: Direction in Direction.values():
 		# For each direction apart from the default NONE direction
 		if current_dir == Direction.NONE:
 			continue
@@ -411,7 +411,7 @@ func _assign_neighbour_group_room_connection(coords_to_group_id: Dictionary[Vect
 	coords_to_group_id[cur_room_coords] = group_id
 	
 	# Recursively propagate assigning groups to neighbouring compatible rooms
-	for current_dir in Direction:
+	for current_dir: Direction in Direction.values():
 		# For each direction apart from the default NONE direction and the last made direction
 		if current_dir == Direction.NONE or current_dir == DIRECTION_TO_OPPOSITE_DIRECTION[last_room_dir]:
 			continue
@@ -504,7 +504,7 @@ func _calculate_weights_placement_type_corridor(placement_type: SecretPlacementT
 	
 	# If last dir wasn't defined earlier, then call the function recursively for each neighbour
 	if last_dir == Direction.NONE:
-		for current_dir in Direction:
+		for current_dir: Direction in Direction.values():
 			# For each direction apart from the default NONE direction
 			if current_dir == Direction.NONE:
 				continue
@@ -569,7 +569,7 @@ func _calculate_weights_placement_type_loop(placement_type: SecretPlacementType,
 	
 	# Prepare a dictionary where for each distinct room group, it will have a list of all the neighbouring rooms coords
 	var neighbours_groups_coords: Dictionary[int, Variant] = {}
-	for current_dir in Direction:
+	for current_dir: Direction in Direction.values():
 		# For each direction apart from the default NONE direction
 		if current_dir == Direction.NONE:
 			continue
@@ -685,7 +685,7 @@ func _find_room_neighbours_placement_type_weights(
 	checked_neighbours_coords.append(cur_coords)
 	
 	# Propagate neighbours check to neighbouring room coords 
-	for current_dir in Direction:
+	for current_dir: Direction in Direction.values():
 		# For each direction apart from the default NONE direction and the last made direction
 		if current_dir == Direction.NONE or (last_dir != Direction.NONE and current_dir == DIRECTION_TO_OPPOSITE_DIRECTION[last_dir]):
 			continue
@@ -727,7 +727,7 @@ func _find_all_room_paths_lengths(
 	visited[cur_coords] = true
 	
 	# Check each neighbouring room coords
-	for current_dir in Direction:
+	for current_dir: Direction in Direction.values():
 		# For each direction apart from the default NONE direction and the last made direction
 		if current_dir == Direction.NONE or (last_dir != Direction.NONE and current_dir == DIRECTION_TO_OPPOSITE_DIRECTION[last_dir]):
 			continue
@@ -765,4 +765,4 @@ func _find_solutions(result: MapSolverResult, placement_config: SecretPlacementC
 	result.stage = MapSolverResult.SolveStage.FOUND_SOLUTION
 	
 	# Calculate possibilites
-	result.calculate_possibility_result_coords(secret_room_generate_count, placement_config.count_type)
+	result.calculate_possibility_result_coords(secret_room_generate_count, placement_config.weight_count_type)

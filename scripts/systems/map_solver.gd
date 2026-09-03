@@ -39,13 +39,21 @@ const DIRECTION_TO_BARRICADE_CONNECTED_ROOM_DIRECTION_FLAGS: Dictionary[Directio
 }
 
 
+var text_color_code_gradient: Gradient = Gradient.new()
+
+
 var _map_state: MapState
 var _map_state_all_room_coords: Array[Vector2i]
 
 
 func _init() -> void:
+	# Prepare map state copy
 	_map_state = GameState.map_state.copy()
 	_map_state_all_room_coords = _map_state.get_all_room_coords()
+	
+	# Initialize color text color code gradient
+	text_color_code_gradient.set_offsets(PackedFloat32Array([0.0, 0.5, 1.0]))
+	text_color_code_gradient.set_colors(PackedColorArray([Color.RED, Color.YELLOW, Color.LIME_GREEN]))
 
 
 func find_secret_room_locations(
@@ -83,10 +91,16 @@ func find_secret_room_locations(
 	# Calculate weights for valid placements and return them if the only_hint_placement_weights flag is true
 	_calculate_weights(result, secret_room_placement_config)
 	if only_hint_placement_weights:
+		# Color code the weight results and save text colors for each valid placement
+		result.assign_color_code(text_color_code_gradient, secret_room_placement_config.weight_count_type, true, false)
+		
 		return result
 	
 	# Find and mark final solutions
 	_find_solutions(result, secret_room_placement_config, secret_room_generate_count)
+	
+	# Color code the solution results and save text colors for each found placement
+	result.assign_color_code(text_color_code_gradient, secret_room_placement_config.weight_count_type, false, true)
 	
 	return result
 

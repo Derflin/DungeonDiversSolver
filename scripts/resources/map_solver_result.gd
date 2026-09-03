@@ -48,6 +48,15 @@ func initialize_result_coords_weights() -> void:
 		result.calculated_weight = 0
 
 
+func get_all_result_coords_weights() -> Array[float]:
+	var result: Array[float] = [] 
+	
+	for result_coord in result_coords:
+		result.append(result_coord.calculated_weight)
+	
+	return result
+
+
 func assign_weight_to_result_coords(coords: Vector2i, weight: float) -> void:
 	for result in result_coords:
 		if result.coords == coords:
@@ -58,6 +67,15 @@ func assign_weight_to_result_coords(coords: Vector2i, weight: float) -> void:
 func intialize_result_coords_possibilities() -> void:
 	for result in result_coords:
 		result.possibility = 0.0
+
+
+func get_all_result_coords_possibilites() -> Array[float]:
+	var result: Array[float] = []
+	
+	for result_coord in result_coords:
+		result.append(result_coord.possibility)
+	
+	return result
 
 
 func assign_possibility_to_result_coords(coords: Vector2i, possibility: float) -> void:
@@ -130,3 +148,43 @@ func calculate_possibility_result_coords(expected_room_count: int, weight_count_
 	deleted_room_indexes.reverse()
 	for cur_index in deleted_room_indexes:
 		result_coords.remove_at(cur_index)
+
+
+func assign_color_code(text_color_gradient: Gradient, weight_count_type: SecretPlacementConfig.CountType, use_weights: bool = false, use_possibilities: bool = false) -> void:
+	# Filter out processing if all function state flags are disabled
+	if not use_weights and not use_possibilities:
+		return
+	
+	# Filter out processing if weight count type is none
+	if weight_count_type == SecretPlacementConfig.CountType.NONE:
+		return
+	
+	# Calculate min and max values based on the function state flags
+	var min_value: float
+	var max_value: float
+	if use_weights:
+		var all_weights := get_all_result_coords_weights()
+		min_value = all_weights.min()
+		max_value = all_weights.max()
+	elif use_possibilities:
+		min_value = 0.0
+		max_value = 1.0
+	
+	# Assign colors to results
+	for result_coord in result_coords:
+		if use_weights:
+			# Calculate main color percantage
+			var base_value := result_coord.calculated_weight
+			var main_color_percentage: float = (base_value - min_value) / (max_value - min_value)
+			
+			# Assign text color based on the provided text color gradient
+			if weight_count_type == SecretPlacementConfig.CountType.MIN:
+				result_coord.text_color = text_color_gradient.sample(1.0 - main_color_percentage)
+			elif weight_count_type == SecretPlacementConfig.CountType.MAX:
+				result_coord.text_color = text_color_gradient.sample(main_color_percentage)
+		else:
+			# Calculate main color percentage
+			var main_color_percentage := result_coord.possibility
+			
+			# Assign text color based on the provided text color gradient
+			result_coord.text_color = text_color_gradient.sample(main_color_percentage)

@@ -53,7 +53,7 @@ func _update_value_label() -> void:
 	if _map_solver_result_solve_stage == MapSolverResult.SolveStage.CALCULATED_WEIGHTS:
 		label_text = str(_map_solver_result_coord.calculated_weight)
 	elif _map_solver_result_solve_stage == MapSolverResult.SolveStage.FOUND_SOLUTION:
-		label_text = str(_map_solver_result_coord.possibility)
+		label_text = str(roundi(_map_solver_result_coord.possibility * 100)) + "%"
 	
 	# Update value label visibility and text
 	value_label.visible = label_text.length() > 0

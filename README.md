@@ -1,3 +1,5 @@
+#TODO: update README todos
+
 # Dungeon Divers Solver
 
 The main purpose of this app is to use it as helper app or map solver for the game called Dungeon Divers. The overall aim of the game itself is to solve each provided map by finding specified secret rooms that are placed on the map, but aren't visible to the player until marked correctly. This app is meant to simulate the map from the game with option to build your own map structure, define how many secret rooms of each type should be placed on the map and then either display hints for where the secret rooms could be placed or suggest solution on where they are most likely to be located.
@@ -35,19 +37,13 @@ This is rather small app that I decided to make inside Godot 4.x, in order to le
 Currently working on:
 
 - [ ] Implement MapSolver feature along with displaying it's results on map.
+	- [ ] Refactor MapSolverDropdown and MapSolverDropdownOption to different, more general names like MenuDropdown and MenuDropdownOption, so that it would be easier to reuse it in the future.
 	- [ ] Make sure that the map solver results from the last stage don't conflict with each other.
-	- [ ] Implement MapSolverResultCursor scene along with label for displaying it's content for a single result coords.
-		- [ ] Add animation (scale in and out) for it that will be only applied to the Corners Sprite2D node and that will be synced between all instances of MapSolverResultCursor.
-	- [ ] Implement MapSolverResultManager node container inside MapDisplay, which will be used to manage MapSolverResultCursor instances assigned as it's children.
-	- [ ] Add member parameter to GameState to hold the recent results of MapSolver
-	- [ ] Connect everything together:
-		- [ ] User triggers signal to enable mapsolver from control ui, 
-		- [ ] Signal is received by GameState and it result in saving the appropriate solver mode and secret room type inside the GameState.
-		- [ ] Depending on the solver mode, GameState either clears the solver results or calls MapSolver script to generate new results based on current state.
-		- [ ] GameState sends signal (some new signal) that map solver result was generated
-		- [ ] Probably MapSolverResultManager receives the signal and takes appropriate action based on the MapSolver results saved in GameState (it can either clear all existing results or check how many need to be removed/added and handles it).
-		- [ ] GameState.MapState RoomStateChanged signal needs to be connected to the GameState, so that any change to existing rooms, would trigger the call to MapSolver for new results (if map solver is enabled) and emit the signal once they will be generated to display them.
-		- [ ] Add Label at the bottom of the screen inside the MapSolverControl, in order to display a map solver result short description.
+	- [ ] Add Label at the bottom of the screen inside the MapSolverControl, in order to display a map solver result short description.
+	- [ ] Fix issue with MapSolverResultCursor not scaling it's size back down correctly after resizing, for example after first selecting "hint weight", then "show solution" and then "hint weight" for the same map state, causes the displayed weight to slightly offset to the side.
+	- [ ] Add animation for showing and hiding the map solver result cursor instances (opacity or mix together opacity and size - somethign similar to what is done for map solver label or it's submenus).
+	- [ ] Check why map solver incorrectly doesn't show 50/50 placement solutions when it should (screenshots in "temp_todos" directory with "test_issue1.png" and "test_issue2.png" files).
+	- [ ] Add secret room initialization in GridSpace handle_input_map_select function, if the user clicks on empty square and the MapSolverResultsContainer contains MapSolverResultCursor over that room coords.
 - [ ] Implement SaveManager to save/load current map state to/from file.
 	- [ ] Decide which data would need to saved/loaded.
 	- [ ] For each source of this data add function that would be used to import/export state of this data in form of the dict or anything similar that would be enough for this.

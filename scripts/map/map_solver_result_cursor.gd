@@ -55,6 +55,10 @@ func _update_value_label() -> void:
 	elif _map_solver_result_solve_stage == MapSolverResult.SolveStage.FOUND_SOLUTION:
 		label_text = str(roundi(_map_solver_result_coord.possibility * 100)) + "%"
 	
+	# Update value label text color
+	var label_text_color := _map_solver_result_coord.text_color
+	value_label.add_theme_color_override("font_color", label_text_color)
+	
 	# Update value label visibility and text
 	value_label.visible = label_text.length() > 0
 	set_value_label_text(label_text, value_label.visible)

@@ -28,10 +28,16 @@ func update_map_solver_results(map_solver_result: MapSolverResult, results_coord
 		else:
 			_update_result_cursor(cur_room_coords, result_coord, result_solve_stage)
 	
-	# Look through existing result cursors and delete any that weren't processed during creating and updating result cursors based on the map solver result
+	# Look through existing result cursors and mark any that weren't processed during creating and updating result cursors based on the map solver result
+	var room_coords_to_delete: Array[Vector2i] = []
 	for cur_room_coords: Vector2i in result_cursors:
 		if cur_room_coords not in processed_room_coords:
-			_delete_result_cursor(cur_room_coords)
+			room_coords_to_delete.append(cur_room_coords)
+	
+	# Delete every marked result cursor that wasn't processed
+	room_coords_to_delete.reverse()
+	for cur_room_coords: Vector2i in room_coords_to_delete:
+		_delete_result_cursor(cur_room_coords)
 
 
 ## Creates result cursor instance for the provided [param map_solver_result_coord] and places it in the [param cursor_position].
@@ -58,7 +64,7 @@ func _delete_result_cursor(room_coords: Vector2i):
 	
 	# Delete result cursor instance
 	var result_cursor = result_cursors[room_coords]
-	result_cursors.erase(result_cursor)
+	result_cursors.erase(room_coords)
 	result_cursor.queue_free()
 
 

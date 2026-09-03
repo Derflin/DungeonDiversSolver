@@ -45,7 +45,7 @@ func unassign_coord_from_result(coords: Vector2i) -> void:
 
 func initialize_result_coords_weights() -> void:
 	for result in result_coords:
-		result_coords[result].calculated_weight = 0
+		result.calculated_weight = 0
 
 
 func assign_weight_to_result_coords(coords: Vector2i, weight: float) -> void:
@@ -57,7 +57,7 @@ func assign_weight_to_result_coords(coords: Vector2i, weight: float) -> void:
 
 func intialize_result_coords_possibilities() -> void:
 	for result in result_coords:
-		result_coords[result].possibility = 0.0
+		result.possibility = 0.0
 
 
 func assign_possibility_to_result_coords(coords: Vector2i, possibility: float) -> void:

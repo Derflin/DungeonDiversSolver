@@ -8,8 +8,8 @@ signal room_created(room_coords: Vector2i, room_instance_data: RoomInstanceData)
 signal room_deleted(room_coords: Vector2i)
 ## Signal for communicating that a room instance inside a map state has been updated along with it's [param room_coords] coordinates.
 signal room_updated(room_coords: Vector2i)
-## Signal for communicating that a map state has been changed.
-signal map_state_changed()
+## Signal for communicating that a room state has been changed.
+signal room_state_changed()
 
 
 var room_instances: Dictionary[Vector2i, RoomInstanceData] = {}
@@ -20,7 +20,7 @@ func _init(ignore_default_init: bool = false) -> void:
 		return
 	
 	# Connect internal signal for updating map state
-	map_state_changed.connect(_on_map_state_changed)
+	room_state_changed.connect(_on_room_state_changed)
 	
 	# Connect game settings map_grid_size_parameter_changed signal
 	GameSettings.map_grid_size_parameter_changed.connect(_on_game_settings_map_grid_size_parameter_changed)
@@ -65,8 +65,8 @@ func create_and_save_empty_room(room_coords: Vector2i) -> void:
 
 ## Create a room for the provided [param room_coords] coordinates using the provided [param room_instance_data].
 ## If [param replace] is [code]true[/code], then if the room already exists, it will first delete it and then create a new one, otherwise it will skip processing.
-## If [param trigger_map_state_changed_signal] is [code]true[/code], then it will emit a [signal map_state_changed] signal.
-func create_room(room_coords: Vector2i, room_instance_data: RoomInstanceData, replace: bool = false, trigger_map_state_changed_signal: bool = true) -> void:
+## If [param trigger_room_state_changed_signal] is [code]true[/code], then it will emit a [signal room_state_changed] signal.
+func create_room(room_coords: Vector2i, room_instance_data: RoomInstanceData, replace: bool = false, trigger_room_state_changed_signal: bool = true) -> void:
 	if has_room_coords(room_coords):
 		if not replace:
 			return
@@ -76,21 +76,21 @@ func create_room(room_coords: Vector2i, room_instance_data: RoomInstanceData, re
 	room_instances[room_coords] = room_instance_data
 	
 	room_created.emit(room_coords, room_instance_data)
-	if trigger_map_state_changed_signal:
-		map_state_changed.emit()
+	if trigger_room_state_changed_signal:
+		room_state_changed.emit()
 
 
 ## Delete an existing room for the provided [param room_coords] coordinates.
-## If [param trigger_map_state_changed_signal] is [code]true[/code], then it will emit a [signal map_state_changed] signal.
-func delete_room(room_coords: Vector2i, trigger_map_state_changed_signal: bool = true) -> void:
+## If [param trigger_room_state_changed_signal] is [code]true[/code], then it will emit a [signal room_state_changed] signal.
+func delete_room(room_coords: Vector2i, trigger_room_state_changed_signal: bool = true) -> void:
 	if not has_room_coords(room_coords):
 		return
 	
 	room_instances.erase(room_coords)
 	
 	room_deleted.emit(room_coords)
-	if trigger_map_state_changed_signal:
-		map_state_changed.emit()
+	if trigger_room_state_changed_signal:
+		room_state_changed.emit()
 
 
 ## Updates an existing room for the provided [param room_coords] coordinates by modifying it's barricades configuration.
@@ -110,7 +110,7 @@ func update_room_set_barricade(room_coords: Vector2i, barricade_direction: RoomI
 	
 	if changed:
 		room_updated.emit(room_coords)
-		map_state_changed.emit()
+		room_state_changed.emit()
 
 
 ## Updates an existing room for the provided [param room_coords] coordinates by modifying it's connections configuration.
@@ -130,7 +130,7 @@ func update_room_set_connection(room_coords: Vector2i, connection_direction: Roo
 	
 	if changed:
 		room_updated.emit(room_coords)
-		map_state_changed.emit()
+		room_state_changed.emit()
 
 
 ## Updates an existing room for the provided [param room_coords] coordinates by modifying it's special type configuration.
@@ -145,7 +145,7 @@ func update_room_set_special_type(room_coords: Vector2i, special_room_kind: Room
 	
 	if changed:
 		room_updated.emit(room_coords)
-		map_state_changed.emit()
+		room_state_changed.emit()
 
 
 ## Updates an existing room for the provided [param room_coords] coordinates by modifying it's secret type configuration.
@@ -160,7 +160,7 @@ func update_room_set_secret_type(room_coords: Vector2i, secret_room_kind: RoomSe
 	
 	if changed:
 		room_updated.emit(room_coords)
-		map_state_changed.emit()
+		room_state_changed.emit()
 
 
 ## Updates the game state by updating it's members, which currently include current map secrets counts.  
@@ -185,7 +185,7 @@ func _update_game_state() -> void:
 			GameState.set_map_secrets_count_current(room_secret_type_kind, 0)
 
 
-func _on_map_state_changed() -> void:
+func _on_room_state_changed() -> void:
 	_update_game_state()
 
 
@@ -198,10 +198,10 @@ func _on_game_settings_map_grid_size_parameter_changed() -> void:
 		if room_coords.x >= _map_grid_size.x or room_coords.y >= _map_grid_size.y:
 			room_coords_deletion_queue.append(room_coords)
 	
-	# Delete any room that would be placed outside the map grid and don't propage it's map_state_changed signal
+	# Delete any room that would be placed outside the map grid and don't propage it's room_state_changed signal
 	for room_coords in room_coords_deletion_queue:
 		delete_room(room_coords, false)
 	
-	# If any of the room was set to be deleted, then emit the map_state_changed signal
+	# If any of the room was set to be deleted, then emit the room_state_changed signal
 	if room_coords_deletion_queue.size() > 0:
-		map_state_changed.emit()
+		room_state_changed.emit()

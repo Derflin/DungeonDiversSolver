@@ -40,7 +40,7 @@ func _ready() -> void:
 		map_secrets_count_current[secret_type_kind] = 0
 	
 	# Connect signals that might trigger change to the map solver result
-	map_state.map_state_changed.connect(_on_map_state_map_state_changed)
+	map_state.room_state_changed.connect(_on_map_state_room_state_changed)
 	GameSettings.map_grid_size_parameter_changed.connect(_on_game_settings_map_grid_size_parameter_changed)
 	GameSettings.map_secrets_count_max_changed.connect(_on_game_settings_map_secrets_count_max_changed)
 
@@ -82,7 +82,7 @@ func _update_map_solver_result_after_signal() -> void:
 
 
 ## After map state change was triggered, update map solver result.
-func _on_map_state_map_state_changed() -> void:
+func _on_map_state_room_state_changed() -> void:
 	_update_map_solver_result_after_signal()
 
 

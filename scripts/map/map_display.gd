@@ -9,6 +9,11 @@ func _ready() -> void:
 	GameSettings.map_grid_size_parameter_changed.connect(_on_game_settings_map_grid_size_parameter_changed)
 	GameSettings.map_grid_room_size_parameter_changed.connect(_on_game_settings_map_grid_room_size_parameter_changed)
 	
+	# Connect map state room signals to handle their visuals
+	GameState.map_state.room_created.connect(_on_game_state_map_state_room_created)
+	GameState.map_state.room_deleted.connect(_on_game_state_map_state_room_deleted)
+	GameState.map_state.room_updated.connect(_on_game_state_map_state_room_updated)
+	
 	update_map_camera_manager_display(true)
 
 
@@ -37,6 +42,21 @@ func _on_game_settings_map_grid_room_size_parameter_changed() -> void:
 	update_grid_space_display(true)
 	
 	update_map_camera_manager_display(false)
+
+
+## After game state map state room create was triggered, create a new room cell instance to display it.
+func _on_game_state_map_state_room_created(room_coords: Vector2i, room_instance_data: RoomInstanceData) -> void:
+	grid_space.create_room_cell(room_coords, room_instance_data)
+
+
+## After game state map state room delete was triggered, delete an existing room cell instance to stop displaying it.
+func _on_game_state_map_state_room_deleted(room_coords: Vector2i) -> void:
+	grid_space.delete_room_cell(room_coords)
+
+
+## After game state map state room update was triggered, update an existing room cell instance to update it's display.
+func _on_game_state_map_state_room_updated(room_coords: Vector2i) -> void:
+	grid_space.update_room_cell(room_coords)
 
 
 func _on_grid_space_selected_room_changed(room_center_position: Vector2) -> void:

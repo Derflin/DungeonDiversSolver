@@ -15,10 +15,6 @@ var room_cells: Dictionary[Vector2i, RoomCell] = {}
 
 
 func _ready() -> void:
-	GameState.map_state.room_created.connect(_on_game_state_map_state_room_created)
-	GameState.map_state.room_deleted.connect(_on_game_state_map_state_room_deleted)
-	GameState.map_state.room_updated.connect(_on_game_state_map_state_room_updated)
-	
 	_initialize_room_cells()
 
 
@@ -26,14 +22,6 @@ func _initialize_room_cells() -> void:
 	var all_room_coords := GameState.map_state.get_all_room_coords()
 	for room_coords in all_room_coords:
 		create_room_cell(room_coords, GameState.map_state.get_room_instance(room_coords))
-
-
-func _on_game_state_map_state_room_created(room_coords: Vector2i, room_instance_data: RoomInstanceData) -> void:
-	create_room_cell(room_coords, room_instance_data)
-
-
-func _on_game_state_map_state_room_deleted(room_coords: Vector2i) -> void:
-	delete_room_cell(room_coords)
 
 
 func _notification(what: int) -> void:
@@ -132,27 +120,52 @@ func get_map_rect() -> Rect2:
 	return grid_lines.get_map_rect()
 
 
+## Creates room cell instance for the provided [param room_instance_data] in the provided [param room_coords] coordinates.
 func create_room_cell(room_coords: Vector2i, room_instance_data: RoomInstanceData) -> void:
+	# Create room cell instance
 	var room_cell_instance = _room_cell_scene.instantiate()
 	
+	# Update room cell position
 	room_cell_instance.room_coords = room_coords
 	update_room_position(room_cell_instance)
 	
+	# Initialize room cell instance with the room instance data
 	room_cell_instance.create(room_instance_data)
 	
+	# Save the room cell instance inside the room cells dictionary and append it to the room cell container
 	room_cells[room_coords] = room_cell_instance
-	
 	append_room(room_cell_instance)
 
 
+## Deletes room cell instance for the provided [param room_coords] coordinates.
 func delete_room_cell(room_coords: Vector2i) -> void:
+	# Filter out processing if the room_coords not found inside the instantiated room cells
+	if not has_room_cell_coords(room_coords):
+		return
+	
+	# Delete room cell instance
 	var room_cell = room_cells[room_coords]
 	room_cells.erase(room_coords)
-	
 	room_cell.queue_free()
 
 
-## This function updates passed RoomCell position based on the room coordinates saved in it's room_coords parameter
+## Updates room cell instance visuals for the provided [param room_coords] coordinates.
+func update_room_cell(room_coords: Vector2i) -> void:
+	# Filter out processing if the room_coords not found inside the instantiated room cells
+	if not has_room_cell_coords(room_coords):
+		return
+	
+	# Refresh visuals for the room cell
+	var room_cell := room_cells[room_coords]
+	room_cell.refresh_visuals()
+
+
+## Checks if the room cell exists for the provided [param room_coords] coordinates.
+func has_room_cell_coords(room_coords: Vector2i) -> bool:
+	return room_coords in room_cells and room_cells[room_coords] != null
+
+
+## Updates [param room_cell_instance] position based on the room coordinates saved in it's room_coords parameter.
 func update_room_position(room_cell_instance: RoomCell) -> void:
 	room_cell_instance.position = get_room_center_from_coords(room_cell_instance.room_coords)
 
@@ -275,8 +288,3 @@ func _on_room_editor_container_room_editor_action_secret_set_triggered(secret_ro
 	GameState.map_state.update_room_set_secret_type(selected_room_cell.room_coords, secret_room_kind, state)
 	
 	grid_interaction_overlay.update_selected_room_cell()
-
-
-func _on_game_state_map_state_room_updated(room_coords: Vector2i) -> void:
-	var room_cell := room_cells[room_coords]
-	room_cell.refresh_visuals()

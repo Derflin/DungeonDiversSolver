@@ -75,11 +75,11 @@ func _initialize_corners_animation_player() -> void:
 	corners_animation_player.seek(animation_time, true)
 
 
-## Set value label text to provided [param value_text] value and adjusts the font size to try and fit the text inside the value label restricted size.
-func set_value_label_text(value_text: String, adjust_font_size: bool = true) -> void:
+## Set value label text to provided [param value_text] value and adjusts the value label root scale to try and fit the text inside the value label restricted size.
+func set_value_label_text(value_text: String, adjust_label_size: bool = true) -> void:
 	value_label.change_text(value_text)
 	
-	if adjust_font_size:
+	if adjust_label_size:
 		_fit_value_label_text(value_text)
 
 

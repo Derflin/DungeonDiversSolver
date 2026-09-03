@@ -35,13 +35,34 @@ This is rather small app that I decided to make inside Godot 4.x, in order to le
 Currently working on:
 
 - [ ] Implement MapSolver feature along with displaying it's results on map.
+	- [ ] Make sure that the map solver results from the last stage don't conflict with each other.
+	- [ ] Implement MapSolverResultCursor scene along with label for displaying it's content for a single result coords.
+		- [ ] Add animation (scale in and out) for it that will be only applied to the Corners Sprite2D node and that will be synced between all instances of MapSolverResultCursor.
+	- [ ] Implement MapSolverResultManager node container inside MapDisplay, which will be used to manage MapSolverResultCursor instances assigned as it's children.
+	- [ ] Add member parameter to GameState to hold the recent results of MapSolver
+	- [ ] Connect everything together:
+		- [ ] User triggers signal to enable mapsolver from control ui, 
+		- [ ] Signal is received by GameState and it result in saving the appropriate solver mode and secret room type inside the GameState.
+		- [ ] Depending on the solver mode, GameState either clears the solver results or calls MapSolver script to generate new results based on current state.
+		- [ ] GameState sends signal (some new signal) that map solver result was generated
+		- [ ] Probably MapSolverResultManager receives the signal and takes appropriate action based on the MapSolver results saved in GameState (it can either clear all existing results or check how many need to be removed/added and handles it).
+		- [ ] GameState.MapState RoomStateChanged signal needs to be connected to the GameState, so that any change to existing rooms, would trigger the call to MapSolver for new results (if map solver is enabled) and emit the signal once they will be generated to display them.
+		- [ ] Add Label at the bottom of the screen inside the MapSolverControl, in order to display a map solver result short description.
 - [ ] Implement SaveManager to save/load current map state to/from file.
+	- [ ] Decide which data would need to saved/loaded.
+	- [ ] For each source of this data add function that would be used to import/export state of this data in form of the dict or anything similar that would be enough for this.
+	- [ ] Add system node that would be used as SaveGameManagerAbstract or something like that, that will orchestrate from which nodes that will be exported/imported upon save/load options.
+	- [ ] Add autoloaded SaveManager scene, which will be responsible for all the save/load operations with help of SaveGameManagerAbstract and some existing extension/plugin for managing saves.
+	- [ ] Add SaveControl scene, which will be responsible for displaying the Save/Load buttons in the bottom left corner of the screen.
+		- [ ] Later maybe add option to hide this section and make it a drawer.
+	- [ ] Add SaveBrowserControl scene, which will be responsible for displaying all the available saves to the user after clicking appropriate buttons inside the SaveControl scene.
 
 Things currently planned for future versions:
 
 - [ ] Refactor existing code (add comments, hide internal functions/variables, check indentation)
 - [ ] Add features section to this readme, that would include description of each available feature and guide how to use them
 - [ ] Implement way to load in map state from the game screenshot.
+- [ ] Add info about secret room type placement restrictions upon clicking or hovering them.
 <br>
 - [ ] Implement audio system for game/map interactions.
 - [ ] Implement map validation based on some basic rules.

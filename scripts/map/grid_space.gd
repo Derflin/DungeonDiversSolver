@@ -12,6 +12,7 @@ var room_cells: Dictionary[Vector2i, RoomCell] = {}
 @onready var grid_lines: Node2D = $GridBackground/GridLines
 @onready var rooms_container: Node2D = $Rooms
 @onready var grid_interaction_overlay: Node2D = $GridInteractionOverlay
+@onready var map_solver_results_container: Node2D = $MapSolverResultsContainer
 
 
 func _ready() -> void:
@@ -230,6 +231,21 @@ func _clear_map_cursor() -> void:
 	if not is_map_cursor_locked:
 		grid_interaction_overlay.hide_map_cursor()
 
+
+## Prepare all the necessary data about map solver results coords, calculate result coords positions on map and call map solver results container to update the displayed results.
+func update_map_solver_results() -> void:
+	# Prepare variables for 
+	var map_solver_result := GameState.map_solver_result
+	var result_coords_to_position: Dictionary[Vector2i, Vector2] = {}
+	
+	# Calculate each result coords position on map
+	if map_solver_result != null:
+		var results_coords := map_solver_result.get_result_coords()
+		for result_coords in results_coords:
+			result_coords_to_position[result_coords] = get_room_center_from_coords(result_coords)
+	
+	# Call grid interaction overlay to update the map solver results
+	map_solver_results_container.update_map_solver_results(map_solver_result, result_coords_to_position)
 
 
 func _on_room_editor_menu_outside_click_menu_closed() -> void:

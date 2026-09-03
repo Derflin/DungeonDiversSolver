@@ -85,6 +85,7 @@ func set_selected_room_cell(_selected_room_cell: RoomCell) -> void:
 	if selected_room_cell != null:
 		room_editor_container.set_room_editor_menu_toggle_action_state(selected_room_cell)
 
+
 func update_selected_room_cell() -> void:
 	if selected_room_cell != null:
 		room_editor_container.set_room_editor_menu_toggle_action_state(selected_room_cell)

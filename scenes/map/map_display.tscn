@@ -17,6 +17,7 @@
 [ext_resource type="Texture2D" uid="uid://dh5cqs7puhpav" path="res://assets/icons/room_editor_menu/DungeonSolvers-RoomEditor-BarricadesDirections.png" id="13_bstpx"]
 [ext_resource type="Texture2D" uid="uid://b7yq2sj7dhgj0" path="res://assets/icons/room_editor_menu/DungeonSolvers-RoomEditor-ConnectionsDirections.png" id="14_lhxh2"]
 [ext_resource type="Script" uid="uid://c4ut8eay2p53j" path="res://scripts/map/map_camera_manager.gd" id="16_134i6"]
+[ext_resource type="Script" uid="uid://crqpip0jdy71s" path="res://scripts/map/map_solver_results_container.gd" id="16_n70jr"]
 
 [sub_resource type="Animation" id="Animation_ilqgx"]
 length = 0.001
@@ -170,6 +171,10 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_134i6")
 label_settings = SubResource("LabelSettings_lhxh2")
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="MapSolverResultsContainer" type="Node2D" parent="GridSpace" unique_id=181378989]
+z_index = 10
+script = ExtResource("16_n70jr")
 
 [node name="MapCameraManager" type="Node2D" parent="." unique_id=1102045684]
 script = ExtResource("16_134i6")

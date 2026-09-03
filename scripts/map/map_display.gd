@@ -15,6 +15,9 @@ func _ready() -> void:
 	GameState.map_state.room_deleted.connect(_on_game_state_map_state_room_deleted)
 	GameState.map_state.room_updated.connect(_on_game_state_map_state_room_updated)
 	
+	# Connect game state map solver signal to handle it's visuals
+	GameState.map_solver_state_changed.connect(_on_game_state_map_solver_state_changed)
+	
 	# Initialize map camera manager display
 	update_map_camera_manager_display(true)
 
@@ -65,6 +68,11 @@ func _on_game_state_map_state_room_deleted(room_coords: Vector2i) -> void:
 ## After game state map state room update was triggered, update an existing room cell instance to update it's display.
 func _on_game_state_map_state_room_updated(room_coords: Vector2i) -> void:
 	grid_space.update_room_cell(room_coords)
+
+
+## After game state map solver state change was triggered, update map solver results in grid space.
+func _on_game_state_map_solver_state_changed() -> void:
+	grid_space.update_map_solver_results()
 
 
 ## After grid space selected room change was triggered, center camera on it.

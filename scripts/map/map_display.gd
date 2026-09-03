@@ -27,13 +27,13 @@ func update_map_camera_manager_display(instant_fit_map_to_view: bool = false) ->
 	map_camera_manager.fit_map_to_view(instant_fit_map_to_view)
 
 
-func _on_game_settings_map_grid_size_parameter_changed(_map_grid_size: Vector2i) -> void:
+func _on_game_settings_map_grid_size_parameter_changed() -> void:
 	update_grid_space_display(false)
 	
 	update_map_camera_manager_display(false)
 
 
-func _on_game_settings_map_grid_room_size_parameter_changed(_map_grid_room_size: Vector2i) -> void:
+func _on_game_settings_map_grid_room_size_parameter_changed() -> void:
 	update_grid_space_display(true)
 	
 	update_map_camera_manager_display(false)

@@ -2,8 +2,8 @@ extends Node
 
 
 signal map_secrets_count_max_changed(kind: RoomSecretType.Kind, value: int)
-signal map_grid_size_parameter_changed(_map_grid_size: Vector2i)
-signal map_grid_room_size_parameter_changed(_map_grid_room_size: Vector2i)
+signal map_grid_size_parameter_changed()
+signal map_grid_room_size_parameter_changed()
 
 
 var map_secrets_count_max: Dictionary[RoomSecretType.Kind, int]
@@ -14,14 +14,14 @@ var map_secrets_count_max: Dictionary[RoomSecretType.Kind, int]
 	set(value):
 		map_grid_size = value
 		
-		map_grid_size_parameter_changed.emit(map_grid_size)
+		map_grid_size_parameter_changed.emit()
 @export var map_grid_size_icon: Texture2D
 
 @export var map_grid_room_size: Vector2i = Vector2i(15, 15):
 	set(value): 
 		map_grid_room_size = value
 		
-		map_grid_room_size_parameter_changed.emit(map_grid_room_size)
+		map_grid_room_size_parameter_changed.emit()
 
 
 func _ready() -> void:

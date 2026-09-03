@@ -149,13 +149,13 @@ func _update_value_editor() -> void:
 		entry_value_editor.value = secret_type_value_max
 
 
-func _on_game_settings_map_grid_size_parameter_changed(_map_grid_size: Vector2i) -> void:
+func _on_game_settings_map_grid_size_parameter_changed() -> void:
 	# Check if appropriate parameter entry type
 	if parameter_type != ParameterType.MAP_GRID_SIZE:
 		return
 	
 	# Assign value
-	map_grid_size = _map_grid_size
+	map_grid_size = GameSettings.map_grid_size
 	
 	# Set collected data into display nodes
 	refresh_display_texts()

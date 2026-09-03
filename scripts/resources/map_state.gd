@@ -190,8 +190,9 @@ func _on_map_state_changed() -> void:
 
 
 ## After detecting [signal GameSettings.map_grid_size_parameter_changed] signal, check if grid size change didn't cause some rooms to be out of grid, if yes then delete them.
-func _on_game_settings_map_grid_size_parameter_changed(_map_grid_size: Vector2i) -> void:
+func _on_game_settings_map_grid_size_parameter_changed() -> void:
 	# Check which rooms would be placed out of the current grid
+	var _map_grid_size = GameSettings.map_grid_size
 	var room_coords_deletion_queue: Array[Vector2i] = []
 	for room_coords in room_instances:
 		if room_coords.x >= _map_grid_size.x or room_coords.y >= _map_grid_size.y:

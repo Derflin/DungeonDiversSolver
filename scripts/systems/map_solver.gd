@@ -778,5 +778,5 @@ func _find_solutions(result: MapSolverResult, placement_config: SecretPlacementC
 	# Initialize stage state
 	result.stage = MapSolverResult.SolveStage.FOUND_SOLUTION
 	
-	# Calculate possibilites
-	result.calculate_possibility_result_coords(secret_room_generate_count, placement_config.weight_count_type)
+	# Calculate probabilities
+	result.calculate_probability_result_coords(secret_room_generate_count, placement_config.weight_count_type)

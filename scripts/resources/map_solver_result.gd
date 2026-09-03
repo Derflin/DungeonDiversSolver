@@ -64,32 +64,32 @@ func assign_weight_to_result_coords(coords: Vector2i, weight: float) -> void:
 			break
 
 
-func intialize_result_coords_possibilities() -> void:
+func intialize_result_coords_probabilities() -> void:
 	for result in result_coords:
-		result.possibility = 0.0
+		result.probability = 0.0
 
 
-func get_all_result_coords_possibilites() -> Array[float]:
+func get_all_result_coords_probabilities() -> Array[float]:
 	var result: Array[float] = []
 	
 	for result_coord in result_coords:
-		result.append(result_coord.possibility)
+		result.append(result_coord.probability)
 	
 	return result
 
 
-func assign_possibility_to_result_coords(coords: Vector2i, possibility: float) -> void:
+func assign_probability_to_result_coords(coords: Vector2i, probability: float) -> void:
 	for result in result_coords:
 		if result.coords == coords:
-			result.possibility = possibility
+			result.probability = probability
 			break
 
 
-func calculate_possibility_result_coords(expected_room_count: int, weight_count_type: SecretPlacementConfig.CountType) -> void:
+func calculate_probability_result_coords(expected_room_count: int, weight_count_type: SecretPlacementConfig.CountType) -> void:
 	var remaining_room_count := expected_room_count
 	
-	# Initialize result coords possibility to default value
-	intialize_result_coords_possibilities()
+	# Initialize result coords probability to default value
+	intialize_result_coords_probabilities()
 	
 	# Sort result coords according to the calculated weights and the weight count type from placement config
 	if weight_count_type == SecretPlacementConfig.CountType.MIN:
@@ -101,9 +101,9 @@ func calculate_possibility_result_coords(expected_room_count: int, weight_count_
 	else:
 		return
 	
-	# Calculate possibility for each result coords
+	# Calculate probability for each result coords
 	var processed_index := -1
-	var cur_weight_calculated_possibility: float = 1.0
+	var cur_weight_calculated_probability: float = 1.0
 	for cur_index in range(result_coords.size()):
 		# Stop looking through result coords if the room count satisfied
 		if remaining_room_count <= 0:
@@ -115,13 +115,13 @@ func calculate_possibility_result_coords(expected_room_count: int, weight_count_
 				
 		# Check if the remaining result coords are enough fullfil the remaining room count
 		if result_coords.size() - processed_index < remaining_room_count:
-			cur_result_coords.possibility = 1.0
+			cur_result_coords.probability = 1.0
 			remaining_room_count -= 1
 			continue
 		
 		# Check if the 
 		if cur_index == 0 or result_coords[cur_index - 1].calculated_weight != cur_result_coords.calculated_weight:
-			cur_weight_calculated_possibility = 1.0
+			cur_weight_calculated_probability = 1.0
 			
 			# Check how many next result coords have the same weight as the current one
 			var count_same_weight := 0
@@ -131,28 +131,28 @@ func calculate_possibility_result_coords(expected_room_count: int, weight_count_
 				else:
 					break
 			
-			# Adjust calculated possibility for the current weight and the remaining room count based on the count of result coords with the same weight as the current one
+			# Adjust calculated probability for the current weight and the remaining room count based on the count of result coords with the same weight as the current one
 			if count_same_weight > expected_room_count:
-				cur_weight_calculated_possibility /= count_same_weight
+				cur_weight_calculated_probability /= count_same_weight
 				remaining_room_count = count_same_weight
 		
-		# Assign calculated possibility for the current weight and adjust the remaining room count
-		cur_result_coords.possibility = cur_weight_calculated_possibility
+		# Assign calculated probability for the current weight and adjust the remaining room count
+		cur_result_coords.probability = cur_weight_calculated_probability
 		remaining_room_count -= 1
 	
-	# Remove result coords that have possibility equal to 0.0
+	# Remove result coords that have probability equal to 0.0
 	var deleted_room_indexes: Array[int] = []
 	for cur_index in range(result_coords.size()):
-		if result_coords[cur_index].possibility <= 0.0:
+		if result_coords[cur_index].probability <= 0.0:
 			deleted_room_indexes.append(cur_index)
 	deleted_room_indexes.reverse()
 	for cur_index in deleted_room_indexes:
 		result_coords.remove_at(cur_index)
 
 
-func assign_color_code(text_color_gradient: Gradient, weight_count_type: SecretPlacementConfig.CountType, use_weights: bool = false, use_possibilities: bool = false) -> void:
+func assign_color_code(text_color_gradient: Gradient, weight_count_type: SecretPlacementConfig.CountType, use_weights: bool = false, use_probabilities: bool = false) -> void:
 	# Filter out processing if all function state flags are disabled
-	if not use_weights and not use_possibilities:
+	if not use_weights and not use_probabilities:
 		return
 	
 	# Filter out processing if weight count type is none
@@ -166,7 +166,7 @@ func assign_color_code(text_color_gradient: Gradient, weight_count_type: SecretP
 		var all_weights := get_all_result_coords_weights()
 		min_value = all_weights.min()
 		max_value = all_weights.max()
-	elif use_possibilities:
+	elif use_probabilities:
 		min_value = 0.0
 		max_value = 1.0
 	
@@ -184,7 +184,7 @@ func assign_color_code(text_color_gradient: Gradient, weight_count_type: SecretP
 				result_coord.text_color = text_color_gradient.sample(main_color_percentage)
 		else:
 			# Calculate main color percentage
-			var main_color_percentage := result_coord.possibility
+			var main_color_percentage := result_coord.probability
 			
 			# Assign text color based on the provided text color gradient
 			result_coord.text_color = text_color_gradient.sample(main_color_percentage)

@@ -42,6 +42,8 @@ Currently working on:
 	- [ ] Add animation for showing and hiding the map solver result cursor instances (opacity or mix together opacity and size - somethign similar to what is done for map solver label or it's submenus).
 	- [ ] Check why map solver incorrectly doesn't show 50/50 placement solutions when it should (screenshots in "temp_todos" directory with "test_issue1.png" and "test_issue2.png" files).
 	- [ ] Add secret room initialization in GridSpace handle_input_map_select function, if the user clicks on empty square and the MapSolverResultsContainer contains MapSolverResultCursor over that room coords.
+- [ ] Check if the RoomSecretType ROOM_SECRET_TYPE_CREATE_ORDER const order is correct - not sure about the RED_ROOM location on the list.
+- [ ] Check if it would be a good idea to move some MapSolver functions logic to specific SecretPlacementConfig/SecretPlacementType/SecretPlacementType* to make it less messy and more organized.
 - [ ] Implement SaveManager to save/load current map state to/from file.
 	- [ ] Decide which data would need to saved/loaded.
 	- [ ] For each source of this data add function that would be used to import/export state of this data in form of the dict or anything similar that would be enough for this.

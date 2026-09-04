@@ -62,7 +62,6 @@ func _show_state(state_text: String, state_icon_texture: Texture2D, state_room_t
 	show()
 	
 	# Initialize state panel data
-	#TODO
 	state_icon.texture = state_icon_texture
 	# Height of panel state is not animated, so it's also immediately assigned
 	custom_minimum_size.y = target_size.y

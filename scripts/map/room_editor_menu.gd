@@ -337,11 +337,9 @@ func _draw():
 		var selector_size = _get_constant("SelectorSegmentWidth")		
 		var select_coords
 		if selector_position == Position.outside:
-			# TODO: Likely we need to swap the inner and outer radius here!			
 			select_coords = _calc_segment(outer, outer+selector_size, start_angle+selected*item_angle, start_angle+(selected+1)*item_angle)
 			Draw.draw_ring_segment(self, select_coords, _get_color("SelectorSegment"),_get_color("SelectorSegment"), 1, true)	
 		elif selector_position == Position.inside:			
-			# TODO: Likely we need to swap the inner and outer radius here!
 			select_coords = _calc_segment(inner-selector_size, inner, start_angle+selected*item_angle, start_angle+(selected+1)*item_angle)
 			Draw.draw_ring_segment(self, select_coords, _get_color("SelectorSegment"), _get_color("SelectorSegment"), 1, true)	
 

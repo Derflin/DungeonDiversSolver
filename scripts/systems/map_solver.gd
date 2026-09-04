@@ -440,7 +440,6 @@ func _assign_neighbour_group_room_connection(coords_to_group_id: Dictionary[Vect
 			_assign_neighbour_group_room_connection(coords_to_group_id, group_id, neighbour_coords, current_dir)
 
 
-#TODO: maybe add color coding for weights depending on the placement config count type and the calculated weights min and max values calculated
 func _calculate_weights(result: MapSolverResult, placement_config: SecretPlacementConfig) -> void:
 	# Initialize stage state
 	result.stage = MapSolverResult.SolveStage.CALCULATED_WEIGHTS

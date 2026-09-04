@@ -18,7 +18,6 @@ enum Kind {
 }
 
 
-#TODO: needs to check where the RED_ROOM should be located (it could be set before OUTSIDER_ROOM, rest should be okay, but it would be good to fact check them
 const ROOM_SECRET_TYPE_CREATE_ORDER: Array[Kind] = [
 	Kind.PORTAL_ROOM,
 	Kind.COMMON_ROOM,

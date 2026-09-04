@@ -13,6 +13,3 @@ enum CountType {
 
 
 @export var count_type: CountType = CountType.NONE
-
-
-#TODO: add some classes meant to be overloaded or default

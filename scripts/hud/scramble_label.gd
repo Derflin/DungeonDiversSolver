@@ -70,8 +70,12 @@ func change_text(new_text: String, animate: bool = true) -> void:
 	_animation_id += 1
 	var current_animation_id := _animation_id
 	
+	# Clean up scramble visual state that might have been left behind by previous animation
+	_reset_scramble_visual_state()
+	
 	# Filter out processing if the new text is the same as the one already set
 	if new_text == text:
+		reset_size()
 		return
 	
 	# If animation is disabled, then simply set the desired state
@@ -164,12 +168,15 @@ func change_text(new_text: String, animate: bool = true) -> void:
 ## Changes internal animation id, causing existing animation to stop.
 func cancel_animation() -> void:
 	_animation_id += 1
+	_reset_scramble_visual_state()
 
 
 ## Immediately sets new text and cancels all existing scramble animations for it.
 func set_text_immediate(new_text: String) -> void:
 	_animation_id += 1
 	text = new_text
+	_reset_scramble_visual_state()
+	reset_size()
 
 
 ## Returns a random character from the [member scramble_characters] parameter if it's not empty, otherwise it returns empty space char.
@@ -188,3 +195,7 @@ func _get_character_or_empty(value: String, index: int) -> String:
 		return ""
 	
 	return value.substr(index, 1)
+
+
+func _reset_scramble_visual_state() -> void:
+	modulate.a = 1.0

@@ -39,7 +39,6 @@ Currently working on:
 - [ ] Implement MapSolver feature along with displaying it's results on map.
 	- [ ] Make sure that the map solver results from the last stage don't conflict with each other.
 	- [ ] Add Label at the bottom of the screen inside the MapSolverControl, in order to display a map solver result short description.
-	- [ ] Fix issue with MapSolverResultCursor not scaling it's size back down correctly after resizing, for example after first selecting "hint weight", then "show solution" and then "hint weight" for the same map state, causes the displayed weight to slightly offset to the side.
 	- [ ] Add animation for showing and hiding the map solver result cursor instances (opacity or mix together opacity and size - somethign similar to what is done for map solver label or it's submenus).
 	- [ ] Check why map solver incorrectly doesn't show 50/50 placement solutions when it should (screenshots in "temp_todos" directory with "test_issue1.png" and "test_issue2.png" files).
 	- [ ] Add secret room initialization in GridSpace handle_input_map_select function, if the user clicks on empty square and the MapSolverResultsContainer contains MapSolverResultCursor over that room coords.

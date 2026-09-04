@@ -144,6 +144,9 @@ func change_text(new_text: String, animate: bool = true) -> void:
 		# Assign prepared display text to the label text parameter
 		text = displayed_text
 		
+		# Cause size reset to make sure that the label is properly adjusted to the new text size
+		reset_size()
+		
 		# Wait for the next update interval
 		await get_tree().create_timer(scramble_update_interval).timeout
 		elapsed += scramble_update_interval
@@ -153,6 +156,9 @@ func change_text(new_text: String, animate: bool = true) -> void:
 		text = new_text
 		if scramble_opacity_enabled:
 			modulate.a = 1.0
+		
+		# Cause size reset to make sure that the label is properly adjusted to the new text size
+		reset_size()
 
 
 ## Changes internal animation id, causing existing animation to stop.

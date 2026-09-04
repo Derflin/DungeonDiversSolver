@@ -6,9 +6,6 @@ const MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS = {
 	GameState.MapSolverState.WEIGHT_HINT: "Hint Weight",
 	GameState.MapSolverState.SOLUTION_SHOW: "Show Solution",
 }
-const MENU_DROPDOWNS_DISPLAY_TEXTS_CLOSED = "▼"
-
-const MENU_DROPDOWNS_DISPLAY_TEXTS_OPENED = "▲"
 
 
 var _menu_effective_ui_scale: int = 1
@@ -62,7 +59,7 @@ func _setup_menu_dropdowns() -> void:
 		
 		# Initialize menu dropdown button text
 		if menu_dropdown_state in MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS:
-			menu_dropdown_instance.text = " ".join([MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS[menu_dropdown_state], MENU_DROPDOWNS_DISPLAY_TEXTS_CLOSED])
+			menu_dropdown_instance.change_dropdown_button_text(MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS[menu_dropdown_state])
 		
 		# Populate menu dropdown options
 		_populate_menu_dropdown(menu_dropdown_instance)
@@ -88,10 +85,10 @@ func _on_menu_dropdown_button_toggled(toggle_on: bool, menu_dropdown_instance: M
 	# Update button text
 	if toggle_on:
 		if menu_dropdown_state in MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS:
-			menu_dropdown_instance.text = " ".join([MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS[menu_dropdown_state], MENU_DROPDOWNS_DISPLAY_TEXTS_OPENED])
+			menu_dropdown_instance.change_dropdown_button_text(MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS[menu_dropdown_state])
 	if not toggle_on:
 		if menu_dropdown_state in MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS:
-			menu_dropdown_instance.text = " ".join([MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS[menu_dropdown_state], MENU_DROPDOWNS_DISPLAY_TEXTS_CLOSED])
+			menu_dropdown_instance.change_dropdown_button_text(MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS[menu_dropdown_state])
 	
 	# Emit signal that map solver submenu was opened
 	GameState.map_solver_submenu_opened.emit()

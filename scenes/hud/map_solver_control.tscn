@@ -120,42 +120,15 @@ theme_override_constants/separation = 4
 
 [node name="PlacementHintButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow" unique_id=953268487 node_paths=PackedStringArray("submenu_overlay_container") instance=ExtResource("3_8tv3e")]
 layout_mode = 2
-submenu_min_width = 0.0
-submenu_close_on_selection = true
 submenu_overlay_container = NodePath("../../../../../../../DropdownOverlay")
-animation_enabled = true
-animation_open_duration = 0.12
-animation_close_duration = 0.12
-animation_slide_distance = 8.0
-copy_selected_text_to_button = false
-copy_selected_icon_to_button = false
-scroll_bar_vertical_width = 3.0
 
 [node name="WeightHintButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow" unique_id=1142679986 node_paths=PackedStringArray("submenu_overlay_container") instance=ExtResource("3_8tv3e")]
 layout_mode = 2
-submenu_min_width = 0.0
-submenu_close_on_selection = true
 submenu_overlay_container = NodePath("../../../../../../../DropdownOverlay")
-animation_enabled = true
-animation_open_duration = 0.12
-animation_close_duration = 0.12
-animation_slide_distance = 8.0
-copy_selected_text_to_button = false
-copy_selected_icon_to_button = false
-scroll_bar_vertical_width = 3.0
 
 [node name="SolutionShowButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow" unique_id=1173696625 node_paths=PackedStringArray("submenu_overlay_container") instance=ExtResource("3_8tv3e")]
 layout_mode = 2
-submenu_min_width = 0.0
-submenu_close_on_selection = true
 submenu_overlay_container = NodePath("../../../../../../../DropdownOverlay")
-animation_enabled = true
-animation_open_duration = 0.12
-animation_close_duration = 0.12
-animation_slide_distance = 8.0
-copy_selected_text_to_button = false
-copy_selected_icon_to_button = false
-scroll_bar_vertical_width = 3.0
 
 [node name="StatePanel" type="PanelContainer" parent="MenuAnchor/MenuRoot/MenuContents" unique_id=1947067750 groups=["blocks_radial_menu_input"]]
 visible = false

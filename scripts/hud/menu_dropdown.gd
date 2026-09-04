@@ -24,6 +24,14 @@ var _submenu_original_scale: Vector2
 @onready var options_list: VBoxContainer = %OptionsList
 
 
+@export_group("Dropdown State Affixes", "dropdown_state_affixes_")
+@export var dropdown_state_affixes_enabled: bool = true
+@export var dropdown_state_affixes_button_text_add_prefix: bool = false
+@export var dropdown_state_affixes_button_text_add_suffix: bool = true
+@export var dropdown_state_affixes_button_text_closed_affix: String = "▼"
+@export var dropdown_state_affixes_button_text_opened_affix: String = "▲"
+@export var dropdown_state_affixes_button_text_affix_join_text: String = " "
+
 @export_group("Submenu", "submenu_")
 @export var submenu_gap: float = 2.0
 @export var submenu_min_width: float = 0.0
@@ -403,3 +411,21 @@ func _return_submenu_from_overlay_container_to_dropdown() -> void:
 	
 	# Update submenu size and parameters to fit the dropdown again
 	_update_submenu_geometry()
+
+
+func change_dropdown_button_text(new_text: String) -> void:
+	# Immediately set dropdown button text if affixes are disabled
+	if not dropdown_state_affixes_enabled:
+		text = new_text
+		return
+	
+	# Prepare a new text with affixes
+	var current_affix: String = dropdown_state_affixes_button_text_opened_affix if button_pressed else dropdown_state_affixes_button_text_closed_affix
+	var affixed_text_parts: Array[String] = [new_text]
+	if dropdown_state_affixes_button_text_add_prefix:
+		affixed_text_parts.insert(0, current_affix)
+	if dropdown_state_affixes_button_text_add_suffix:
+		affixed_text_parts.append(current_affix)
+	
+	# Assigned affixed text
+	text = dropdown_state_affixes_button_text_affix_join_text.join(affixed_text_parts)

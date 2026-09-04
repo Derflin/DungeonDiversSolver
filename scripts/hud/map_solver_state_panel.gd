@@ -47,13 +47,6 @@ func show_state_panel(state_text: String, state_icon_texture: Texture2D, state_r
 	# Stop existing animation
 	_kill_panel_animation()
 	
-	# Stop existing animations for scramble labels
-	solver_label.cancel_animation()
-	first_separator_label.cancel_animation()
-	state_label.cancel_animation()
-	second_separator_label.cancel_animation()
-	state_room_type_label.cancel_animation()
-	
 	# Calculate panel target width for animating it
 	var target_size := _measure_target_size(state_text, state_icon_texture, state_room_type_text)
 	

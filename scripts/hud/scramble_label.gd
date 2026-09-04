@@ -2,6 +2,7 @@ class_name ScrambleLabel
 extends Label
 
 
+var _target_text: String
 var _animation_id: int = 0
 
 
@@ -64,19 +65,25 @@ var scramble_opacity_min_value: float = 0.4
 var scramble_opacity_max_value: float = 0.6
 
 
+func _ready() -> void:
+	_target_text = text
+
+
 ## Assign new text to a label text along with providing scramble animation handling based on the set parameters.
 func change_text(new_text: String, animate: bool = true) -> void:
+	# Filter out processing if the new text is the same as the one already set
+	if new_text == _target_text:
+		return
+	
+	# Update target text state
+	_target_text = new_text
+	
 	# Update current animation ID, which also causes previous animation to cancel
 	_animation_id += 1
 	var current_animation_id := _animation_id
 	
 	# Clean up scramble visual state that might have been left behind by previous animation
 	_reset_scramble_visual_state()
-	
-	# Filter out processing if the new text is the same as the one already set
-	if new_text == text:
-		reset_size()
-		return
 	
 	# If animation is disabled, then simply set the desired state
 	if not animate or not scramble_enabled or scramble_duration <= 0.0:
@@ -168,6 +175,7 @@ func change_text(new_text: String, animate: bool = true) -> void:
 ## Changes internal animation id, causing existing animation to stop.
 func cancel_animation() -> void:
 	_animation_id += 1
+	text = _target_text
 	_reset_scramble_visual_state()
 
 
@@ -175,6 +183,7 @@ func cancel_animation() -> void:
 func set_text_immediate(new_text: String) -> void:
 	_animation_id += 1
 	text = new_text
+	_target_text = new_text
 	_reset_scramble_visual_state()
 	reset_size()
 

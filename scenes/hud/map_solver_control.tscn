@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://ct41vjd725w25" path="res://scripts/hud/map_solver_control.gd" id="1_cr2eo"]
 [ext_resource type="Texture2D" uid="uid://bev8owoorne83" path="res://assets/icons/map_solver/third_party/kenney/fantasy_ui_borders/panel-transparent-center-029.png" id="2_1fwjt"]
-[ext_resource type="PackedScene" uid="uid://dvexut8dssl25" path="res://scenes/hud/map_solver_dropdown.tscn" id="3_8tv3e"]
+[ext_resource type="PackedScene" uid="uid://dvexut8dssl25" path="res://scenes/hud/menu_dropdown.tscn" id="3_8tv3e"]
 [ext_resource type="Script" uid="uid://s0xvwjemblta" path="res://scripts/hud/map_solver_state_panel.gd" id="4_iirtx"]
 [ext_resource type="Texture2D" uid="uid://bn1xlytmmwobf" path="res://assets/icons/map_solver/MapSolver-Cancel.png" id="4_ngmy0"]
 [ext_resource type="Script" uid="uid://b8x8oocqx8an3" path="res://scripts/hud/scramble_label.gd" id="5_nueyn"]
@@ -120,15 +120,42 @@ theme_override_constants/separation = 4
 
 [node name="PlacementHintButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow" unique_id=953268487 node_paths=PackedStringArray("submenu_overlay_container") instance=ExtResource("3_8tv3e")]
 layout_mode = 2
+submenu_min_width = 0.0
+submenu_close_on_selection = true
 submenu_overlay_container = NodePath("../../../../../../../DropdownOverlay")
+animation_enabled = true
+animation_open_duration = 0.12
+animation_close_duration = 0.12
+animation_slide_distance = 8.0
+copy_selected_text_to_button = false
+copy_selected_icon_to_button = false
+scroll_bar_vertical_width = 3.0
 
 [node name="WeightHintButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow" unique_id=1142679986 node_paths=PackedStringArray("submenu_overlay_container") instance=ExtResource("3_8tv3e")]
 layout_mode = 2
+submenu_min_width = 0.0
+submenu_close_on_selection = true
 submenu_overlay_container = NodePath("../../../../../../../DropdownOverlay")
+animation_enabled = true
+animation_open_duration = 0.12
+animation_close_duration = 0.12
+animation_slide_distance = 8.0
+copy_selected_text_to_button = false
+copy_selected_icon_to_button = false
+scroll_bar_vertical_width = 3.0
 
 [node name="SolutionShowButton" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow" unique_id=1173696625 node_paths=PackedStringArray("submenu_overlay_container") instance=ExtResource("3_8tv3e")]
 layout_mode = 2
+submenu_min_width = 0.0
+submenu_close_on_selection = true
 submenu_overlay_container = NodePath("../../../../../../../DropdownOverlay")
+animation_enabled = true
+animation_open_duration = 0.12
+animation_close_duration = 0.12
+animation_slide_distance = 8.0
+copy_selected_text_to_button = false
+copy_selected_icon_to_button = false
+scroll_bar_vertical_width = 3.0
 
 [node name="StatePanel" type="PanelContainer" parent="MenuAnchor/MenuRoot/MenuContents" unique_id=1947067750 groups=["blocks_radial_menu_input"]]
 visible = false

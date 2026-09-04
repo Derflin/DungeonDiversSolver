@@ -1,11 +1,11 @@
-class_name MapSolverDropdown
+class_name MenuDropdown
 extends Button
 
 
 signal option_selected(option_id: int)
 
 
-const OPTION_SCENE: PackedScene = preload("res://scenes/hud/map_solver_dropdown_option.tscn")
+const OPTION_SCENE: PackedScene = preload("res://scenes/hud/menu_dropdown_option.tscn")
 
 
 var selected_option_id: int = -1
@@ -120,7 +120,7 @@ func clear_options() -> void:
 
 func add_option(option_id: int, option_text: String, option_icon: Texture2D = null, _is_disabled: bool = false) -> void:
 	# Instantiate the option scene
-	var option := OPTION_SCENE.instantiate() as MapSolverDropdownOption
+	var option := OPTION_SCENE.instantiate() as MenuDropdownOption
 	
 	# Assign instantiated option scene as child to the options list
 	options_list.add_child(option)

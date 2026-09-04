@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://bqgngme46edk"]
 
-[ext_resource type="Script" uid="uid://bb8snwmv5nser" path="res://scripts/hud/map_solver_dropdown_option.gd" id="1_obowk"]
+[ext_resource type="Script" uid="uid://bb8snwmv5nser" path="res://scripts/hud/menu_dropdown_option.gd" id="1_obowk"]
 
 [node name="MapSolverDropdownOption" type="Button" unique_id=529674396]
 offset_right = 8.0

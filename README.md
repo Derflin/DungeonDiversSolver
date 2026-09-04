@@ -37,7 +37,6 @@ This is rather small app that I decided to make inside Godot 4.x, in order to le
 Currently working on:
 
 - [ ] Implement MapSolver feature along with displaying it's results on map.
-	- [ ] Refactor MapSolverDropdown and MapSolverDropdownOption to different, more general names like MenuDropdown and MenuDropdownOption, so that it would be easier to reuse it in the future.
 	- [ ] Make sure that the map solver results from the last stage don't conflict with each other.
 	- [ ] Add Label at the bottom of the screen inside the MapSolverControl, in order to display a map solver result short description.
 	- [ ] Fix issue with MapSolverResultCursor not scaling it's size back down correctly after resizing, for example after first selecting "hint weight", then "show solution" and then "hint weight" for the same map state, causes the displayed weight to slightly offset to the side.

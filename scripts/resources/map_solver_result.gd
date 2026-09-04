@@ -159,6 +159,10 @@ func assign_color_code(text_color_gradient: Gradient, weight_count_type: SecretP
 	if weight_count_type == SecretPlacementConfig.CountType.NONE:
 		return
 	
+	# Filter out processing if there aren't any results to color code
+	if result_coords.size() <= 0:
+		return
+	
 	# Calculate min and max values based on the function state flags
 	var min_value: float
 	var max_value: float

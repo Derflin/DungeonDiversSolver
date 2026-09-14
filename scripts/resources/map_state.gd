@@ -63,6 +63,21 @@ func create_and_save_empty_room(room_coords: Vector2i) -> void:
 	create_room(room_coords, default_room_instance_data)
 
 
+## Creates an empty default room instance for the provided [param room_coords] coordinates and assigns secret room type to it based on the provided [param secret_type_kind] kind.
+## If the [param secret_type_kind] kind wouldn't be found inside the GameData catalogue, then it will fallback to calling [method create_and_save_empty_room] function with the provided [param room_coords].
+func create_and_save_secret_room(room_coords: Vector2i, secret_type_kind: RoomSecretType.Kind) -> void:
+	# Collect selected room secret type kind
+	var room_secret_type = GameData.room_secret_types.get_type(secret_type_kind)
+	if room_secret_type == null:
+		create_and_save_empty_room(room_coords)
+		return
+	
+	# Initialize the secret room instance data
+	var secret_room_instance_data = RoomInstanceData.new()
+	secret_room_instance_data.secret_type = room_secret_type
+	create_room(room_coords, secret_room_instance_data)
+
+
 ## Create a room for the provided [param room_coords] coordinates using the provided [param room_instance_data].
 ## If [param replace] is [code]true[/code], then if the room already exists, it will first delete it and then create a new one, otherwise it will skip processing.
 ## If [param trigger_room_state_changed_signal] is [code]true[/code], then it will emit a [signal room_state_changed] signal.

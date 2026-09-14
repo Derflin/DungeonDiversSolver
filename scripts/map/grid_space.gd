@@ -74,12 +74,19 @@ func _update_hovered_map_cursor() -> void:
 
 
 func handle_input_map_select() -> void:
+	# Prepare mouse position based details that will be used for handling the input
 	var mouse_position = get_local_mouse_position()
 	var position_on_grid_lines = is_local_position_on_grid_lines(mouse_position)
 	var coords = get_coords_at_local_position(mouse_position)
 	
+	# Create new rooms if the coords are valid and don't contain any existing rooms, otherwise update selected room cursor accordingly
 	if not position_on_grid_lines and is_valid_coords(coords) and not GameState.map_state.has_room_coords(coords):
-		GameState.map_state.create_and_save_empty_room(coords)
+		# Create a secret room if the map solver result exists for a given coordinates, otherwise create an empty default room
+		if map_solver_results_container.has_result_cursor_coords(coords):
+			var secret_room_kind = GameState.get_map_solver_secret_kind()
+			GameState.map_state.create_and_save_secret_room(coords, secret_room_kind)
+		else:
+			GameState.map_state.create_and_save_empty_room(coords)
 	else:
 		_update_selected_room_cursor()
 

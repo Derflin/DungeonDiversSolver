@@ -51,6 +51,11 @@ func set_map_secrets_count_current(kind: RoomSecretType.Kind, value: int) -> voi
 		map_secrets_count_current_changed.emit(kind, value)
 
 
+## Returns a current value of the secret room type kind that is assigned to the currently enabled map solver state.
+func get_map_solver_secret_kind() -> RoomSecretType.Kind:
+	return map_solver_secret_kind
+
+
 ## Generates and returns map solver result based on the map solver state and current map state.
 func _generate_map_solver_result() -> MapSolverResult:
 	var result: MapSolverResult = null

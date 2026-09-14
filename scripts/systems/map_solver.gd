@@ -293,7 +293,7 @@ func _filter_results_placement_type_placement_restrictions(result: MapSolverResu
 			cur_coords_valid = _filter_results_placement_type_placement_restrictions_path(prepared_placement_type_data, cur_coords)
 		
 		if not cur_coords_valid:
-			filtered_coords.append(cur_coords_valid)
+			filtered_coords.append(cur_coords)
 	
 	# Remove all the coords that were marked as filtered
 	for filtered_coord in filtered_coords:

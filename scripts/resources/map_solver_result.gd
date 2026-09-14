@@ -85,7 +85,7 @@ func assign_probability_to_result_coords(coords: Vector2i, probability: float) -
 			break
 
 
-func calculate_probability_result_coords(expected_room_count: int, weight_count_type: SecretPlacementConfig.CountType) -> void:
+func calculate_probability_result_coords(expected_room_count: int, weight_count_type: SecretPlacementConfig.CountType) -> void:	
 	var remaining_room_count := expected_room_count
 	
 	# Initialize result coords probability to default value
@@ -112,19 +112,19 @@ func calculate_probability_result_coords(expected_room_count: int, weight_count_
 		# Gather data about current result coords
 		var cur_result_coords = result_coords[cur_index]
 		processed_index += 1
-				
-		# Check if the remaining result coords are enough fullfil the remaining room count
+		
+		# Assing 100% probability if the remaining result coords are enough to fulfill the remaining room count
 		if result_coords.size() - processed_index < remaining_room_count:
 			cur_result_coords.probability = 1.0
 			remaining_room_count -= 1
 			continue
 		
-		# Check if the 
+		# Calculate probability for the current weight if current result index is the first one or if it has a different weight then a previous one
 		if cur_index == 0 or result_coords[cur_index - 1].calculated_weight != cur_result_coords.calculated_weight:
 			cur_weight_calculated_probability = 1.0
 			
 			# Check how many next result coords have the same weight as the current one
-			var count_same_weight := 0
+			var count_same_weight := 1
 			for weight_check_index in range(cur_index + 1, result_coords.size()):
 				if result_coords[weight_check_index].calculated_weight == cur_result_coords.calculated_weight:
 					count_same_weight += 1
@@ -132,7 +132,7 @@ func calculate_probability_result_coords(expected_room_count: int, weight_count_
 					break
 			
 			# Adjust calculated probability for the current weight and the remaining room count based on the count of result coords with the same weight as the current one
-			if count_same_weight > expected_room_count:
+			if count_same_weight > remaining_room_count:
 				cur_weight_calculated_probability /= count_same_weight
 				remaining_room_count = count_same_weight
 		

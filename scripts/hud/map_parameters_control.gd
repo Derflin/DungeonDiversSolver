@@ -75,12 +75,12 @@ func initialize_drawer_scrollbar() -> void:
 func _create_static_map_grid_size_entry() -> void:
 	# Initialize static map grid size parameter entry
 	var parameter_entry_map_grid_size := _map_parameter_entry.instantiate()
-	map_grid_settings_container.add_child(parameter_entry_map_grid_size)
+	map_grid_settings_container.add_child(parameter_entry_map_grid_size, true)
 	parameter_entry_map_grid_size.initialize_map_grid_size()
 	
 	# Set node custom node name
-	parameter_entry_map_grid_size.name = "%s_%s" % [
-		parameter_entry_map_grid_size.scene_file_path.get_file().get_basename(), 
+	parameter_entry_map_grid_size.name = "%s (%s)" % [
+		parameter_entry_map_grid_size.get_script().get_global_name(), 
 		"map_grid_size",
 	]
 
@@ -100,8 +100,8 @@ func _create_dynamic_secret_settings_entries() -> void:
 		
 		# Set node custom node name
 		var secret_room_type_id = GameData.room_secret_types.get_type(secret_room_type_kind).get_id()
-		parameter_entry_secret_type_count_max.name = "%s_%s_%s" % [
-			parameter_entry_secret_type_count_max.scene_file_path.get_file().get_basename(), 
+		parameter_entry_secret_type_count_max.name = "%s (%s_%s)" % [
+			parameter_entry_secret_type_count_max.get_script().get_global_name(),
 			"count_max",
 			secret_room_type_id,
 		]

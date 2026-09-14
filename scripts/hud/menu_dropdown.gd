@@ -130,8 +130,11 @@ func add_option(option_id: int, option_text: String, option_icon: Texture2D = nu
 	# Instantiate the option scene
 	var option := OPTION_SCENE.instantiate() as MenuDropdownOption
 	
+	# Update option instance name
+	option.name = "%s (%d - %s)" % [option.get_script().get_global_name(), option_id, option_text]
+	
 	# Assign instantiated option scene as child to the options list
-	options_list.add_child(option)
+	options_list.add_child(option, true)
 	
 	# Initialize the option instance
 	option.setup(option_id, option_text, option_icon, _is_disabled)

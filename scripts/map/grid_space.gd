@@ -137,6 +137,9 @@ func create_room_cell(room_coords: Vector2i, room_instance_data: RoomInstanceDat
 	room_cell_instance.room_coords = room_coords
 	update_room_position(room_cell_instance)
 	
+	# Update room cell instance name
+	room_cell_instance.name = "%s %.0v" % [room_cell_instance.get_script().get_global_name(), room_coords]
+	
 	# Initialize room cell instance with the room instance data
 	room_cell_instance.create(room_instance_data)
 	

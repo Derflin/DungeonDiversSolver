@@ -51,6 +51,9 @@ func _create_result_cursor(map_solver_result_coord: MapSolverResultCoord, cursor
 	# Initialize data inside result cursor instance with the map solver result coord
 	result_cursor_instance.update_data(map_solver_result_coord, result_solve_stage)
 	
+	# Update result cursor instance name
+	result_cursor_instance.name = "%s %.0v" % [result_cursor_instance.get_script().get_global_name(), map_solver_result_coord.coords]
+	
 	# Save the result cursor instance inside the result cursors dictionary and add it as child to the current node
 	result_cursors[map_solver_result_coord.coords] = result_cursor_instance
 	add_child(result_cursor_instance)

@@ -110,8 +110,8 @@ func _find_valid_placements(result: MapSolverResult, placement_config: SecretPla
 	result.stage = MapSolverResult.SolveStage.FOUND_VALID_PLACEMENTS
 	
 	# Check every coordinate position
-	for column in GameSettings.map_grid_room_size.x:
-		for row in GameSettings.map_grid_room_size.y:
+	for column in GameSettings.map_grid_size.x:
+		for row in GameSettings.map_grid_size.y:
 			# Filter out room coords where the room already exists
 			var room_coords := Vector2i(column, row)
 			if _map_state.has_room_coords(room_coords):

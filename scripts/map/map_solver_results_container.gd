@@ -4,6 +4,11 @@ extends Node2D
 
 const _result_cursor_scene: PackedScene = preload("res://scenes/map/map_solver_result_cursor.tscn")
 var result_cursors: Dictionary[Vector2i, MapSolverResultCursor] = {}
+var result_cursors_deleted: Array[MapSolverResultCursor] = []
+
+
+@onready var active_container: Node2D = $ActiveContainer
+@onready var transition_container: Node2D = $TransitionContainer 
 
 
 ## Update map solver result cursors assigned as this container node children to reflect map solver result.
@@ -56,7 +61,10 @@ func _create_result_cursor(map_solver_result_coord: MapSolverResultCoord, cursor
 	
 	# Save the result cursor instance inside the result cursors dictionary and add it as child to the current node
 	result_cursors[map_solver_result_coord.coords] = result_cursor_instance
-	add_child(result_cursor_instance)
+	active_container.add_child(result_cursor_instance)
+	
+	# Show result cursor
+	result_cursor_instance.show_cursor()
 
 
 ## Deletes result cursor instance for the provided [param room_coords] coordinates.
@@ -65,9 +73,20 @@ func _delete_result_cursor(room_coords: Vector2i):
 	if not has_result_cursor_coords(room_coords):
 		return
 	
-	# Delete result cursor instance
+	# Hide result cursor
 	var result_cursor = result_cursors[room_coords]
+	result_cursor.hide_cursor()
+	
+	# Delete result cursor instance from it's active container and reparent it to the transition container along with connecting it's signal to later handle it's full deletion
 	result_cursors.erase(room_coords)
+	result_cursor.reparent(transition_container)
+	result_cursors_deleted.append(result_cursor)
+	result_cursor.cursor_hidden.connect(_on_result_cursor_hidden)
+
+
+## Removes the result cursor from temporary array for storing it during transition from active to deleted state and queues it's deletion.
+func _on_result_cursor_hidden(result_cursor: MapSolverResultCursor) -> void:
+	result_cursors_deleted.erase(result_cursor)
 	result_cursor.queue_free()
 
 

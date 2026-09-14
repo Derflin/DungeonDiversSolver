@@ -176,6 +176,10 @@ vertical_alignment = 1
 z_index = 10
 script = ExtResource("16_n70jr")
 
+[node name="ActiveContainer" type="Node2D" parent="GridSpace/MapSolverResultsContainer" unique_id=1868611559]
+
+[node name="TransitionContainer" type="Node2D" parent="GridSpace/MapSolverResultsContainer" unique_id=1839754396]
+
 [node name="MapCameraManager" type="Node2D" parent="." unique_id=1102045684]
 script = ExtResource("16_134i6")
 fit_padding = -18.0

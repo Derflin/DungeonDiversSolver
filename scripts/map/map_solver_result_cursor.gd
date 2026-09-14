@@ -2,9 +2,15 @@ class_name MapSolverResultCursor
 extends Node2D
 
 
+## Signal for communicating that the result cursor has been fully hidden, so that the parent container could optionally manage it's state. 
+## Sent along with the [param result_cursor] reference to itself. 
+signal cursor_hidden(result_cursor: MapSolverResultCursor)
+
+
 const CORNERS_ANIMATION_NAME := &"default"
 
 
+var _cursor_animation: Tween
 var _map_solver_result_coord: MapSolverResultCoord = null
 var _map_solver_result_solve_stage: MapSolverResult.SolveStage
 
@@ -26,13 +32,90 @@ var _map_solver_result_solve_stage: MapSolverResult.SolveStage
 @export var value_label_visual_offset := Vector2(0.0, -1.0)
 
 
+@export_group("Cursor Animation", "cursor_animation_")
+## Enables the cursor animation for handling it's show/hide states.
+@export var cursor_animation_enabled: bool = true
+## Show animation duration in seconds.
+@export_range(0.0, 1.0, 0.01)
+var cursor_animation_show_duration: float = 0.2
+## Hide animation duration in seconds.
+@export_range(0.0, 1.0, 0.01)
+var cursor_animation_hide_duration: float = 0.2
+
+
 func _ready() -> void:
+	# Initialize initial state
+	hide()
+	modulate.a = 0.0
+	
 	# Initialize the animation player for corners sprite
 	_initialize_corners_animation_player()
 	
 	# Update value label if it was initialized before ready function
 	if _map_solver_result_coord != null:
 		_update_value_label()
+
+
+## Shows cursor either immediately if the [member cursor_animation_enabled] is disabled or initializes the animation for it.
+func show_cursor() -> void:
+	# Stop existing animation
+	_kill_cursor_animation()
+	
+	# Show cursor
+	show()
+	
+	# If animation is disabled, then simply set the desired state
+	if not cursor_animation_enabled:
+		modulate.a = 1.0
+		return
+	
+	# Initialize cursor styles before animation
+	modulate.a = 0.0
+	
+	# Initialize animation with animated opacity and size transition
+	_cursor_animation = create_tween().set_parallel(true).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_cursor_animation.tween_property(self, "modulate:a", 1.0, cursor_animation_show_duration)
+
+
+## Hides cursor either immediately if the [member cursor_animation_enabled] is disabled or initializes the animation for it.
+func hide_cursor() -> void:
+	# Filter out processing if the cursor is already hidden
+	if not visible:
+		return
+	
+	# Stop existing animation
+	_kill_cursor_animation()
+	
+	# If animation is disabled, then simply set the desired state
+	if not cursor_animation_enabled:
+		_on_cursor_hide_animation_finished()
+		return
+	
+	# Initialize animation with animated opacity transition
+	_cursor_animation = create_tween().set_parallel(true).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	_cursor_animation.tween_property(self, "modulate:a", 0.0, cursor_animation_hide_duration)
+	
+	# Prepare signal connection after animation ends to finalize hiding submenu
+	if _cursor_animation != null and _cursor_animation.is_valid():
+		_cursor_animation.finished.connect(_on_cursor_hide_animation_finished)
+
+
+## After cursor hide animation finishes, sets it's state so that it wouldn't be visible and emits [signal cursor_hidden] signal, so that it's parent might take care of freeing this instance.
+func _on_cursor_hide_animation_finished() -> void:
+	# Hide cursor and set it's state
+	hide()
+	modulate.a = 0.0
+	
+	# Emit signal that the cursor has been hidden
+	cursor_hidden.emit(self)
+
+
+## Stops any cursor animation tween that might have been active and resets it's state.
+func _kill_cursor_animation() -> void:
+	if _cursor_animation != null and _cursor_animation.is_valid():
+		_cursor_animation.kill()
+	
+	_cursor_animation = null
 
 
 ## Initialize result cursor with the map solver result coord that it's based on.

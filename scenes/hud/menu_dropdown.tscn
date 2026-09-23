@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://dvexut8dssl25"]
 
 [ext_resource type="Script" uid="uid://pf2i81y8emkx" path="res://scripts/hud/menu_dropdown.gd" id="1_avs1r"]
+[ext_resource type="Script" uid="uid://c300hvn4msg8b" path="res://scripts/hud/smooth_scroll_container.gd" id="2_50086"]
 
 [node name="MapSolverDropdown" type="Button" unique_id=953268487]
 offset_right = 8.0
@@ -30,6 +31,7 @@ theme_override_constants/margin_bottom = 4
 unique_name_in_owner = true
 layout_mode = 2
 horizontal_scroll_mode = 0
+script = ExtResource("2_50086")
 
 [node name="OptionsList" type="VBoxContainer" parent="SubmenuPanel/MarginContainer/ScrollContainer" unique_id=976183116]
 unique_name_in_owner = true

@@ -2,7 +2,7 @@ class_name SmoothScrollBar
 extends ScrollBar
 
 
-## How quickly the scroll bar approaches its target in pixels per frame.
+## How quickly the scroll bar approaches its target in scroll bar units per frame.
 @export_range(1.0, 50.0, 0.5)
 var smooth_speed: float = 8.0
 ## Distance moved by one wheel step in scroll bar units.
@@ -12,13 +12,13 @@ var smooth_speed: float = 8.0
 var minimum_scroll_speed: float = 60.0
 
 
-var target_value: float
-var _changing_value_internally := false
+var _smooth_scroll_logic: SmoothScrollLogic
 
 
 func _ready() -> void:
-	# Initialize target value to the current value on the scroll bar.
-	target_value = value
+	# Initialize smooth scroll logic script instance and sync current class instance parameters to it.
+	_smooth_scroll_logic = SmoothScrollLogic.new(self)
+	_update_smooth_scroll_settings()
 	
 	# Connect value changed signal to trigger when the value is changed internally or externally by some other script.
 	value_changed.connect(_on_value_changed)
@@ -54,45 +54,20 @@ func _gui_input(event: InputEvent) -> void:
 	accept_event()
 
 
-## Handles calculating and managing the smooth scroll movement every frame.
+## Handles managing the smooth scroll movement every frame.
 func _process(delta: float) -> void:
-	# Calculate difference between target value and current value.
-	var difference := target_value - value
+	# Propagate call to the smooth scroll logic.
+	_smooth_scroll_logic.process(delta)
 	
-	# Finish processing if the calculated difference is less then set epsilon to minimize easing interpolation into infinity.
-	if abs(difference) <= 0.01:
-		_set_value_internally(target_value)
+	# Stop processing smooth scrolling if the active status on the smooth scroll logic in no longer active.
+	if not _smooth_scroll_logic.active:
 		set_process(false)
-		return
-	
-	# Calculate scroll movement.
-	var weight := 1.0 - exp(-smooth_speed * delta)
-	var movement := difference * weight
-	
-	# Adjust scroll movement if it's slower than defined minimum movement.
-	var minimum_movement := minimum_scroll_speed * delta
-	if abs(movement) < minimum_movement:
-		movement = sign(difference) * minimum_movement
-	
-	# Make sure to not overshoot the remaining movement distance.
-	if abs(movement) > abs(difference):
-		movement = difference
-	
-	# Set calculated scroll value.
-	_set_value_internally(
-		value + movement
-	)
 
 
 ## Modifies target value on scroll bar based on the scroll wheel movement and triggers smooth scrolling processing.
 func scroll_wheel(direction: float, factor: float = 1.0) -> void:
-	# Synchronize the target value with the current scroll bar value if scroll bar animation isn't being processed.
-	if not is_processing():
-		target_value = value
-	
-	# Adjust target value to include new scroll movement.
-	target_value += direction * _get_wheel_scroll_amount() * factor
-	target_value = clamp(target_value, min_value, get_max_scroll_value())
+	# Propagate call to the smooth scroll logic.
+	_smooth_scroll_logic.scroll_wheel(direction, factor)
 	
 	# Trigger smooth scrolling processing.
 	set_process(true)
@@ -100,12 +75,8 @@ func scroll_wheel(direction: float, factor: float = 1.0) -> void:
 
 ## Modifies target value on scroll bar by a given amount and triggers smooth scrolling processing.
 func smooth_scroll_by(amount: float) -> void:
-	# Synchronize the target value with the current scroll bar value if scroll bar animation isn't being processed.
-	if not is_processing():
-		target_value = value
-	
-	# Adjust target value to include modified scroll amount.
-	target_value = clamp(target_value + amount, min_value, get_max_scroll_value())
+	# Propagate call to the smooth scroll logic.
+	_smooth_scroll_logic.smooth_scroll_by(amount)
 	
 	# Trigger smooth scrolling processing.
 	set_process(true)
@@ -113,43 +84,25 @@ func smooth_scroll_by(amount: float) -> void:
 
 ## Modifies target value on scroll bar by setting a new value to it and triggers smooth scrolling processing.
 func smooth_scroll_to(new_value: float) -> void:
-	# Adjust target value to include modified scroll amount.
-	target_value = clamp(new_value, min_value, get_max_scroll_value())
+	# Propagate call to the smooth scroll logic.
+	_smooth_scroll_logic.smooth_scroll_to(new_value)
 	
 	# Trigger smooth scrolling processing.
 	set_process(true)
 
 
-## Returns mouse wheel scroll amount based on the scroll bar parameters.
-func _get_wheel_scroll_amount() -> float:
-	if wheel_scroll_amount >= 0.0:
-		return wheel_scroll_amount
-	
-	if page > 0.0:
-		return page / 8.0
-	
-	return (max_value - min_value) / 16.0
-
-
-## Returns max scroll value based on the scroll bar parameters.
-func get_max_scroll_value() -> float:
-	return max(min_value, max_value - page)
-
-
-## Sets a new value to a scroll bar value and during it marks it as being changed to prevent multiple sources changing it at the same time. 
-func _set_value_internally(new_value: float) -> void:
-	_changing_value_internally = true
-	value = new_value
-	_changing_value_internally = false
-
-
 ## Handle value changed signal if the scroll bar value was changed internally or externally.
 func _on_value_changed(new_value: float) -> void:
 	# Filter out processing if the value is being changed internally by the scroll bar itself and not by external source.
-	if _changing_value_internally:
-		return
-	
-	target_value = new_value
+	_smooth_scroll_logic.handle_value_changed(new_value)
 	
 	# Disable smooth scrolling processing.
-	set_process(false)
+	if not _smooth_scroll_logic.active:
+		set_process(false)
+
+
+## Sync current class instance parameters into the smooth scroll logic instance.
+func _update_smooth_scroll_settings() -> void:
+	_smooth_scroll_logic.smooth_speed = smooth_speed
+	_smooth_scroll_logic.wheel_scroll_amount = wheel_scroll_amount
+	_smooth_scroll_logic.minimum_scroll_speed = minimum_scroll_speed

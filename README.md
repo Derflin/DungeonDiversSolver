@@ -37,7 +37,6 @@ Currently working on:
 
 - [ ] Implement MapSolver feature along with displaying it's results on map.
 	- [ ] Make sure that the map solver results from the last stage don't conflict with each other.
-	- [ ] Add Label at the bottom of the screen inside the MapSolverControl, in order to display a map solver result short description.
 	- [ ] Fix issue with invalid room placements if they are only located next to a secret room and no other room is connected to them (weight 0).
 - [ ] Add option to automatically close the map parameters control hud menu, when the user clicks outside of it.
 - [ ] Add animation for room cell show/hide states.

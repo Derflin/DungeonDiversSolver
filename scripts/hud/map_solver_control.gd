@@ -9,17 +9,21 @@ const MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS = {
 
 
 var _menu_effective_ui_scale: int = 1
+var _status_effective_ui_scale: int = 1
 var _menu_dropdowns: Dictionary[MenuDropdown, GameState.MapSolverState]
 
 
 @onready var menu_root: Control = $MenuAnchor/MenuRoot
 @onready var menu_contents: Control = $MenuAnchor/MenuRoot/MenuContents
+@onready var status_root: Control = $StatusAnchor/StatusRoot
+@onready var status_contents: Control = $StatusAnchor/StatusRoot/StatusContents
 
 @onready var menu_button_placement_hint: MenuDropdown = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow/PlacementHintButton
 @onready var menu_button_weight_hint: MenuDropdown = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow/WeightHintButton
 @onready var menu_button_solution_show: MenuDropdown = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/ButtonsRow/SolutionShowButton
 
 @onready var solver_state_panel: PanelContainer = $MenuAnchor/MenuRoot/MenuContents/StatePanel
+@onready var solver_status_panel: PanelContainer = $StatusAnchor/StatusRoot/StatusContents/StatusPanel
 
 
 @export_group("Menu Layout", "menu_")
@@ -42,6 +46,9 @@ func _ready() -> void:
 	
 	# Attach node resized signal to handle resizing and refreshing menu layout
 	resized.connect(_on_control_resized)
+	
+	# Keep status panel centered while its contents resize
+	status_contents.resized.connect(_position_status_root)
 	
 	# Refresh menu layout after initializing all the map parameter entries 
 	call_deferred("_refresh_menu_layout")
@@ -107,18 +114,23 @@ func _refresh_menu_layout() -> void:
 	
 	# Set base menu scale
 	menu_root.scale = Vector2.ONE
+	status_root.scale = Vector2.ONE
 	
 	# Calculate total height
-	var natural_panel_size := _get_natural_menu_size()
+	var natural_menu_panel_size := _get_natural_menu_size()
+	var natural_status_panel_size := _get_natural_status_size()
 	
 	# Calculate effective menu scale
-	_menu_effective_ui_scale = _calculate_ui_scale(natural_panel_size)
+	_menu_effective_ui_scale = _calculate_ui_scale(natural_menu_panel_size)
+	_status_effective_ui_scale = _calculate_ui_scale(natural_status_panel_size)
 	
 	# Set calculated effective menu scale
 	menu_root.scale = Vector2.ONE * float(_menu_effective_ui_scale)
+	status_root.scale = Vector2.ONE * float(_status_effective_ui_scale)
 	
 	# Position menu root based on the menu scale
 	_position_menu_root()
+	_position_status_root()
 
 
 func _position_menu_root() -> void:
@@ -129,6 +141,17 @@ func _position_menu_root() -> void:
 	menu_root.position = Vector2(
 		-menu_contents.size.x * scale_factor * 0.5,
 		0,
+	)
+
+
+func _position_status_root() -> void:
+	# Prepare scale factor
+	var scale_factor := float(_status_effective_ui_scale)
+
+	# Adjust status root position
+	status_root.position = Vector2(
+		-status_contents.size.x * scale_factor * 0.5,
+		-1.0 * status_contents.size.y * scale_factor,
 	)
 
 
@@ -153,6 +176,10 @@ func _get_natural_menu_size() -> Vector2:
 	return menu_contents.get_combined_minimum_size()
 
 
+func _get_natural_status_size() -> Vector2:
+	return status_contents.get_combined_minimum_size()
+
+
 func _on_control_resized() -> void:
 	call_deferred("_refresh_menu_layout")
 
@@ -167,10 +194,12 @@ func _on_game_state_map_solver_state_changed() -> void:
 	# Get data from game state regarding map solver state
 	var cur_map_solver_state := GameState.map_solver_state
 	var cur_map_solver_secret_kind := GameState.map_solver_secret_kind
+	var cur_map_solver_result := GameState.map_solver_result
 	
 	# Hide state panel if either the map solver state is none or map solver secret kind is none
-	if cur_map_solver_secret_kind == RoomSecretType.Kind.NONE or cur_map_solver_state == GameState.MapSolverState.NONE:
+	if cur_map_solver_secret_kind == RoomSecretType.Kind.NONE or cur_map_solver_state == GameState.MapSolverState.NONE or cur_map_solver_result == null:
 		solver_state_panel.hide_state_panel()
+		solver_status_panel.hide_status_panel()
 	else:
 		# Gather data about secret room type
 		var selected_secret_room_type: RoomSecretType = null
@@ -182,6 +211,7 @@ func _on_game_state_map_solver_state_changed() -> void:
 			selected_secret_room_type.get_static_texture(),
 			selected_secret_room_type.get_display_name(),
 		)
+		solver_status_panel.show_status_panel(cur_map_solver_result.get_status_message())
 
 
 func _on_cancel_button_pressed() -> void:

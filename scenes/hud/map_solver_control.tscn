@@ -70,6 +70,23 @@ corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 corner_detail = 5
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_yvpet"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0.1, 0.1, 0.1, 0.6)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45882353, 0.34509805, 0.27450982, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 5
+
 [node name="MapSolverControl" type="Control" unique_id=195301154]
 texture_filter = 1
 layout_mode = 3
@@ -229,6 +246,7 @@ visible = false
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_yvpet")
 script = ExtResource("21_yvpet")
 
 [node name="ContentRoot" type="Control" parent="StatusAnchor/StatusRoot/StatusContents/StatusPanel" unique_id=82853201]

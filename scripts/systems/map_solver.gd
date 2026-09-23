@@ -63,16 +63,19 @@ func find_secret_room_locations(
 ) -> MapSolverResult:
 	# Prepare return output value
 	var result = MapSolverResult.new()
+	result.clear_status_message()
 	
 	# Check if GameData has specified secret room kind
 	if not GameData.room_secret_types.has_type(secret_room_kind):
+		result.append_status_message("Missing selected secret room type kind inside resources in GameData")
 		return result
 	
 	# Get current secret room kind current and max count and check how many of them need to be solved
 	var secret_room_count_current: int = GameState.map_secrets_count_current.get(secret_room_kind, 0)
 	var secret_room_count_max: int = GameSettings.map_secrets_count_max.get(secret_room_kind, 0)
 	var secret_room_generate_count := secret_room_count_max - secret_room_count_current
-	if secret_room_generate_count <= 0:
+	if secret_room_count_max - secret_room_count_current <= 0:
+		result.append_status_message("All secret rooms already placed")
 		return result
 	
 	# Gather secret room type data
@@ -81,11 +84,13 @@ func find_secret_room_locations(
 	
 	# Check if secret room type data has any placement configuration assigned
 	if secret_room_placement_config == null:
+		result.append_status_message("Secret room kind missing placement configuration")
 		return result
 	
 	# Find valid placements and return them if the only_hint_placement flag is true
 	_find_valid_placements(result, secret_room_placement_config)
 	if only_hint_placement:
+		result.append_status_message("Found %d valid placements" % [result.get_result_coords().size()])
 		return result
 	
 	# Calculate weights for valid placements and return them if the only_hint_placement_weights flag is true
@@ -94,6 +99,7 @@ func find_secret_room_locations(
 		# Color code the weight results and save text colors for each valid placement
 		result.assign_color_code(text_color_code_gradient, secret_room_placement_config.weight_count_type, true, false)
 		
+		result.append_status_message("Calculated weights for %d valid placements" % [result.get_result_coords().size()])
 		return result
 	
 	# Find and mark final solutions
@@ -102,6 +108,7 @@ func find_secret_room_locations(
 	# Color code the solution results and save text colors for each found placement
 	result.assign_color_code(text_color_code_gradient, secret_room_placement_config.weight_count_type, false, true)
 	
+	result.append_status_message("Found %d valid and most probable placements" % [result.get_result_coords().size()])
 	return result
 
 

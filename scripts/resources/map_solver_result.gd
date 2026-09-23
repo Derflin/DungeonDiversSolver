@@ -12,6 +12,7 @@ enum SolveStage {
 
 var stage: SolveStage = SolveStage.NONE
 var result_coords: Array[MapSolverResultCoord] = []
+var status_msg: Array[String] = []
 
 
 func get_result_coords() -> Array[Vector2i]:
@@ -46,6 +47,18 @@ func unassign_coord_from_result(coords: Vector2i) -> void:
 func initialize_result_coords_weights() -> void:
 	for result in result_coords:
 		result.calculated_weight = 0
+
+
+func get_status_message() -> String:
+	return "\n".join(status_msg)
+
+
+func append_status_message(text: String) -> void:
+	status_msg.append(text)
+
+
+func clear_status_message() -> void:
+	status_msg.clear()
 
 
 func get_all_result_coords_weights() -> Array[float]:

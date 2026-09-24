@@ -108,6 +108,14 @@ func delete_room(room_coords: Vector2i, trigger_room_state_changed_signal: bool 
 		room_state_changed.emit()
 
 
+## Delete all existing rooms.
+func delete_all_rooms() -> void:
+	for room_coords: Vector2i in room_instances.keys():
+		room_instances.erase(room_coords)
+		room_deleted.emit(room_coords)
+	room_state_changed.emit()
+
+
 ## Updates an existing room for the provided [param room_coords] coordinates by modifying it's barricades configuration.
 ## Uses [param barricade_direction] and [param state] to determine, which barricade direction flag should be set and in which state.
 func update_room_set_barricade(room_coords: Vector2i, barricade_direction: RoomInstanceData.BarricadeDirectionFlags, state: bool) -> void:
@@ -220,3 +228,36 @@ func _on_game_settings_map_grid_size_parameter_changed() -> void:
 	# If any of the room was set to be deleted, then emit the room_state_changed signal
 	if room_coords_deletion_queue.size() > 0:
 		room_state_changed.emit()
+
+
+#region Save Provider
+# These functions expose this object's persistent state to the save system.
+
+## Returns the unique key used to identify this Save Provider in save data.
+func get_save_key() -> StringName:
+	return &"map_state"
+
+
+## Captures this Save Provider's current persistent state as serializable save data.
+func capture_save_data() -> Dictionary:
+	var saved_room_instances: Dictionary = {}
+	for room_coords in room_instances.keys():
+		saved_room_instances[room_coords] = room_instances[room_coords].capture_save_data()
+	
+	return {
+		"room_instances": saved_room_instances,
+	}
+
+
+## Restores this Save Provider's persistent state from previously captured save data.
+func restore_save_data(data: Dictionary) -> void:
+	delete_all_rooms()
+	for saved_room_data_coords in data["room_instances"].keys():
+		var saved_room_data = data["room_instances"][saved_room_data_coords]
+		
+		var room_instance_data = RoomInstanceData.new()
+		room_instance_data.restore_save_data(saved_room_data)
+		
+		create_room(saved_room_data_coords, room_instance_data)
+
+#endregion

@@ -205,3 +205,34 @@ func assign_color_code(text_color_gradient: Gradient, weight_count_type: SecretP
 			
 			# Assign text color based on the provided text color gradient
 			result_coord.text_color = text_color_gradient.sample(main_color_percentage)
+
+
+#region Save Data Serialization
+# These functions convert this object's persistent state to and from save data.
+
+## Captures this object's persistent state as serializable save data.
+func capture_save_data() -> Dictionary:
+	var saved_result_coords: Array = []
+	for cur_result_coords in result_coords:
+		saved_result_coords.append(cur_result_coords.capture_save_data())
+	
+	return {
+		"stage": stage,
+		"result_coords": saved_result_coords,
+		"status_msg": status_msg.duplicate(true),
+	}
+
+
+## Restores this object's persistent state from previously captured save data.
+func restore_save_data(data: Dictionary) -> void:
+	var loaded_result_coords = []
+	for saved_result_coords in data["result_coords"]:
+		var new_result_coords = MapSolverResultCoord.new()
+		new_result_coords.restore_save_data(saved_result_coords)
+		loaded_result_coords.append(new_result_coords)
+	
+	stage = data["stage"]
+	result_coords = loaded_result_coords
+	status_msg = data["status_msg"].duplicate(true)
+
+#endregion

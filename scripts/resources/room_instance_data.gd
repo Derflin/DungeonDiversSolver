@@ -306,3 +306,35 @@ func has_specified_room_type(room_type: RoomType) -> bool:
 		return secret_type != null and secret_type == room_type
 	
 	return false
+
+
+#region Save Data Serialization
+# These functions convert this object's persistent state to and from save data.
+
+## Captures this object's persistent state as serializable save data.
+func capture_save_data() -> Dictionary:
+	var saved_corridor_type_kind = RoomCorridorType.Kind.NONE if corridor_type == null else corridor_type.get_kind()
+	var saved_special_type_kind = RoomSpecialType.Kind.NONE if special_type == null else special_type.get_kind()
+	var saved_secret_type_kind = RoomSecretType.Kind.NONE if secret_type == null else secret_type.get_kind()
+	
+	return {
+		"instance_seed_value": instance_seed_value,
+		"connection_directions_mask": connection_directions_mask,
+		"barricade_directions_mask": barricade_directions_mask,
+		"corridor_type_kind": saved_corridor_type_kind,
+		"special_type_kind": saved_special_type_kind,
+		"secret_type_kind": saved_secret_type_kind,
+	}
+
+
+## Restores this object's persistent state from previously captured save data.
+func restore_save_data(data: Dictionary) -> void:
+	instance_seed_value = data["instance_seed_value"]
+	connection_directions_mask = data["connection_directions_mask"]
+	barricade_directions_mask = data["barricade_directions_mask"]
+	
+	corridor_type = GameData.room_corridor_types.get_type(data["corridor_type_kind"])
+	special_type = GameData.room_special_types.get_type(data["special_type_kind"])
+	secret_type = GameData.room_secret_types.get_type(data["secret_type_kind"])
+
+#endregion

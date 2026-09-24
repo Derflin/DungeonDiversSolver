@@ -39,3 +39,28 @@ func set_map_secrets_count_max(kind: RoomSecretType.Kind, value: int) -> void:
 
 func set_map_grid_size(size: int) -> void:
 	map_grid_size = Vector2i(size, size)
+
+
+#region Save Provider
+# These functions expose this object's persistent state to the save system.
+
+## Returns the unique key used to identify this Save Provider in save data.
+func get_save_key() -> StringName:
+	return &"game_settings"
+
+
+## Captures this Save Provider's current persistent state as serializable save data.
+func capture_save_data() -> Dictionary:
+	return {
+		"map_secrets_count_max": map_secrets_count_max.duplicate(),
+		"map_grid_size": map_grid_size,
+		"map_grid_room_size": map_grid_room_size,
+	}
+
+## Restores this Save Provider's persistent state from previously captured save data.
+func restore_save_data(data: Dictionary) -> void:
+	map_secrets_count_max = data["map_secrets_count_max"].duplicate()
+	map_grid_size = data["map_grid_size"]
+	map_grid_room_size = data["map_grid_room_size"]
+	
+#endregion

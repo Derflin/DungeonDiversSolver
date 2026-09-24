@@ -64,6 +64,18 @@ const BARRICADE_DISPLAY_NAME_BY_DIRECTION: Dictionary[RoomInstanceData.Barricade
 }
 
 
+func get_kind() -> Kind:
+	return kind
+
+
+func get_id() -> StringName:
+	return id
+
+
+func get_display_name() -> String:
+	return display_name
+
+
 func get_floor_variant_frame_index(seed_value: int) -> int:
 	if seed_value == -1 or seed_value == null:
 		seed_value = randi()

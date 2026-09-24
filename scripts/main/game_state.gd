@@ -119,3 +119,32 @@ func _on_map_solver_state_change_triggered(state: MapSolverState, secret_room_ki
 	
 	# Emit signal that map solver state has been changed
 	map_solver_state_changed.emit()
+
+
+#region Save Provider
+# These functions expose this object's persistent state to the save system.
+
+## Returns the unique key used to identify this Save Provider in save data.
+func get_save_key() -> StringName:
+	return &"game_state"
+
+
+## Captures this Save Provider's current persistent state as serializable save data.
+func capture_save_data() -> Dictionary:
+	return {
+		map_state.get_save_key(): map_state.capture_save_data(),
+		"map_secrets_count_current": map_secrets_count_current.duplicate(),
+		"map_solver_state": map_solver_state,
+		"map_solver_secret_kind": map_solver_secret_kind,
+		"map_solver_result": null if map_solver_result == null else map_solver_result.capture_save_data(),
+	}
+
+## Restores this Save Provider's persistent state from previously captured save data.
+func restore_save_data(data: Dictionary) -> void:
+	map_state.restore_save_data(data[map_state.get_save_key()])
+	map_secrets_count_current = data["map_secrets_count_current"].duplicate()
+	map_solver_state = data["map_solver_state"]
+	map_solver_state = data["map_solver_secret_kind"]
+	map_solver_result = null if data["map_solver_result"] == null else MapSolverResult.new().map_solver_result.restore_save_data(data["map_solver_result"])
+
+#endregion

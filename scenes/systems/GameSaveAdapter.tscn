@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://clic7mqmov8r0"]
+
+[ext_resource type="Script" uid="uid://d3ciiakg2odmi" path="res://scripts/systems/game_save_adapter.gd" id="1_6fcny"]
+
+[node name="GameSaveAdapter" type="Node" unique_id=1783445634]
+script = ExtResource("1_6fcny")

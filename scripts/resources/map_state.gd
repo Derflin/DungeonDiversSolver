@@ -260,4 +260,16 @@ func restore_save_data(data: Dictionary) -> void:
 		
 		create_room(saved_room_data_coords, room_instance_data)
 
+
+## Captures this Save Provider's current persistant state in form of summary metadata for save data.
+func capture_save_metadata() -> Array[Dictionary]:
+	var save_metadata: Array[Dictionary] = [
+		{
+			"key": &"room_count",
+			"value": str(room_instances.size()),
+		},
+	]
+	
+	return save_metadata
+
 #endregion

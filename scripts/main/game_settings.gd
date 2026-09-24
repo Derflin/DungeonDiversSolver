@@ -62,5 +62,17 @@ func restore_save_data(data: Dictionary) -> void:
 	map_secrets_count_max = data["map_secrets_count_max"].duplicate()
 	map_grid_size = data["map_grid_size"]
 	map_grid_room_size = data["map_grid_room_size"]
+
+
+## Captures this Save Provider's current persistant state in form of summary metadata for save data.
+func capture_save_metadata() -> Array[Dictionary]:
+	var save_metadata: Array[Dictionary] = [
+		{
+			"key": &"map_size",
+			"value": "%d x %d" % [map_grid_size.x, map_grid_size.y],
+		},
+	]
 	
+	return save_metadata
+
 #endregion

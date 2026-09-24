@@ -147,4 +147,21 @@ func restore_save_data(data: Dictionary) -> void:
 	map_solver_state = data["map_solver_secret_kind"]
 	map_solver_result = null if data["map_solver_result"] == null else MapSolverResult.new().map_solver_result.restore_save_data(data["map_solver_result"])
 
+
+## Captures this Save Provider's current persistant state in form of summary metadata for save data.
+func capture_save_metadata() -> Array[Dictionary]:
+	var save_metadata: Array[Dictionary] = []
+	
+	var secret_count = 0
+	for secret_type_kind in map_secrets_count_current:
+		secret_count += map_secrets_count_current[secret_type_kind]
+	save_metadata.append({
+		"key": &"secret_count",
+		"value": secret_count,
+	})
+	
+	save_metadata.append_array(map_state.capture_save_metadata())
+	
+	return save_metadata
+
 #endregion

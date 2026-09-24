@@ -15,6 +15,7 @@ func register_save_provider(provider: Object) -> void:
 	assert(provider.has_method("get_save_key"))
 	assert(provider.has_method("capture_save_data"))
 	assert(provider.has_method("restore_save_data"))
+	assert(provider.has_method("capture_save_metadata"))
 	
 	var save_key: StringName = provider.get_save_key()
 	
@@ -54,3 +55,14 @@ func restore_game_state(game_state: Dictionary) -> void:
 			continue
 		
 		provider.restore_save_data(game_state[save_key])
+
+
+func capture_save_metadata() -> Array[Dictionary]:
+	var save_metadata: Array[Dictionary] = []
+	
+	for save_key: StringName in _save_providers:
+		var provider: Object = _save_providers[save_key]
+		
+		save_metadata.append_array(provider.capture_save_metadata())
+	
+	return save_metadata

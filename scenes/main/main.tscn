@@ -1,12 +1,15 @@
 [gd_scene format=3 uid="uid://cj2o6bu7lko4k"]
 
 [ext_resource type="PackedScene" uid="uid://byxiaffshj4eo" path="res://scenes/map/map_display.tscn" id="1_hyk8p"]
+[ext_resource type="PackedScene" uid="uid://clic7mqmov8r0" path="res://scenes/systems/GameSaveAdapter.tscn" id="1_l3cfh"]
 [ext_resource type="PackedScene" uid="uid://q8745vdh26mn" path="res://scenes/hud/map_parameters_control.tscn" id="2_iuonh"]
 [ext_resource type="PackedScene" uid="uid://b65s6cwmlyn4f" path="res://scenes/hud/map_solver_control.tscn" id="3_k2fmo"]
 
 [node name="Main" type="Node" unique_id=107272976]
 
 [node name="Systems" type="Node" parent="." unique_id=1350648501]
+
+[node name="GameSaveAdapter" parent="Systems" unique_id=1783445634 instance=ExtResource("1_l3cfh")]
 
 [node name="World" type="Node2D" parent="." unique_id=1955869184]
 

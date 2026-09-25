@@ -6,8 +6,17 @@ var _save_providers: Dictionary[StringName, Object] = {}
 
 
 func _ready() -> void:
+	# Register save providers.
 	register_save_provider(GameSettings)
 	register_save_provider(GameState)
+	
+	# Register game save adapter inside the save manager.
+	SaveManager.register_game_save_adapter(self)
+
+
+func _exit_tree() -> void:
+	# Unregister game save adapter from the save manager.
+	SaveManager.unregister_game_save_adapter(self)
 
 
 func register_save_provider(provider: Object) -> void:

@@ -91,6 +91,14 @@ A radial menu `Control` for Godot, used as the basis for the project's radial co
 - Source: [godot-radial-menu-control](https://github.com/jesuisse/godot-radial-menu-control)
 - License: MIT
 
+#### Easy Store
+
+EasyStore is a lightweight, modular save system addon for Godot 4. It's used as a basis for the project's save manager menus.
+
+- Author: [IUXGames](https://github.com/IUXGames)
+- Source: [EasyStore](https://github.com/IUXGames/EasyStore)
+- License: MIT
+
 ### UI Assets
 
 #### Fantasy UI Borders

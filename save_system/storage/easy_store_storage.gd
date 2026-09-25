@@ -196,15 +196,28 @@ func load_slot(slot: int) -> Dictionary:
 			continue
 		
 		# Gather data about load result.
-		var data: Dictionary = result[1]
+		var sections_data: Dictionary = result[1]
 		var success: bool = result[2]
 		if not success:
+			return {}
+		
+		# Filter out processing if the loaded data doesn't have a game state section in it.
+		if not sections_data.has(GAME_STATE_SECTION):
+			push_error("EasyStoreStorage: slot %d does not containt the \"%s\" section." % [slot, GAME_STATE_SECTION])
+			return {}
+		
+		# Get game state section from the loaded data.
+		var game_state: Variant = sections_data[GAME_STATE_SECTION]
+		
+		# Filter out processing if the game state section is not a valid dicitonary.
+		if not game_state is Dictionary:
+			push_error("EasyStoreStorage: the \"%s\" section in slot %d is not a Dictionary.")
 			return {}
 		
 		# Refresh slots manually to make sure that that they are loaded in correctly in our save storage.
 		refresh_slots()
 		
-		return data
+		return game_state.duplicate(true)
 	
 	return {}
 

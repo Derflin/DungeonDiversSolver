@@ -46,17 +46,17 @@ static func from_user_metadata(metadata: SaveMetadata) -> SaveBrowserEntry:
 	return entry
 
 
-## Creates and returns a SaveBrowserEntry instance for the empty, unused [param slot] number.
-static func create_empty_user_slot(slot: int) -> SaveBrowserEntry:
+## Creates and returns a SaveBrowserEntry instance for the empty, unused [param _slot] number.
+static func create_empty_user_slot(_slot: int) -> SaveBrowserEntry:
 	# Instantiate save browser entry.
 	var entry := SaveBrowserEntry.new()
 	
 	# Initialize it with the provided metadata.
 	entry.source = Source.USER_SAVE
-	entry.slot = slot
-	entry.entry_id = "slot:%d" % slot
+	entry.slot = _slot
+	entry.entry_id = "slot:%d" % _slot
 	entry.exists = false
-	entry.display_name = "Save %d" % slot
+	entry.display_name = "Save %d" % _slot
 	
 	# Return prepared save browser entry.
 	return entry

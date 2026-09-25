@@ -131,12 +131,16 @@ func get_save_key() -> StringName:
 
 ## Captures this Save Provider's current persistent state as serializable save data.
 func capture_save_data() -> Dictionary:
+	var save_data_map_solver_result = null
+	if map_solver_result != null:
+		save_data_map_solver_result = map_solver_result.capture_save_data()
+	
 	return {
 		map_state.get_save_key(): map_state.capture_save_data(),
 		"map_secrets_count_current": map_secrets_count_current.duplicate(),
 		"map_solver_state": map_solver_state,
 		"map_solver_secret_kind": map_solver_secret_kind,
-		"map_solver_result": null if map_solver_result == null else map_solver_result.capture_save_data(),
+		"map_solver_result": save_data_map_solver_result,
 	}
 
 ## Restores this Save Provider's persistent state from previously captured save data.

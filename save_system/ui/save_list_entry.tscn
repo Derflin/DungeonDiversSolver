@@ -1,0 +1,37 @@
+[gd_scene format=3 uid="uid://cknktvtqj2ag7"]
+
+[ext_resource type="Script" uid="uid://rhwexwnxc5yr" path="res://save_system/ui/save_list_entry.gd" id="1_qe2ig"]
+
+[node name="SaveListEntry" type="Button" unique_id=8007045]
+custom_minimum_size = Vector2(350, 100)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+toggle_mode = true
+script = ExtResource("1_qe2ig")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=2121678787]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="ContentsContainer" type="HBoxContainer" parent="MarginContainer" unique_id=1400090694]
+layout_mode = 2
+
+[node name="Thumbnail" type="TextureRect" parent="MarginContainer/ContentsContainer" unique_id=765518251]
+layout_mode = 2
+
+[node name="InfoContainer" type="HBoxContainer" parent="MarginContainer/ContentsContainer" unique_id=326729022]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="MarginContainer/ContentsContainer/InfoContainer" unique_id=1251656487]
+layout_mode = 2
+
+[node name="SavedLabel" type="Label" parent="MarginContainer/ContentsContainer/InfoContainer" unique_id=2068588437]
+layout_mode = 2
+
+[node name="DescriptionLabel" type="Label" parent="MarginContainer/ContentsContainer/InfoContainer" unique_id=388735641]
+layout_mode = 2
+autowrap_mode = 3

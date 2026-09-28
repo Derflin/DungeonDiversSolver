@@ -1,0 +1,25 @@
+class_name SaveUIEnums
+extends RefCounted
+
+
+enum OperationMode {
+	SAVE,
+	LOAD,
+}
+
+
+enum BrowserMode {
+	SLOT_VIEW,
+	EXISTING_SAVES_VIEW,
+	EXAMPLES_VIEW,
+}
+
+
+enum SortMode {
+	LAST_SAVED_ASCENDING,
+	LAST_SAVED_DESCENDING,
+	NAME_ASCENDING,
+	NAME_DESCENDING,
+	SLOT_ASCENDING,
+	SLOT_DESCENDING,
+}

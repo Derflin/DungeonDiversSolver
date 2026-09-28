@@ -1,0 +1,48 @@
+class_name ModalConfirmationDialog
+extends Control
+
+
+signal decision_made(confirmed: bool)
+
+
+@onready var title_label: Label = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/TitleLabel
+@onready var message_label: Label = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/MessageLabel
+@onready var cancel_button: Label = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/Buttons/CancelButton
+@onready var confirm_button: Label = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/Buttons/ConfirmButton
+
+
+func _ready() -> void:
+	cancel_button.pressed.connect(_on_cancel_pressed)
+	confirm_button.pressed.connect(_on_confirm_pressed)
+
+
+## Populates modal confirmation dialog, shows it, waits for a response from it and then hides it.
+## Returns a bool value representing the confirmation response.
+func request_confirmation(title: String, message: String, confirm_text: String = "Confirm", cancel_text: String = "Cancel") -> bool:
+	# Populate modal confirmation dialog.
+	title_label.text = title
+	message_label.text = message
+	confirm_button.text = confirm_text
+	cancel_button.text = cancel_text
+	
+	# Show the modal.
+	visible = true
+	
+	# Set confirmation button as focussed.
+	confirm_button.grab_focus()
+	
+	# Wait for a signal containing a response from the modal. 
+	var confirmed: bool = await decision_made
+	
+	# Hide the modal.
+	visible = false
+	
+	return confirmed
+
+
+func _on_confirm_pressed() -> void:
+	decision_made.emit(true)
+
+
+func _on_cancel_pressed() -> void:
+	decision_made.emit(false)

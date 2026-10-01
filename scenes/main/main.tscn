@@ -5,7 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://q8745vdh26mn" path="res://scenes/hud/map_parameters_control.tscn" id="2_iuonh"]
 [ext_resource type="PackedScene" uid="uid://b65s6cwmlyn4f" path="res://scenes/hud/map_solver_control.tscn" id="3_k2fmo"]
 [ext_resource type="PackedScene" uid="uid://dbher8pgko3e0" path="res://scenes/hud/map_manager_control.tscn" id="5_ow5a4"]
-[ext_resource type="PackedScene" uid="uid://8bk1yrjo8s7q" path="res://save_system/ui/save_manager_control.tscn" id="6_hujxm"]
+[ext_resource type="PackedScene" uid="uid://8bk1yrjo8s7q" path="res://scenes/save_system/ui/save_manager_control.tscn" id="6_hujxm"]
 
 [node name="Main" type="Node" unique_id=107272976]
 

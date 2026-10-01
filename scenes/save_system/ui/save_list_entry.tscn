@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://cknktvtqj2ag7"]
 
-[ext_resource type="Script" uid="uid://rhwexwnxc5yr" path="res://save_system/ui/save_list_entry.gd" id="1_qe2ig"]
+[ext_resource type="Script" uid="uid://rhwexwnxc5yr" path="res://scripts/save_system/ui/save_list_entry.gd" id="1_qe2ig"]
 
 [node name="SaveListEntry" type="Button" unique_id=8007045]
 custom_minimum_size = Vector2(350, 100)

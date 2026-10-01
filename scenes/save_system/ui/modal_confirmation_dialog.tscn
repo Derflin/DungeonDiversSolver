@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://d0dhy4jipapar"]
 
-[ext_resource type="Script" uid="uid://rq4bm18rwfvv" path="res://scripts/hud/modal_confirmation_dialog.gd" id="1_nx1nm"]
+[ext_resource type="Script" uid="uid://rq4bm18rwfvv" path="res://scripts/save_system/ui/modal_confirmation_dialog.gd" id="1_nx1nm"]
 
 [node name="ModalConfirmationDialog" type="Control" unique_id=24606316]
 process_mode = 3

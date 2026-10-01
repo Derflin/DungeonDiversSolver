@@ -1,10 +1,10 @@
 [gd_scene format=3 uid="uid://8bk1yrjo8s7q"]
 
-[ext_resource type="PackedScene" uid="uid://dac6vexif8k3u" path="res://save_system/ui/save_details.tscn" id="1_1fu6j"]
-[ext_resource type="Script" uid="uid://divaghrtm4in3" path="res://save_system/ui/save_manager_control.gd" id="1_o3tvv"]
-[ext_resource type="PackedScene" uid="uid://kwr4qd666g0k" path="res://save_system/ui/save_slot_entry.tscn" id="2_7e8b3"]
-[ext_resource type="PackedScene" uid="uid://d0dhy4jipapar" path="res://scenes/hud/modal_confirmation_dialog.tscn" id="2_o3tvv"]
-[ext_resource type="PackedScene" uid="uid://cknktvtqj2ag7" path="res://save_system/ui/save_list_entry.tscn" id="3_akqj1"]
+[ext_resource type="PackedScene" uid="uid://dac6vexif8k3u" path="res://scenes/save_system/ui/save_details.tscn" id="1_1fu6j"]
+[ext_resource type="Script" uid="uid://divaghrtm4in3" path="res://scripts/save_system/ui/save_manager_control.gd" id="1_o3tvv"]
+[ext_resource type="PackedScene" uid="uid://kwr4qd666g0k" path="res://scenes/save_system/ui/save_slot_entry.tscn" id="2_7e8b3"]
+[ext_resource type="PackedScene" uid="uid://d0dhy4jipapar" path="res://scenes/save_system/ui/modal_confirmation_dialog.tscn" id="2_o3tvv"]
+[ext_resource type="PackedScene" uid="uid://cknktvtqj2ag7" path="res://scenes/save_system/ui/save_list_entry.tscn" id="3_akqj1"]
 
 [node name="SaveManagerControl" type="Control" unique_id=1590019939]
 process_mode = 3

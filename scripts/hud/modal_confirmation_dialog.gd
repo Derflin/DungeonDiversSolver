@@ -7,8 +7,8 @@ signal decision_made(confirmed: bool)
 
 @onready var title_label: Label = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/TitleLabel
 @onready var message_label: Label = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/MessageLabel
-@onready var cancel_button: Label = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/Buttons/CancelButton
-@onready var confirm_button: Label = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/Buttons/ConfirmButton
+@onready var cancel_button: Button = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/Buttons/CancelButton
+@onready var confirm_button: Button = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/Buttons/ConfirmButton
 
 
 func _ready() -> void:

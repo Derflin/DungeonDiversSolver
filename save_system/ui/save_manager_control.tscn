@@ -1,0 +1,146 @@
+[gd_scene format=3 uid="uid://8bk1yrjo8s7q"]
+
+[ext_resource type="PackedScene" uid="uid://dac6vexif8k3u" path="res://save_system/ui/save_details.tscn" id="1_1fu6j"]
+[ext_resource type="Script" uid="uid://divaghrtm4in3" path="res://save_system/ui/save_manager_control.gd" id="1_o3tvv"]
+[ext_resource type="PackedScene" uid="uid://kwr4qd666g0k" path="res://save_system/ui/save_slot_entry.tscn" id="2_7e8b3"]
+[ext_resource type="PackedScene" uid="uid://d0dhy4jipapar" path="res://scenes/hud/modal_confirmation_dialog.tscn" id="2_o3tvv"]
+[ext_resource type="PackedScene" uid="uid://cknktvtqj2ag7" path="res://save_system/ui/save_list_entry.tscn" id="3_akqj1"]
+
+[node name="SaveManagerControl" type="Control" unique_id=1590019939]
+process_mode = 3
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_o3tvv")
+save_slot_entry_scene = ExtResource("2_7e8b3")
+save_list_entry_scene = ExtResource("3_akqj1")
+
+[node name="BackgroundBlocker" type="ColorRect" parent="." unique_id=1824152389]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.6784314)
+
+[node name="OuterMargin" type="MarginContainer" parent="." unique_id=1841713516]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 40
+
+[node name="MainPanel" type="PanelContainer" parent="OuterMargin" unique_id=1251163032]
+layout_mode = 2
+
+[node name="MainContents" type="VBoxContainer" parent="OuterMargin/MainPanel" unique_id=88581728]
+layout_mode = 2
+
+[node name="Header" type="HBoxContainer" parent="OuterMargin/MainPanel/MainContents" unique_id=596367384]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="OuterMargin/MainPanel/MainContents/Header" unique_id=1522000836]
+layout_mode = 2
+
+[node name="HeaderSpacer" type="Control" parent="OuterMargin/MainPanel/MainContents/Header" unique_id=1881676128]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SlotViewButton" type="Button" parent="OuterMargin/MainPanel/MainContents/Header" unique_id=143095648]
+layout_mode = 2
+toggle_mode = true
+text = "Slots"
+
+[node name="ListViewButton" type="Button" parent="OuterMargin/MainPanel/MainContents/Header" unique_id=1522580205]
+layout_mode = 2
+toggle_mode = true
+text = "Existing Saves"
+
+[node name="CloseButton" type="Button" parent="OuterMargin/MainPanel/MainContents/Header" unique_id=393914659]
+layout_mode = 2
+text = "X"
+
+[node name="Content" type="HSplitContainer" parent="OuterMargin/MainPanel/MainContents" unique_id=1085594961]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="LeftPanel" type="PanelContainer" parent="OuterMargin/MainPanel/MainContents/Content" unique_id=1645437866]
+custom_minimum_size = Vector2(440, 0)
+layout_mode = 2
+
+[node name="LeftMargin" type="MarginContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel" unique_id=617762433]
+layout_mode = 2
+
+[node name="LeftContents" type="VBoxContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin" unique_id=1004210518]
+layout_mode = 2
+
+[node name="SlotView" type="VBoxContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents" unique_id=885359241]
+layout_mode = 2
+
+[node name="SlotScroll" type="ScrollContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView" unique_id=321842903]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="SlotGrid" type="GridContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotScroll" unique_id=441823977]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+columns = 2
+
+[node name="SlotPagination" type="HBoxContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView" unique_id=333787534]
+layout_mode = 2
+
+[node name="PreviousPageButton" type="Button" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotPagination" unique_id=427687897]
+layout_mode = 2
+text = "<"
+
+[node name="PageButtons" type="HBoxContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotPagination" unique_id=2074186700]
+layout_mode = 2
+alignment = 1
+
+[node name="NextPageButton" type="Button" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotPagination" unique_id=287472989]
+layout_mode = 2
+text = ">"
+
+[node name="ListView" type="VBoxContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents" unique_id=784824449]
+layout_mode = 2
+
+[node name="SortRow" type="HBoxContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView" unique_id=1900608348]
+layout_mode = 2
+
+[node name="SortLabel" type="Label" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SortRow" unique_id=137330407]
+layout_mode = 2
+text = "Sort:"
+
+[node name="SortOption" type="OptionButton" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SortRow" unique_id=1563297835]
+layout_mode = 2
+
+[node name="SavesScroll" type="ScrollContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView" unique_id=1971339262]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="SavesList" type="VBoxContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SavesScroll" unique_id=1487103521]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SaveDetails" parent="OuterMargin/MainPanel/MainContents/Content" unique_id=1221008773 instance=ExtResource("1_1fu6j")]
+layout_mode = 2
+
+[node name="StatusLabel" type="Label" parent="OuterMargin/MainPanel/MainContents" unique_id=1303756108]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ModalConfirmationDialog" parent="." unique_id=24606316 instance=ExtResource("2_o3tvv")]
+layout_mode = 1

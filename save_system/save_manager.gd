@@ -128,7 +128,7 @@ func get_user_slot_entry(slot: int) -> SaveBrowserEntry:
 
 ## Tries to save the current game state into the provided [param slot] number along with the provided [param display_name], [param description] and [param thumbnail].
 ## Returns a bool indicating if the save operation was successful or not.
-func save_to_slot(slot: int, display_name: String, description: String, thumbnail: Image) -> bool:
+func save_user_save(slot: int, display_name: String, description: String, thumbnail: Image) -> bool:
 	# Filter out processing if the save manager is currently busy processing something else.
 	if _is_busy:
 		return false
@@ -189,7 +189,7 @@ func save_to_slot(slot: int, display_name: String, description: String, thumbnai
 
 ## Tries to load the game state from the provided [param slot] number and restore it.
 ## Returns a bool indicating if the load operation was successful or not.
-func load_user_slot(slot: int) -> bool:
+func load_user_save(slot: int) -> bool:
 	# Filter out processing if the save manager is currently busy processing something else.
 	if _is_busy:
 		return false

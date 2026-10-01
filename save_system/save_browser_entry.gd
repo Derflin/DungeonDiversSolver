@@ -13,6 +13,7 @@ var entry_id: String = ""
 var slot: int = -1
 var example_id: String = ""
 
+var is_new_save_entry: bool = false
 var exists: bool = false
 var display_name: String = ""
 var description: String = ""
@@ -56,6 +57,24 @@ static func create_empty_user_slot(_slot: int) -> SaveBrowserEntry:
 	entry.slot = _slot
 	entry.entry_id = "slot:%d" % _slot
 	entry.exists = false
+	entry.is_new_save_entry = false 
+	entry.display_name = "Save %d" % _slot
+	
+	# Return prepared save browser entry.
+	return entry
+
+
+## Creates and returns a SaveBrowserEntry instance for the empty, unused [param _slot] number, which is marked as a placeholder for a new save entry to be created.
+static func create_new_user_save_entry(_slot: int) -> SaveBrowserEntry:
+	# Instantiate save browser entry.
+	var entry := SaveBrowserEntry.new()
+	
+	# Initialize it with the provided metadata.
+	entry.source = Source.USER_SAVE
+	entry.slot = _slot
+	entry.entry_id = "slot:%d" % _slot
+	entry.exists = false
+	entry.is_new_save_entry = true
 	entry.display_name = "Save %d" % _slot
 	
 	# Return prepared save browser entry.
@@ -70,6 +89,11 @@ func is_user_save() -> bool:
 ## Check if the save browser entry is sourced as an example save.
 func is_example() -> bool:
 	return source == Source.EXAMPLE
+
+
+## Check if the save browser entry is a placeholder entry for a new save entry.
+func is_new_save() -> bool:
+	return is_new_save_entry
 
 
 ## Check if it would be allowed to delete the save browser entry based on it's parameters.

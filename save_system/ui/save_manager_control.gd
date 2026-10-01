@@ -344,6 +344,11 @@ func _prepare_selection_for_list_view() -> void:
 			_selected_entry = refreshed_entry
 			return
 	
+	# Sets the selected entry to entry placeholder for creating new saves if the save manager operation mode is set to save.
+	if _operation_mode == SaveUIEnums.OperationMode.SAVE:
+		_selected_entry = SaveManager.get_new_user_save_entry()
+		return
+	
 	# Otherwise set the first sorted save browser entry as the one selected. 
 	_selected_entry = _get_first_sorted_existing_save()
 
@@ -720,6 +725,31 @@ func _rebuild_list_view() -> void:
 	# Get list of existing save browser entries.
 	var entries := _get_sorted_existing_saves()
 	
+	# Create a save browser entry placeholder to act as an option to create a new save on top of the list if the save manager operation mode is set to save.
+	if _operation_mode == SaveUIEnums.OperationMode.SAVE:
+		# Create a new save browser entry placeholder instance.
+		var new_save_entry := SaveManager.get_new_user_save_entry()
+		
+		# Instantiate new list entry.
+		var new_save_control := save_list_entry_scene.instantiate() as SaveListEntry
+		
+		# Add the list entry to the saves list container.
+		saves_list.add_child(new_save_control)
+		
+		# Populate list entry with the save browser entry placeholder details.
+		new_save_control.setup(new_save_entry)
+		
+		# Connect entry placeholder selected signal from the list entry to the local handler function.
+		new_save_control.entry_selected.connect(_on_entry_selected)
+		
+		# Append created list entry placeholder to the field that aggregates all existing list entries.
+		_visible_list_entries.append(new_save_control)
+		
+		# Create a horizontal separator and place it after the list entry placeholder if there are any existing save browser entries for the user saves.  
+		if not entries.is_empty():
+			var separator := HSeparator.new()
+			saves_list.add_child(separator)
+	
 	# Prepare empty label to be put inside save list view if there wouldn't be any existing save browser entries.
 	if entries.is_empty():
 		var empty_label := Label.new()
@@ -1068,7 +1098,12 @@ func _perform_delete(entry: SaveBrowserEntry) -> void:
 func _select_after_delete(deleted_slot: int) -> void:
 	# Select a first existing save if the save manager browse mode is set to list view.
 	if _browse_mode == SaveUIEnums.BrowseMode.LIST_VIEW:
-		_selected_entry = _get_first_sorted_existing_save()
+		# Select an entry placeholder if the save manager operation mode is set to save, otherwise select a first existing user save.
+		if _operation_mode == SaveUIEnums.OperationMode.SAVE:
+			_selected_entry = SaveManager.get_new_user_save_entry()
+		else:
+			_selected_entry = _get_first_sorted_existing_save()
+			
 		return
 	
 	# Select the deleted slot if possible or the first slot available on the current page or first existing page if the save browser entry doesn't exist anymore for the deleted slot or the current page doesn't have any more existing saves.

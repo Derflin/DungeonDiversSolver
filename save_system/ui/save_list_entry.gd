@@ -23,6 +23,14 @@ func setup(new_entry: SaveBrowserEntry) -> void:
 	# Save entry parameter in local instance field.
 	entry = new_entry
 	
+	# Set the list entry details for a save browser entry placeholder for creating new save. 
+	if entry.is_new_save():
+		thumbnail.texture = null
+		name_label.text = "Create new save"
+		saved_label.text = ""
+		description_label.text = "Save to the first available slot."
+		return
+	
 	# Set the list entry details.
 	thumbnail.texture = SaveManager.get_thumbnail_texture(entry)
 	name_label.text = entry.display_name

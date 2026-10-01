@@ -121,6 +121,21 @@ func get_user_slot_entry(slot: int) -> SaveBrowserEntry:
 	
 	return SaveBrowserEntry.create_empty_user_slot(slot)
 
+
+## Returns a first empty slot number that doesn't contain any existing user save.
+func get_first_empty_user_slot() -> int:
+	# Look through every slot starting from the first slot static value and incrementing it until it points to a slot that doesn't have any user save assigned to itself.
+	var slot := FIRST_SLOT
+	while _user_entries_by_slot.has(slot):
+		slot += 1
+	
+	return slot
+
+
+## Creates a new save browser entry for the first empty slot number that doesn't contain any existing user save.
+func get_new_user_save_entry() -> SaveBrowserEntry:
+	return SaveBrowserEntry.create_new_user_save_entry(get_first_empty_user_slot())
+
 #endregion
 
 

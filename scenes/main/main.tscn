@@ -4,6 +4,8 @@
 [ext_resource type="PackedScene" uid="uid://clic7mqmov8r0" path="res://scenes/systems/GameSaveAdapter.tscn" id="1_l3cfh"]
 [ext_resource type="PackedScene" uid="uid://q8745vdh26mn" path="res://scenes/hud/map_parameters_control.tscn" id="2_iuonh"]
 [ext_resource type="PackedScene" uid="uid://b65s6cwmlyn4f" path="res://scenes/hud/map_solver_control.tscn" id="3_k2fmo"]
+[ext_resource type="PackedScene" uid="uid://dbher8pgko3e0" path="res://scenes/hud/map_manager_control.tscn" id="5_ow5a4"]
+[ext_resource type="PackedScene" uid="uid://8bk1yrjo8s7q" path="res://save_system/ui/save_manager_control.tscn" id="6_hujxm"]
 
 [node name="Main" type="Node" unique_id=107272976]
 
@@ -34,6 +36,19 @@ layout_mode = 1
 
 [node name="MapParametersControl" parent="HudLayer/HudRoot" unique_id=1239913164 instance=ExtResource("2_iuonh")]
 z_index = 5
+layout_mode = 1
+
+[node name="MapManagerControl" parent="HudLayer/HudRoot" unique_id=1470203554 node_paths=PackedStringArray("save_manager_control") instance=ExtResource("5_ow5a4")]
+layout_mode = 0
+anchors_preset = 0
+anchor_top = 0.0
+anchor_bottom = 0.0
+offset_top = 0.0
+offset_bottom = 54.0
+grow_vertical = 1
+save_manager_control = NodePath("../SaveManagerControl")
+
+[node name="SaveManagerControl" parent="HudLayer/HudRoot" unique_id=1590019939 instance=ExtResource("6_hujxm")]
 layout_mode = 1
 
 [node name="PauseLayer" type="CanvasLayer" parent="." unique_id=621645473]

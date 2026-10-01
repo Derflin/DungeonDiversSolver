@@ -8,9 +8,9 @@ enum OperationMode {
 }
 
 
-enum BrowserMode {
+enum BrowseMode {
 	SLOT_VIEW,
-	EXISTING_SAVES_VIEW,
+	LIST_VIEW,
 	EXAMPLES_VIEW,
 }
 

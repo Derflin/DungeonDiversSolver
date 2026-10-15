@@ -2,29 +2,49 @@
 
 [ext_resource type="Script" uid="uid://ckoqqm65up8ie" path="res://scripts/hud/map_manager_control.gd" id="1_u4gwn"]
 
-[node name="MapManagerControl" type="PanelContainer" unique_id=1470203554]
+[node name="MapManagerControl" type="Control" unique_id=871488007]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_u4gwn")
+
+[node name="MenuAnchor" type="Control" parent="." unique_id=739627296]
+layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_top = -54.0
-offset_right = 40.0
 grow_vertical = 0
-script = ExtResource("1_u4gwn")
 
-[node name="MarginContainer" type="MarginContainer" parent="." unique_id=35061449]
+[node name="MenuRoot" type="Control" parent="MenuAnchor" unique_id=2088808407]
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="MenuContents" type="VBoxContainer" parent="MenuAnchor/MenuRoot" unique_id=1727332750]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="MenuPanel" type="PanelContainer" parent="MenuAnchor/MenuRoot/MenuContents" unique_id=1002298226]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel" unique_id=35061449]
 layout_mode = 2
 theme_override_constants/margin_left = 4
 theme_override_constants/margin_top = 4
 theme_override_constants/margin_right = 4
 theme_override_constants/margin_bottom = 4
 
-[node name="Buttons" type="VBoxContainer" parent="MarginContainer" unique_id=997932540]
+[node name="Buttons" type="VBoxContainer" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer" unique_id=997932540]
 layout_mode = 2
 
-[node name="SaveButton" type="Button" parent="MarginContainer/Buttons" unique_id=1807453228]
+[node name="SaveButton" type="Button" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons" unique_id=1807453228]
 layout_mode = 2
 text = "Save"
 
-[node name="LoadButton" type="Button" parent="MarginContainer/Buttons" unique_id=17811309]
+[node name="LoadButton" type="Button" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons" unique_id=17811309]
 layout_mode = 2
 text = "Load"

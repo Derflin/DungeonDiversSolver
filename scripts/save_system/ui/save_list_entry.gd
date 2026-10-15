@@ -45,12 +45,12 @@ func set_selected(selected: bool) -> void:
 
 ## Returns a shortened version of the description string if it exceeds a set char limit of 90.
 func _get_description_preview(description: String) -> String:
-	var text := description.strip_edges()
+	var description_preview := description.strip_edges()
 	
-	if text.length() <= 90:
-		return text
+	if description_preview.length() <= 90:
+		return description_preview
 	
-	return text.left(87) + "..."
+	return description_preview.left(87) + "..."
 
 
 ## Handle save list entry button pressed signal to emit the [signal entry_selected] signal.

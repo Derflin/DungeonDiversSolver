@@ -6,9 +6,9 @@ signal entry_selected(entry: SaveBrowserEntry)
 
 
 @onready var thumbnail: TextureRect = $MarginContainer/ContentsContainer/Thumbnail
-@onready var name_label: Label = $MarginContainer/ContentsContainer/InfoContainer/NameLabel
-@onready var saved_label: Label = $MarginContainer/ContentsContainer/InfoContainer/SavedLabel
-@onready var description_label: Label = $MarginContainer/ContentsContainer/InfoContainer/DescriptionLabel
+@onready var name_label: Label = $MarginContainer/ContentsContainer/MarginContainer/InfoContainer/NameLabel
+@onready var saved_label: Label = $MarginContainer/ContentsContainer/MarginContainer/InfoContainer/SavedLabel
+@onready var description_label: Label = $MarginContainer/ContentsContainer/MarginContainer/InfoContainer/DescriptionLabel
 
 
 var entry: SaveBrowserEntry = null
@@ -25,9 +25,10 @@ func setup(new_entry: SaveBrowserEntry) -> void:
 	
 	# Set the list entry details for a save browser entry placeholder for creating new save. 
 	if entry.is_new_save():
+		thumbnail.visible = false
 		thumbnail.texture = null
 		name_label.text = "Create new save"
-		saved_label.text = ""
+		saved_label.text = "-"
 		description_label.text = "Save to the first available slot."
 		return
 	
@@ -36,6 +37,8 @@ func setup(new_entry: SaveBrowserEntry) -> void:
 	name_label.text = entry.display_name
 	saved_label.text = SaveManager.format_timestamp(entry.timestamp)
 	description_label.text = _get_description_preview(entry.description)
+	if description_label.text.strip_edges().is_empty():
+		description_label.text = "-"
 
 
 ## Sets list entry button state without emitting it's default signals.

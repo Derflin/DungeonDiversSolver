@@ -1048,7 +1048,7 @@ func _on_delete_requested(entry: SaveBrowserEntry) -> void:
 	# Show user the confirmation dialog and await his response.
 	var confirmed := await confirmation_dialog.request_confirmation(
 		"Delete Save",
-		"Delete \"%s\"?\n\nThis cannot be undone.",
+		"Delete \"%s\"?\n\nThis cannot be undone." % entry.display_name,
 		"Delete",
 		"Cancel",
 	)

@@ -150,6 +150,7 @@ func _update_interactions() -> void:
 	
 	# Update delete button state.
 	delete_button.visible = _entry.can_delete()
+	delete_button.text = "Delete"
 	
 	# Update primary button state.
 	if saving:

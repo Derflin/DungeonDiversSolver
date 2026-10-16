@@ -33,6 +33,7 @@ func setup(new_entry: SaveBrowserEntry) -> void:
 		return
 	
 	# Set the list entry details.
+	thumbnail.visible = true
 	thumbnail.texture = SaveManager.get_thumbnail_texture(entry)
 	name_label.text = entry.display_name
 	saved_label.text = SaveManager.format_timestamp(entry.timestamp)

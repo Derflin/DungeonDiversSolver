@@ -4,7 +4,7 @@ extends Control
 
 const FIRST_PAGE: int = 1
 const FIRST_SLOT: int = 1
-const SLOTS_PER_PAGE: int = 8
+const SLOTS_PER_PAGE: int = 5
 
 
 @export var save_slot_entry_scene: PackedScene

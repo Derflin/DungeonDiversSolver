@@ -81,6 +81,10 @@ size_flags_horizontal = 3
 
 [node name="LeftMargin" type="MarginContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel" unique_id=617762433]
 layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
 
 [node name="LeftContents" type="VBoxContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin" unique_id=1004210518]
 layout_mode = 2
@@ -97,7 +101,8 @@ size_flags_vertical = 3
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-columns = 2
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
 
 [node name="SlotPagination" type="HBoxContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView" unique_id=333787534]
 layout_mode = 2

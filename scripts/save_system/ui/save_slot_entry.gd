@@ -6,9 +6,9 @@ signal entry_selected(entry: SaveBrowserEntry)
 
 
 @onready var thumbnail: TextureRect = $MarginContainer/ContentsContainer/Thumbnail
-@onready var slot_label: Label = $MarginContainer/ContentsContainer/InfoContainer/SlotLabel
-@onready var name_label: Label = $MarginContainer/ContentsContainer/InfoContainer/NameLabel
-@onready var saved_label: Label = $MarginContainer/ContentsContainer/InfoContainer/SavedLabel
+@onready var slot_label: Label = $MarginContainer/ContentsContainer/MarginContainer/InfoContainer/SlotLabel
+@onready var name_label: Label = $MarginContainer/ContentsContainer/MarginContainer/InfoContainer/NameLabel
+@onready var saved_label: Label = $MarginContainer/ContentsContainer/MarginContainer/InfoContainer/SavedLabel
 
 
 var entry: SaveBrowserEntry = null
@@ -31,6 +31,7 @@ func setup(new_entry: SaveBrowserEntry, operation_mode: SaveUIEnums.OperationMod
 	# Set the slot entry nodes to an empty state if the provided save browser entry is not for an existing save.
 	if not entry.exists:
 		# Set the slot entry details for an empty save slot.
+		thumbnail.visible = false
 		thumbnail.texture = null
 		name_label.text = "Empty"
 		saved_label.text = ""
@@ -39,6 +40,7 @@ func setup(new_entry: SaveBrowserEntry, operation_mode: SaveUIEnums.OperationMod
 		return
 	
 	# Set the slot entry details for not empty save slot.
+	thumbnail.visible = true
 	thumbnail.texture = SaveManager.get_thumbnail_texture(entry)
 	name_label.text = entry.display_name
 	saved_label.text = SaveManager.format_timestamp(entry.timestamp)

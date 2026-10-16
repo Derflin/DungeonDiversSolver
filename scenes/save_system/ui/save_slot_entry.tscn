@@ -3,37 +3,59 @@
 [ext_resource type="Script" uid="uid://dagt06eubhhm3" path="res://scripts/save_system/ui/save_slot_entry.gd" id="1_oabkp"]
 
 [node name="SaveSlotEntry" type="Button" unique_id=174235215]
-custom_minimum_size = Vector2(230, 110)
+custom_minimum_size = Vector2(0, 96)
+clip_contents = true
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+size_flags_horizontal = 3
 toggle_mode = true
 script = ExtResource("1_oabkp")
 
 [node name="MarginContainer" type="MarginContainer" parent="." unique_id=1020924018]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
 
 [node name="ContentsContainer" type="HBoxContainer" parent="MarginContainer" unique_id=1955796202]
 layout_mode = 2
 
 [node name="Thumbnail" type="TextureRect" parent="MarginContainer/ContentsContainer" unique_id=1282518699]
-custom_minimum_size = Vector2(96, 72)
+custom_minimum_size = Vector2(88, 50)
 layout_mode = 2
+size_flags_vertical = 4
 expand_mode = 1
 stretch_mode = 5
 
-[node name="InfoContainer" type="HBoxContainer" parent="MarginContainer/ContentsContainer" unique_id=1410206153]
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/ContentsContainer" unique_id=104118275]
 layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_right = 10
 
-[node name="SlotLabel" type="Label" parent="MarginContainer/ContentsContainer/InfoContainer" unique_id=928626915]
+[node name="InfoContainer" type="VBoxContainer" parent="MarginContainer/ContentsContainer/MarginContainer" unique_id=1717419645]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
 
-[node name="NameLabel" type="Label" parent="MarginContainer/ContentsContainer/InfoContainer" unique_id=1031761817]
+[node name="SlotLabel" type="Label" parent="MarginContainer/ContentsContainer/MarginContainer/InfoContainer" unique_id=928626915]
 layout_mode = 2
+size_flags_horizontal = 3
+clip_text = true
+text_overrun_behavior = 3
 
-[node name="SavedLabel" type="Label" parent="MarginContainer/ContentsContainer/InfoContainer" unique_id=1845100806]
+[node name="NameLabel" type="Label" parent="MarginContainer/ContentsContainer/MarginContainer/InfoContainer" unique_id=1031761817]
 layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SavedLabel" type="Label" parent="MarginContainer/ContentsContainer/MarginContainer/InfoContainer" unique_id=1845100806]
+layout_mode = 2
+size_flags_horizontal = 3

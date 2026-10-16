@@ -136,6 +136,19 @@ func get_first_empty_user_slot() -> int:
 func get_new_user_save_entry() -> SaveBrowserEntry:
 	return SaveBrowserEntry.create_new_user_save_entry(get_first_empty_user_slot())
 
+
+## Returns current game metadata based on the current game state.
+func capture_current_game_metadata() -> Array[Dictionary]:
+	# Filter out processing if the game save adapter isn't registered.
+	if _game_save_adapter == null:
+		return []
+	
+	# Get game metadata from the game save adapter.
+	var game_metadata: Array[Dictionary] = _game_save_adapter.capture_save_metadata()
+	
+	# Return a duplicate of the returned game metadata.
+	return game_metadata.duplicate(true)
+
 #endregion
 
 

@@ -39,6 +39,7 @@ var _current_page: int = FIRST_PAGE
 var _selected_entry: SaveBrowserEntry = null
 
 var _cached_screenshot: Image = null
+var _cached_game_metadata: Array[Dictionary] = []
 
 var _tree_was_paused: bool = false
 var _is_busy: bool = false
@@ -105,6 +106,7 @@ func open_save_mode(screenshot: Image) -> void:
 	_browse_mode = SaveUIEnums.BrowseMode.LIST_VIEW
 	_current_page = FIRST_PAGE
 	_cached_screenshot = screenshot
+	_cached_game_metadata = SaveManager.capture_current_game_metadata()
 	
 	# Set save manager as not busy.
 	_is_busy = false
@@ -146,6 +148,7 @@ func open_load_mode() -> void:
 	_browse_mode = SaveUIEnums.BrowseMode.LIST_VIEW
 	_current_page = FIRST_PAGE
 	_cached_screenshot = null
+	_cached_game_metadata.clear()
 	
 	# Set save manager as not busy.
 	_is_busy = false
@@ -188,6 +191,7 @@ func close() -> void:
 	
 	# Set the save manager internal display state.
 	_cached_screenshot = null
+	_cached_game_metadata.clear()
 	_selected_entry = null
 	
 	# Reset status label text.
@@ -253,6 +257,10 @@ func _update_details() -> void:
 	if _selected_entry == null:
 		save_details.clear_details()
 		return
+	
+	# Assign currently cached game metadata to the selected save browser entry if it's for the user save and it doesn't currently exist.
+	if _selected_entry.is_user_save() and not _selected_entry.exists:
+		_selected_entry.game_metadata = _cached_game_metadata.duplicate(true)
 	
 	# Show save browser entry set as selected.
 	save_details.show_entry(_selected_entry, _operation_mode, _cached_screenshot)

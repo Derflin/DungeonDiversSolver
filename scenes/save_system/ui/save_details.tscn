@@ -19,30 +19,45 @@ layout_mode = 2
 [node name="ContentsContainer" type="VBoxContainer" parent="MarginContainer" unique_id=817308246]
 layout_mode = 2
 
-[node name="SourceLabel" type="Label" parent="MarginContainer/ContentsContainer" unique_id=1287346083]
+[node name="Header" type="HBoxContainer" parent="MarginContainer/ContentsContainer" unique_id=2042092932]
+layout_mode = 2
+
+[node name="DetailsTitle" type="Label" parent="MarginContainer/ContentsContainer/Header" unique_id=329435967]
+layout_mode = 2
+text = "SAVE DETAILS"
+
+[node name="HeaderSpacer" type="Control" parent="MarginContainer/ContentsContainer/Header" unique_id=1131124815]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SourceLabel" type="Label" parent="MarginContainer/ContentsContainer/Header" unique_id=1287346083]
 layout_mode = 2
 text = "No save selected."
+
+[node name="HeaderSeparator" type="HSeparator" parent="MarginContainer/ContentsContainer" unique_id=200716626]
+layout_mode = 2
+
+[node name="NameTitle" type="Label" parent="MarginContainer/ContentsContainer" unique_id=1481343607]
+layout_mode = 2
+text = "SAVE NAME"
 
 [node name="NameEdit" type="LineEdit" parent="MarginContainer/ContentsContainer" unique_id=687843361]
 layout_mode = 2
 
-[node name="SavedLabel" type="Label" parent="MarginContainer/ContentsContainer" unique_id=1941058527]
+[node name="ThumbnailFrame" type="PanelContainer" parent="MarginContainer/ContentsContainer" unique_id=360525847]
 layout_mode = 2
 
-[node name="Thumbnail" type="TextureRect" parent="MarginContainer/ContentsContainer" unique_id=309480341]
-custom_minimum_size = Vector2(420, 236)
+[node name="Thumbnail" type="TextureRect" parent="MarginContainer/ContentsContainer/ThumbnailFrame" unique_id=309480341]
+custom_minimum_size = Vector2(0, 210)
 layout_mode = 2
 expand_mode = 1
 stretch_mode = 5
 
-[node name="DescriptionTitle" type="Label" parent="MarginContainer/ContentsContainer" unique_id=707626669]
-layout_mode = 2
-
-[node name="DescriptionEdit" type="LineEdit" parent="MarginContainer/ContentsContainer" unique_id=1329767452]
-custom_minimum_size = Vector2(0, 100)
-layout_mode = 2
-
 [node name="MetadataTitle" type="Label" parent="MarginContainer/ContentsContainer" unique_id=725411786]
+layout_mode = 2
+text = "GAME DETAILS"
+
+[node name="MetadataSeparator" type="HSeparator" parent="MarginContainer/ContentsContainer" unique_id=2086533621]
 layout_mode = 2
 
 [node name="MetadataScrollContainer" type="ScrollContainer" parent="MarginContainer/ContentsContainer" unique_id=1672918293]
@@ -52,16 +67,33 @@ size_flags_vertical = 3
 
 [node name="MetadataContainer" type="VBoxContainer" parent="MarginContainer/ContentsContainer/MetadataScrollContainer" unique_id=1938632863]
 layout_mode = 2
-
-[node name="Spacer" type="Control" parent="MarginContainer/ContentsContainer" unique_id=585843249]
-layout_mode = 2
+size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="Actions" type="HBoxContainer" parent="MarginContainer/ContentsContainer" unique_id=1198554619]
+[node name="DescriptionTitle" type="Label" parent="MarginContainer/ContentsContainer" unique_id=707626669]
+layout_mode = 2
+text = "DESCRIPTION"
+
+[node name="DescriptionEdit" type="TextEdit" parent="MarginContainer/ContentsContainer" unique_id=1451077768]
+custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
 
-[node name="DeleteButton" type="Button" parent="MarginContainer/ContentsContainer/Actions" unique_id=2068479981]
+[node name="Footer" type="HBoxContainer" parent="MarginContainer/ContentsContainer" unique_id=1198554619]
 layout_mode = 2
 
-[node name="PrimaryButton" type="Button" parent="MarginContainer/ContentsContainer/Actions" unique_id=4661809]
+[node name="SavedTitle" type="Label" parent="MarginContainer/ContentsContainer/Footer" unique_id=1062538173]
+layout_mode = 2
+text = "Last Saved:"
+
+[node name="SavedLabel" type="Label" parent="MarginContainer/ContentsContainer/Footer" unique_id=1941058527]
+layout_mode = 2
+
+[node name="FooterSpacer" type="Control" parent="MarginContainer/ContentsContainer/Footer" unique_id=1194210720]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="DeleteButton" type="Button" parent="MarginContainer/ContentsContainer/Footer" unique_id=2068479981]
+layout_mode = 2
+
+[node name="PrimaryButton" type="Button" parent="MarginContainer/ContentsContainer/Footer" unique_id=4661809]
 layout_mode = 2

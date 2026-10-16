@@ -7,23 +7,26 @@ signal load_requested(entry: SaveBrowserEntry)
 signal delete_requested(entry: SaveBrowserEntry)
 
 
-@onready var source_label: Label = $MarginContainer/ContentsContainer/SourceLabel
+@onready var source_label: Label = $MarginContainer/ContentsContainer/Header/SourceLabel
 @onready var name_edit: LineEdit = $MarginContainer/ContentsContainer/NameEdit
-@onready var saved_label: Label = $MarginContainer/ContentsContainer/SavedLabel
-@onready var thumbnail: TextureRect = $MarginContainer/ContentsContainer/Thumbnail
-@onready var description_edit: LineEdit = $MarginContainer/ContentsContainer/DescriptionEdit
+@onready var thumbnail: TextureRect = $MarginContainer/ContentsContainer/ThumbnailFrame/Thumbnail
 @onready var metadata_container: VBoxContainer = $MarginContainer/ContentsContainer/MetadataScrollContainer/MetadataContainer
-@onready var delete_button: Button = $MarginContainer/ContentsContainer/Actions/DeleteButton
-@onready var primary_button: Button = $MarginContainer/ContentsContainer/Actions/PrimaryButton
+@onready var description_edit: TextEdit = $MarginContainer/ContentsContainer/DescriptionEdit
+@onready var saved_label: Label = $MarginContainer/ContentsContainer/Footer/SavedLabel
+@onready var delete_button: Button = $MarginContainer/ContentsContainer/Footer/DeleteButton
+@onready var primary_button: Button = $MarginContainer/ContentsContainer/Footer/PrimaryButton
 
 
 var _entry: SaveBrowserEntry = null
 var _operation_mode: SaveUIEnums.OperationMode = SaveUIEnums.OperationMode.LOAD
+var _interaction_enabled: bool = true
 
 
 func _ready() -> void:
 	primary_button.pressed.connect(_on_primary_pressed)
 	delete_button.pressed.connect(_on_delete_pressed)
+	
+	name_edit.text_changed.connect(_on_name_changed)
 	
 	clear_details()
 
@@ -56,9 +59,9 @@ func show_entry(entry: SaveBrowserEntry, operation_mode: SaveUIEnums.OperationMo
 	
 	# Set saved label depending on the provided save browser entry.
 	if entry.exists and entry.timestamp > 0:
-		saved_label.text = "Last saved: %s" % SaveManager.format_timestamp(entry.timestamp)
+		saved_label.text = SaveManager.format_timestamp(entry.timestamp)
 	else:
-		saved_label.text = ""
+		saved_label.text = "-"
 	
 	# Set thumbnail texture depending on the provided save browser entry and the provided pending thumbnail.
 	if entry.exists:
@@ -81,12 +84,15 @@ func clear_details(message: String = "No save selected.") -> void:
 	_entry = null
 	
 	# Reset state of the display nodes.
-	source_label.text = message
+	source_label.text = "-"
 	name_edit.text = ""
-	saved_label.text = ""
+	name_edit.placeholder_text = message
+	saved_label.text = "-"
 	description_edit.text = ""
+	description_edit.placeholder_text = "No description"
 	thumbnail.texture = null
 	_clear_metadata()
+	_add_metadata_message("Select a save to view game details.")
 	
 	# Disable editable fields
 	name_edit.editable = false
@@ -101,6 +107,9 @@ func clear_details(message: String = "No save selected.") -> void:
 ## Sets the editable fields editable state based on the provided [param enabled] state and the saved save browser entry and operation mode.
 ## Sets the actions buttons state based on the provided [param enabled] state.
 func set_interaction_enabled(enabled: bool) -> void:
+	# Save interaction status.
+	_interaction_enabled = enabled
+	
 	# Filter out processing if the save browser entry isn't assigned in the internal field.
 	if _entry == null:
 		return
@@ -114,7 +123,7 @@ func set_interaction_enabled(enabled: bool) -> void:
 	
 	# Set actions buttons disabled state.
 	delete_button.disabled = not enabled
-	primary_button.disabled = not enabled
+	_update_primary_button_state()
 
 
 ## Updates available actions buttons and editable fields depending on the saved save browser entry.
@@ -136,8 +145,8 @@ func _update_interactions() -> void:
 	var saving: bool = _operation_mode == SaveUIEnums.OperationMode.SAVE
 	
 	# Update editable fields editable state.
-	name_edit.editable = saving
-	description_edit.editable = saving
+	name_edit.editable = saving and _interaction_enabled
+	description_edit.editable = saving and _interaction_enabled
 	
 	# Update delete button state.
 	delete_button.visible = _entry.can_delete()
@@ -152,6 +161,29 @@ func _update_interactions() -> void:
 	else:
 		primary_button.visible = _entry.exists
 		primary_button.text = "Load"
+	
+	_update_primary_button_state()
+
+
+##TODO
+func _on_name_changed(_new_text: String) -> void:
+	_update_primary_button_state()
+
+
+##TODO
+func _update_primary_button_state() -> void:
+	if not primary_button.visible:
+		return
+	
+	if not _interaction_enabled:
+		primary_button.disabled = true
+		return
+	
+	if _entry != null and _entry.is_user_save() and _operation_mode == SaveUIEnums.OperationMode.SAVE:
+		primary_button.disabled = name_edit.text.strip_edges().is_empty()
+		return
+	
+	primary_button.disabled = false
 
 
 ## Handles primary button pressed signal to correctly interpret how it should be handled and propagated.
@@ -191,6 +223,11 @@ func _populate_metadata(metadata: Array[Dictionary]) -> void:
 	# Clear out existing elements in metadata container.
 	_clear_metadata()
 	
+	#TODO
+	if metadata.is_empty():
+		_add_metadata_message("No additional game details.")
+		return
+	
 	# Populate metadata container with new contents based on the provided metadata.
 	for item: Dictionary in metadata:
 		# Prepare new row entry.
@@ -214,6 +251,17 @@ func _populate_metadata(metadata: Array[Dictionary]) -> void:
 		
 		# Add new entry as a child of the metadata container.
 		metadata_container.add_child(row)
+
+
+##TODO
+func _add_metadata_message(message: String) -> void:
+	var label := Label.new()
+	
+	label.text = message
+	
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	
+	metadata_container.add_child(label)
 
 
 ## Clears out existing nodes inside the metadata container.

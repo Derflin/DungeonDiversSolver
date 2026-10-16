@@ -741,18 +741,32 @@ func _rebuild_list_view() -> void:
 		# Append created list entry placeholder to the field that aggregates all existing list entries.
 		_visible_list_entries.append(new_save_control)
 		
-		# Create a horizontal separator and place it after the list entry placeholder if there are any existing save browser entries for the user saves.  
-		if not entries.is_empty():
-			var separator := HSeparator.new()
-			saves_list.add_child(separator)
+		# Create a horizontal separator and place it after the list entry placeholder.  
+		var separator := HSeparator.new()
+		saves_list.add_child(separator)
 	
 	# Prepare empty label to be put inside save list view if there wouldn't be any existing save browser entries.
 	if entries.is_empty():
+		# Create an empty container for expanding over the whole empty area.
+		var empty_container := MarginContainer.new()
+		empty_container.add_theme_constant_override("margin_left", 6)
+		empty_container.add_theme_constant_override("margin_top", 6)
+		empty_container.add_theme_constant_override("margin_right", 6)
+		empty_container.add_theme_constant_override("margin_bottom", 6)
+		empty_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		empty_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		
+		# Create an empty label.
 		var empty_label := Label.new()
 		empty_label.text = "No saves found."
 		empty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		
-		saves_list.add_child(empty_label)
+		# Add empty label as a child of the empty container.
+		empty_container.add_child(empty_label)
+		
+		# Add empty container as a child of the saves list.
+		saves_list.add_child(empty_container)
+		
 		return
 	
 	# Populate list entries for each existing save.

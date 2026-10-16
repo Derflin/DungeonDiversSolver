@@ -161,7 +161,7 @@ func capture_save_metadata() -> Array[Dictionary]:
 		secret_count += map_secrets_count_current[secret_type_kind]
 	save_metadata.append({
 		"key": &"secret_count",
-		"value": secret_count,
+		"value": str(secret_count),
 	})
 	
 	save_metadata.append_array(map_state.capture_save_metadata())

@@ -24,19 +24,27 @@ grow_vertical = 2
 color = Color(0, 0, 0, 0.54901963)
 
 [node name="CenterContainer" type="CenterContainer" parent="." unique_id=964168904]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="DialogPanel" type="PanelContainer" parent="CenterContainer" unique_id=2127451955]
-custom_minimum_size = Vector2(420, 180)
+custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="CenterContainer/DialogPanel" unique_id=873546506]
 layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 16
 
 [node name="ContentsContainer" type="VBoxContainer" parent="CenterContainer/DialogPanel/MarginContainer" unique_id=415914208]
 layout_mode = 2
+theme_override_constants/separation = 12
 
 [node name="TitleLabel" type="Label" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer" unique_id=73844720]
 layout_mode = 2
@@ -44,18 +52,22 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="MessageLabel" type="Label" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer" unique_id=1227318724]
-custom_minimum_size = Vector2(420, 30)
+custom_minimum_size = Vector2(420, 40)
 layout_mode = 2
 vertical_alignment = 1
 autowrap_mode = 3
 
 [node name="Buttons" type="HBoxContainer" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer" unique_id=613040637]
 layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
 
 [node name="CancelButton" type="Button" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer/Buttons" unique_id=1029253948]
+custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 text = "Cancel"
 
 [node name="ConfirmButton" type="Button" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer/Buttons" unique_id=91162766]
+custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 text = "Confirm"

@@ -77,6 +77,7 @@ size_flags_vertical = 3
 [node name="LeftPanel" type="PanelContainer" parent="OuterMargin/MainPanel/MainContents/Content" unique_id=1645437866]
 custom_minimum_size = Vector2(440, 0)
 layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="LeftMargin" type="MarginContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel" unique_id=617762433]
 layout_mode = 2
@@ -86,6 +87,7 @@ layout_mode = 2
 
 [node name="SlotView" type="VBoxContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents" unique_id=885359241]
 layout_mode = 2
+size_flags_vertical = 3
 
 [node name="SlotScroll" type="ScrollContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView" unique_id=321842903]
 layout_mode = 2
@@ -114,6 +116,7 @@ text = ">"
 
 [node name="ListView" type="VBoxContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents" unique_id=784824449]
 layout_mode = 2
+size_flags_vertical = 3
 
 [node name="SortRow" type="HBoxContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView" unique_id=1900608348]
 layout_mode = 2
@@ -132,6 +135,7 @@ size_flags_vertical = 3
 [node name="SavesList" type="VBoxContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SavesScroll" unique_id=1487103521]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
 
 [node name="SaveDetails" parent="OuterMargin/MainPanel/MainContents/Content" unique_id=1221008773 instance=ExtResource("1_1fu6j")]
 layout_mode = 2

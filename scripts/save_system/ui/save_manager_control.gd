@@ -316,22 +316,18 @@ func _set_browse_mode(new_mode: SaveUIEnums.BrowseMode) -> void:
 ## Updates selected save browser entry to make sure that it fits the current slot view browse mode. 
 func _prepare_selection_for_slot_view() -> void:
 	# Handle preparing selected entry if it was already selected before and if it's a user save.
-	if _selected_entry != null and _selected_entry.is_user_save():
+	if _selected_entry != null and _selected_entry.is_user_save() and _selected_entry.slot >= FIRST_SLOT:
 		# Check current slot page for the selected entry.
 		_current_page = _get_page_for_slot(_selected_entry.slot)
 		
-		# Update assigned selected save browser entry for the slot view.
-		var refreshed_entry := SaveManager.get_user_save(_selected_entry.slot)
-		if refreshed_entry != null:
-			_selected_entry = refreshed_entry
-		else:
-			_selected_entry = SaveManager.get_user_slot_entry(_selected_entry.slot)
+		# Update assigned selected save browser entry for the slot view.		
+		_selected_entry = SaveManager.get_user_slot_entry(_selected_entry.slot)
 		
 		return
 	
 	# Otherwise set the current page as first one and select the default entry on it as the one selected. 
-	_current_page = FIRST_PAGE
-	_select_default_entry_for_current_page()
+	_current_page = max(FIRST_PAGE, _current_page)
+	_selected_entry = null
 
 
 ## Updates selected save browser entry to make sure that it fits the current list view browse mode. 

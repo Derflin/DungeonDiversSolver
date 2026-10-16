@@ -103,4 +103,4 @@ func can_delete() -> bool:
 
 ## Check if it would be allowed to overwrite the save browser entry based on it's parameters.
 func can_overwrite() -> bool:
-	return is_user_save()
+	return is_user_save() and exists

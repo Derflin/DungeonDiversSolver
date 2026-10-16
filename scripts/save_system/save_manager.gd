@@ -168,13 +168,13 @@ func save_user_save(slot: int, display_name: String, description: String, thumbn
 	
 	# Gather game state and metadata from the game save adapter.
 	var game_state: Dictionary = _game_save_adapter.capture_game_state()
-	var save_metadata: Array[Dictionary] = _game_save_adapter.capture_save_metadata()
+	var game_metadata: Array[Dictionary] = _game_save_adapter.capture_save_metadata()
 	
 	# Prepare custom metadata wrapper.
 	var custom_metadata := {
 		"display_name": normalized_name,
 		"description": description,
-		"save_metadata": save_metadata.duplicate(true),
+		"game_metadata": game_metadata.duplicate(true),
 	}
 	
 	# Try to save game state along with it's metadata and thumbnail into save slot. 

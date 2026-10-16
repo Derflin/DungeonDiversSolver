@@ -161,28 +161,31 @@ func _update_interactions() -> void:
 	else:
 		primary_button.visible = _entry.exists
 		primary_button.text = "Load"
-	
 	_update_primary_button_state()
 
 
-##TODO
+## Handles text changed signal for the connected line edit node by updating the interaction state of the primary button.
 func _on_name_changed(_new_text: String) -> void:
 	_update_primary_button_state()
 
 
-##TODO
+## Updates the interaction state of the primary button based on it's vibility state along with the interaction tracked status and save browser entry details. 
 func _update_primary_button_state() -> void:
+	# Filter out processing if the primary button isn't visible.
 	if not primary_button.visible:
 		return
 	
+	# Disable the primary button and filter out further processing if the interactions are disabled by the internal field tracking the interaction status.
 	if not _interaction_enabled:
 		primary_button.disabled = true
 		return
 	
+	# Update the primary disabled state according to the save details name edit if the current save browser entry is not empty and the operation mode is set to save.
 	if _entry != null and _entry.is_user_save() and _operation_mode == SaveUIEnums.OperationMode.SAVE:
 		primary_button.disabled = name_edit.text.strip_edges().is_empty()
 		return
 	
+	# Otherwise if all the other conditions weren't met, then enable the primary button.
 	primary_button.disabled = false
 
 
@@ -223,7 +226,7 @@ func _populate_metadata(metadata: Array[Dictionary]) -> void:
 	# Clear out existing elements in metadata container.
 	_clear_metadata()
 	
-	#TODO
+	# Add default empty metadata message if the provided metadata is empty.
 	if metadata.is_empty():
 		_add_metadata_message("No additional game details.")
 		return
@@ -253,14 +256,14 @@ func _populate_metadata(metadata: Array[Dictionary]) -> void:
 		metadata_container.add_child(row)
 
 
-##TODO
+## Adds label node to the metadata container including the provided text [param message] parameter.
 func _add_metadata_message(message: String) -> void:
+	# Create new label for the provided message.
 	var label := Label.new()
-	
 	label.text = message
-	
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	
+	# Add the created label to the metadata container node. 
 	metadata_container.add_child(label)
 
 

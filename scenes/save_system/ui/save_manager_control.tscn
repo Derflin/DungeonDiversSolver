@@ -106,6 +106,7 @@ theme_override_constants/v_separation = 6
 
 [node name="SlotPagination" type="HBoxContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView" unique_id=333787534]
 layout_mode = 2
+alignment = 1
 
 [node name="PreviousPageButton" type="Button" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotPagination" unique_id=427687897]
 layout_mode = 2

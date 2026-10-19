@@ -19,7 +19,7 @@ const SLOTS_PER_PAGE: int = 5
 @onready var slot_view: VBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView
 @onready var slot_grid: GridContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotScroll/SlotGrid
 @onready var previous_page_button: Button = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotPagination/PreviousPageButton
-@onready var page_buttons: HBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotPagination/PageButtons
+@onready var page_buttons: HBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotPagination/PageButtonsArea/PageButtonsCenter/PageButtons
 @onready var next_page_button: Button = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotPagination/NextPageButton
 
 @onready var list_view: VBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView

@@ -122,8 +122,7 @@ func open_save_mode(screenshot: Image) -> void:
 	SaveManager.refresh_user_saves()
 	
 	# Set the selected save browser entry as the first one available.
-	#_selected_entry = SaveManager.get_user_slot_entry(FIRST_SLOT)
-	_selected_entry = _get_first_sorted_existing_save()
+	_selected_entry = SaveManager.get_new_user_save_entry()
 	
 	# Set display title label text.
 	title_label.text = "Save Game"
@@ -164,7 +163,6 @@ func open_load_mode() -> void:
 	SaveManager.refresh_user_saves()
 	
 	# Set the selected save browser entry as the first one available.
-	#_selected_entry = SaveManager.get_user_slot_entry(FIRST_SLOT)
 	_selected_entry = _get_first_sorted_existing_save()
 	
 	# Set display title label text.

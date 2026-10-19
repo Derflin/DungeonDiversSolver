@@ -19,6 +19,7 @@ const SLOTS_PER_PAGE: int = 5
 @onready var slot_view: VBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView
 @onready var slot_grid: GridContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotScroll/SlotGrid
 @onready var previous_page_button: Button = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotPagination/PreviousPageButton
+@onready var page_buttons_area: Control = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotPagination/PageButtonsArea
 @onready var page_buttons: HBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotPagination/PageButtonsArea/PageButtonsCenter/PageButtons
 @onready var next_page_button: Button = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotPagination/NextPageButton
 
@@ -47,6 +48,8 @@ var _is_busy: bool = false
 var _visible_slot_entries: Array[SaveSlotEntry] = []
 var _visible_list_entries: Array[SaveListEntry] = []
 
+var _pagination_rebuild_queued: bool = false
+
 
 func _ready() -> void:
 	# Make sure that the save manager control is always being processed.
@@ -70,6 +73,7 @@ func _ready() -> void:
 	# Connect slot view nodes signals.
 	previous_page_button.pressed.connect(_on_previous_page_button_pressed)
 	next_page_button.pressed.connect(_on_next_page_button_pressed)
+	page_buttons_area.resized.connect(_on_page_buttons_area_resized)
 	
 	# Connect list view nodes signals.
 	sort_option.item_selected.connect(_on_sort_option_selected)
@@ -531,46 +535,310 @@ func _get_first_existing_save_on_page(page: int) -> SaveBrowserEntry:
 
 #region Pagination
 
-## Rebuilds pagination controls by clearing out existing ones and populating new ones based on the available pages for which saves exist.
+## Rebuilds pagination using as much available page information as can fit inside the allocated pagination area.
 func _rebuild_pagination() -> void:
-	# Clear out existing page buttons.
-	_clear_container(page_buttons)
-	
 	# Get list of available page numbers for which saves exist or that should be available in navigation.
-	var pages := _get_available_page_numbers()
+	var ideal_pages := _get_available_page_numbers()
 	
-	# Populate page buttons for each page on the list.
-	for page: int in pages:
-		# Create new button.
-		var button := Button.new()
-		
-		# Initialize button state and display.
-		button.text = str(page)
-		button.toggle_mode = true
-		
-		# Set button pressed state based on current page number and the button page number.
-		button.button_pressed = page == _current_page
-		
-		# Connect button pressed signal to the local handler function.
-		button.pressed.connect(_on_page_number_pressed.bind(page))
-		
-		# Add the page button to the page container.
-		page_buttons.add_child(button)
+	# Truncate list of available page numbers in order to make them fit inside the pagination container.
+	var visible_pages := _get_pagination_pages_that_fit(ideal_pages)
+	
+	# Prepare pagination display nodes.
+	_render_pagination_pages(visible_pages)
 	
 	# Update state of the pagination buttons along with their interactions.
 	_update_pagination_navigation()
 
 
-## Returns a list of available page numbers based on the existing saves.
-func _get_available_page_numbers() -> Array[int]:
+## Renders the display nodes for the pagination using the provided [param pages] numbers.
+## Ellipsis labels are automatically inserted wherever one or more numerical pages are omitted between two displayed page buttons.
+func _render_pagination_pages(pages: Array[int]) -> void:
+	# Clear out existing pagination buttons nodes.
+	_clear_container(page_buttons)
+	
+	# Filter out processing if the provided pages are empty.
+	if pages.is_empty():
+		return
+	
+	# Make sure that pages are sorted accordingly.
+	var sorted_pages := pages.duplicate()
+	sorted_pages.sort()
+	
+	# Populate pagination display nodes for each page on the list.
+	var previous_page: int = -1
+	for page: int in sorted_pages:
+		# Add ellipsis label if the previous page exists and there is any page break between current one and last one.
+		if previous_page != -1 and page > previous_page + 1:
+			_add_pagination_ellipsis()
+		
+		# Add page button for the current page.
+		_add_pagination_page_button(page)
+		
+		# Save current page as the previous page.
+		previous_page = page
+
+
+## Creates one interactive pagination page button for the provided [param page] number and adds it as a child of page buttons container.
+func _add_pagination_page_button(page: int) -> void:
+	# Create new button.
+	var button := Button.new()
+	
+	# Initialize button state and display.
+	button.text = str(page)
+	button.toggle_mode = true
+	
+	# Set button pressed state based on current page number and the button page number.
+	button.button_pressed = page == _current_page
+	
+	# Set button disabled state based on the current save manager busy state.
+	button.disabled = _is_busy
+	
+	# Connect button pressed signal to the local handler function.
+	button.pressed.connect(_on_page_number_pressed.bind(page))
+	
+	# Add the page button to the page container.
+	page_buttons.add_child(button)
+
+
+## Creats one non-interactive pagination visual marker indicating skipped pages and adds it as a child of page buttons container.
+func _add_pagination_ellipsis() -> void:
+	# Create new label.
+	var label := Label.new()
+	
+	# Initialize label state and display.
+	label.text = "..."
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	
+	# Add the label to the page container.
+	page_buttons.add_child(label)
+
+
+## Renders the provided [param pages] list candidate and returns whether its real minimum width fits inside the available space based on the provided [param available_width].
+func _pagination_pages_fit(pages: Array[int], available_width: float) -> bool:
+	# Prepare pagination display nodes.
+	_render_pagination_pages(pages)
+	
+	# Get current width of page buttons to determine how much width it would require to render the provided pages.
+	var required_width := page_buttons.get_combined_minimum_size().x
+	
+	# Check if the provided pages would fit inside the available width to display them in.
+	return required_width <= available_width + 0.5
+
+
+## Returns pages that should normally never be removed while truncating pagination.
+## Those include: page 1, nearest occupied page before current, current page, nearest occupied page after current, last occupied page.
+## Uses provided [param occupied_pages] to determine what is the previous, next and the last available page that contain any saves at all.
+func _get_required_pagination_pages(occupied_pages: Array[int]) -> Array[int]:
+	# Prepare variable to store the result to return.
+	var pages: Array[int] = []
+	
+	# Append first page to the result.
+	_append_unique_page(pages, FIRST_PAGE)
+	
+	# Append previous page to the result if it exists.
+	var previous_page := _get_previous_occupied_page(occupied_pages, _current_page)
+	if previous_page != -1:
+		_append_unique_page(pages, previous_page)
+	
+	# Append current page to the result.
+	_append_unique_page(pages, _current_page)
+	
+	# Append next page to the result if it exists.
+	var next_page := _get_next_occupied_page(occupied_pages, _current_page)
+	if next_page != -1:
+		_append_unique_page(pages, next_page)
+	
+	# Append last page to the result if it exists.
+	if not occupied_pages.is_empty():
+		_append_unique_page(pages, occupied_pages[occupied_pages.size() - 1])
+	
+	# Make sure that pages are sorted accordingly.
+	pages.sort()
+	
+	return pages
+
+
+## Finds the nearest occupied page from the provided [param occupied_pages] list before the current page and returns it if it exists. Otherwise it returns -1.
+func _get_previous_occupied_page(occupied_pages: Array[int], current_page: int) -> int:
+	# Prepare variable to store the result to return along with it's default value.
+	var result: int = -1
+	
+	# Search for the nearest occupied page before the current page.
+	for page: int in occupied_pages:
+		if page >= current_page:
+			break
+		result = page
+	
+	return result
+
+
+## Finds the nearest occupied page from the provided [param occupied_pages] list after the current page and returns it if it exists. Otherwise it returns -1.
+func _get_next_occupied_page(occupied_pages: Array[int], current_page: int) -> int:
+	# Prepare variable to store the result to return along with it's default value.
+	var result: int = -1
+	
+	# Search for the nearest occupied page after the current page.
+	for page: int in occupied_pages:
+		if page > current_page:
+			return page
+	
+	return result
+
+
+## Appends a [param page] number only if it isn't already present in the current [param pages] list.
+func _append_unique_page(pages: Array[int], page: int) -> void:
+	if not pages.has(page):
+		pages.append(page)
+
+
+## Finds the most detailed pagination state that fits inside the currently available width for the pagination container.
+## Uses provided [param ideal_pages] list to check if it fits and if not it truncates it accordingly and returns the modified pages list.
+func _get_pagination_pages_that_fit(ideal_pages: Array[int]) -> Array[int]:
+	# Filter out processing and return the default page list containing only first page if the provided page list is empty.
+	if ideal_pages.is_empty():
+		return [FIRST_PAGE]
+	
+	# Calculate how much width there is available inside the pagination container.
+	var available_width := page_buttons_area.size.x
+	
+	# Filter out processing and return provided pages list if the available width wasn't initialized yet.
+	if available_width <= 0.0:
+		return ideal_pages
+	
+	# Check if by default the provided page list already fits and return it if that's the case.
+	if _pagination_pages_fit(ideal_pages, available_width):
+		return ideal_pages
+	
+	# Prepare variables used for truncating the page list.
+	var occupied_pages := _get_occupied_page_numbers()
+	var required_pages := _get_required_pagination_pages(occupied_pages)
+	var working_pages := ideal_pages.duplicate()
+	var removable_left: Array[int] = []
+	var removable_right: Array[int] = []
+	
+	# Split optional pages according to which side of the current page they are located on.
+	for page: int in working_pages:
+		if required_pages.has(page):
+			continue
+		
+		if page < _current_page:
+			removable_left.append(page)
+		elif page > _current_page:
+			removable_right.append(page)
+	
+	# Sort splitted pages on left and right, so that first elements would be the ones that would be farthest ones from the current page.
+	removable_left.sort()
+	removable_right.sort()
+	removable_right.reverse()
+	
+	# Check from which side the next page should be truncated from next.
+	var remove_left_next := _should_remove_left_first(removable_left, removable_right)
+	
+	# Keep truncating pages from left and right side until the remaining pages would be able to fit inside the available width or until there would be nothing left to truncate from.
+	while not removable_left.is_empty() or not removable_right.is_empty():
+		var page_to_remove: int = -1
+		
+		# Get next page to truncate.
+		if remove_left_next:
+			if not removable_left.is_empty():
+				page_to_remove = removable_left.pop_front()
+			elif not removable_right.is_empty():
+				page_to_remove = removable_right.pop_front()
+		else:
+			if not removable_right.is_empty():
+				page_to_remove = removable_right.pop_front()
+			elif not removable_left.is_empty():
+				page_to_remove = removable_left.pop_front()
+		
+		# Remove the selected page if it exists.
+		if page_to_remove != -1:
+			working_pages.erase(page_to_remove)
+		
+		# After every truncation, check if the remaining page list fit and return it if that's the case.
+		if _pagination_pages_fit(working_pages, available_width):
+			return working_pages
+		
+		# Change side from which the next page should be removed.
+		remove_left_next = not remove_left_next
+	
+	# Call and return a result of the emergency pagination display if after removing all optional pages the baseline pages still don't fit.
+	return _get_emergency_pagination_pages(working_pages, occupied_pages, available_width)
+
+
+## Checks if the page truncation should be started from the [param left_pages] list or rather from the [param right_pages] list based on their relative distance to the current page.
+func _should_remove_left_first(left_pages: Array[int], right_pages: Array[int]) -> bool:
+	# Return false if the left page list is empty.
+	if left_pages.is_empty():
+		return false
+	
+	# Return true if the right page list is empty.
+	if right_pages.is_empty():
+		return true
+	
+	# Check if first left page is located further from the first right page.
+	var left_distance := _current_page - left_pages[0]
+	var right_distance := right_pages[0] - _current_page
+	return left_distance >= right_distance
+
+
+## Handles unusually narrow layouts where even the normal mandatory pagination baseline from the "_get_pagination_pages_that_fit" function call cannot fit.
+## Uses provided [param baseline_pages] list that contains already truncated pages along with provided [param occupied_pages] list to further truncate them.
+## After further truncation it uses [param available_width] to check if the further truncated list would fit in the available space.
+## Returns further truncated list based on the provided [param baseline_pages] list.
+func _get_emergency_pagination_pages(baseline_pages: Array[int], occupied_pages: Array[int], available_width: float) -> Array[int]:
+	# Prepare variable for emergency pagination truncation.
+	var local_pages := baseline_pages.duplicate()
+	var previous_page := _get_previous_occupied_page(occupied_pages, _current_page)
+	var next_page := _get_next_occupied_page(occupied_pages, _current_page)
+	
+	# Prepare a list of pages that are required in the first pass of the emergency pagination truncation.
+	var local_required: Array[int] = [_current_page]
+	if previous_page != -1:
+		_append_unique_page(local_required, previous_page)
+	if next_page != -1:
+		_append_unique_page(local_required, next_page)
+	
+	# Perform a first pass of emergency truncation by leaving only the required pages from the just prepared list.
+	for page: int in baseline_pages:
+		if not local_required.has(page):
+			local_pages.erase(page)
+	local_pages.sort()
+	
+	# Return prepared pages list if it fits in the available space.
+	if _pagination_pages_fit(local_pages, available_width):
+		return local_pages
+	
+	# Further truncate the page list by only returning the current page if all the previous truncations weren't enough.
+	return [_current_page]
+
+
+## Returns sorted page numbers containing at least one existing user save.
+func _get_occupied_page_numbers() -> Array[int]:
 	# Prepare a dictionary for marking which pages exist for the existing saves.
-	var page_set: Dictionary[int, bool] = {1: true}
+	var page_set: Dictionary[int, bool] = {}
 	var saves := SaveManager.get_existing_user_saves()
 	for entry: SaveBrowserEntry in saves:
 		page_set[_get_page_for_slot(entry.slot)] = true
 	
-	# Mark the current page as existing if the save manager operation mode is set to save nad the current page isn't listed in the page set.
-	# This situation will happen in save mode, if the user will visit pages without any existing saves.
+	# Prepare a list of pages that will be returned by this function as the available page number list.
+	var pages: Array[int] = []
+	for page: int in page_set.keys():
+		pages.append(page)
+	pages.sort()
+	
+	return pages
+
+
+## Returns a list of available page numbers based on the existing saves.
+func _get_available_page_numbers() -> Array[int]:
+	# Prepare a dictionary for marking which pages exist for the existing saves.
+	var page_set: Dictionary[int, bool] = {FIRST_PAGE: true}
+	for page:int in _get_occupied_page_numbers():
+		page_set[page] = true
+	
+	# Mark the current page as existing if the save manager operation mode is set to save and the current page isn't listed in the page set.
 	if _operation_mode == SaveUIEnums.OperationMode.SAVE and _current_page not in page_set:
 		page_set[_current_page] = false
 	
@@ -669,6 +937,50 @@ func _on_next_page_button_pressed() -> void:
 	
 	# Increase current page number by changing it into next bigger available page number.
 	_go_to_page(pages[current_index + 1])
+
+
+## Handles page buttons area node resized signal to handle updating all the relevant page buttons area that might be affected by the resize event.
+func _on_page_buttons_area_resized() -> void:
+	# Filter out processing if the save manager isn't visible.
+	if not visible:
+		return
+	
+	# Filter out processing if the save manager browse mode isn't set to slot view, since only it uses the pagination controls.
+	if _browse_mode != SaveUIEnums.BrowseMode.SLOT_VIEW:
+		return
+	
+	# Queue pagination control nodes rebuild, since they might have been affected by the resize.
+	_queue_pagination_rebuild()
+
+
+## Queues a single deferred pagination rebuild.
+func _queue_pagination_rebuild() -> void:
+	# Filter out processing if the pagination rebuild is already queued.
+	if _pagination_rebuild_queued:
+		return
+	
+	# Set the pagination rebuild queued flag.
+	_pagination_rebuild_queued = true
+	
+	# Queue the function call to rebuild the pagination.
+	call_deferred("_rebuild_pagination_after_layout")
+
+
+## Rebuilds pagination once the current UI layout has settled.
+func _rebuild_pagination_after_layout() -> void:
+	# Unset the pagination rebuild queued flag.
+	_pagination_rebuild_queued = false
+	
+	# Filter out processing if the save manager isn't visible.
+	if not visible:
+		return
+	
+	# Filter out processing if the save manager browse mode isn't set to slot view, since only it uses the pagination controls.
+	if _browse_mode != SaveUIEnums.BrowseMode.SLOT_VIEW:
+		return
+	
+	# Update pagination buttons and related details.
+	_rebuild_pagination()
 
 
 ## Handles page number button pressed signal to change the displayed page to the provided [param page] number.

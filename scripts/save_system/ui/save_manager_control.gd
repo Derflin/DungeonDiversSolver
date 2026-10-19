@@ -582,7 +582,10 @@ func _add_pagination_page_button(page: int) -> void:
 	var button := Button.new()
 	
 	# Initialize button state and display.
-	button.text = str(page)
+	if page != _current_page:
+		button.text = str(page)
+	else:
+		button.text = "[" + str(page) + "]"
 	button.toggle_mode = true
 	
 	# Set button pressed state based on current page number and the button page number.

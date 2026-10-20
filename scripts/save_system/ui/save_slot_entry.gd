@@ -33,8 +33,8 @@ func setup(new_entry: SaveBrowserEntry, operation_mode: SaveUIEnums.OperationMod
 		# Set the slot entry details for an empty save slot.
 		thumbnail.visible = false
 		thumbnail.texture = null
-		name_label.text = "Empty"
-		saved_label.text = ""
+		name_label.text = ""
+		saved_label.text = "Empty"
 		disabled = operation_mode == SaveUIEnums.OperationMode.LOAD
 		
 		return

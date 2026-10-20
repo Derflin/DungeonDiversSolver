@@ -216,7 +216,8 @@ func close() -> void:
 #region Interface Refresh
 
 ## Updates state of display interfaces that might change based on internal fields values like browse mode or other user selected settings.
-func _refresh_interface() -> void:
+## Provided [param preserve_details_edits] flag will determine if the save details should preserve the existing edited interactible save fields if the save entry didn't change.
+func _refresh_interface(preserve_details_edits: bool = false) -> void:
 	# Update state of save views and their buttons that are used to change the active browse view mode.
 	_update_view_visibility()
 	_update_view_buttons()
@@ -232,7 +233,7 @@ func _refresh_interface() -> void:
 			pass
 	
 	# Update save details display.
-	_update_details()
+	_update_details(preserve_details_edits)
 	
 	# Update selected entry highlight.
 	_update_selection_highlights()
@@ -254,7 +255,8 @@ func _update_view_buttons() -> void:
 
 
 ## Updates save details displayed inside the save manager control display based on the save browser entry set as selected.
-func _update_details() -> void:
+## Provided [param preserve_edits] flag will determine if the save details should preserve the existing edited interactible save fields if the save entry didn't change.
+func _update_details(preserve_edits: bool = false) -> void:
 	# Clear save details if there isn't any save browser entry set as selected.
 	if _selected_entry == null:
 		save_details.clear_details()
@@ -265,7 +267,7 @@ func _update_details() -> void:
 		_selected_entry.game_metadata = _cached_game_metadata.duplicate(true)
 	
 	# Show save browser entry set as selected.
-	save_details.show_entry(_selected_entry, _operation_mode, _cached_thumbnail)
+	save_details.show_entry(_selected_entry, _operation_mode, _cached_thumbnail, preserve_edits)
 
 #endregion
 
@@ -309,6 +311,11 @@ func _set_browse_mode(new_mode: SaveUIEnums.BrowseMode) -> void:
 		_update_view_buttons()
 		return
 	
+	# Cache previous selected entry before it could be changed in order to later verify if after the change the entry would still be referring to the same save. 
+	var previous_entry_id: String = ""
+	if _selected_entry != null:
+		previous_entry_id = _selected_entry.entry_id
+	
 	# Save new browse mode.
 	_browse_mode = new_mode
 	
@@ -319,8 +326,11 @@ func _set_browse_mode(new_mode: SaveUIEnums.BrowseMode) -> void:
 		SaveUIEnums.BrowseMode.LIST_VIEW:
 			_prepare_selection_for_list_view()
 	
+	# Check if previous selected entry is for the save as the current one along if save mode is enabled in save manager and if yes, then preserve the user edits inside the save details.
+	var preserve_details_edits: bool = _operation_mode == SaveUIEnums.OperationMode.SAVE and _selected_entry != null and not previous_entry_id.is_empty() and _selected_entry.entry_id == previous_entry_id
+	
 	# Update save manager interfaces.
-	_refresh_interface()
+	_refresh_interface(preserve_details_edits)
 
 
 ## Updates selected save browser entry to make sure that it fits the current slot view browse mode. 

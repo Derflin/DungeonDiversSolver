@@ -78,7 +78,15 @@ func _input(event: InputEvent) -> void:
 
 ## Show save details for the provided [param entry] and sets the provided [param operation_mode] for the save details.
 ## Provided [param pending_thumbnail] will be set as the thumbnail texture, if the entry doesn't already have an existing thumbnail assigned to itself.
-func show_entry(entry: SaveBrowserEntry, operation_mode: SaveUIEnums.OperationMode, pending_thumbnail: Image = null) -> void:
+## Provided [param preserve_edits] flag will determine if the save details should preserve the existing edited interactible save fields if the save entry didn't change.
+func show_entry(entry: SaveBrowserEntry, operation_mode: SaveUIEnums.OperationMode, pending_thumbnail: Image = null, preserve_edits: bool = false) -> void:
+	# Check if the provided entry is for the same save as the last one that was provided.
+	var same_entry: bool = _entry != null and entry != null and _entry.entry_id == entry.entry_id
+	
+	# Cache user interactible save fields that could have been edited by the user.
+	var edited_name: String = name_edit.text
+	var edited_description: String = description_edit.text
+	
 	# Save parameters in local instance fields.
 	_entry = entry
 	_operation_mode = operation_mode
@@ -96,11 +104,14 @@ func show_entry(entry: SaveBrowserEntry, operation_mode: SaveUIEnums.OperationMo
 	else:
 		source_label.text = "Slot %d - Empty" % entry.slot
 	
-	# Set name text depending on the provided save browser entry.
-	name_edit.text = entry.display_name
-	
-	# Set description text depending on the provided save browser entry.
-	description_edit.text = entry.description
+	# Check if previous entry edits should be preserved and set name text and description text depending on it and the provided save browser entry.
+	var keep_edits: bool = preserve_edits and same_entry and operation_mode == SaveUIEnums.OperationMode.SAVE
+	if keep_edits:
+		name_edit.text = edited_name
+		description_edit.text = edited_description
+	else:
+		name_edit.text = entry.display_name
+		description_edit.text = entry.description
 	
 	# Set saved label depending on the provided save browser entry.
 	if entry.exists and entry.timestamp > 0:

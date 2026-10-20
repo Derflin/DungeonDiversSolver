@@ -295,6 +295,11 @@ func delete_user_save(slot: int) -> bool:
 
 #region Thumbnail Access
 
+# Prepares and returns a thumbnail image using the same processing that is used for stored save thumbnails.
+func prepare_thumbnail(source_image: Image) -> Image:
+	return _storage.prepare_thumbnail(source_image)
+
+
 # Returns a texture of the thumbnail for the provided save browser entry if it exists, otherwise it returns null.
 func get_thumbnail_texture(entry: SaveBrowserEntry) -> Texture2D:
 	# Filter out processing if the provided save entry is empty.

@@ -379,6 +379,35 @@ func _read_metadata_file(file_name: String) -> SaveMetadata:
 
 #region Thumbnails
 
+## Prepares and returns a thumbnail image from the provided [param source_image].
+func prepare_thumbnail(source_image: Image) -> Image:
+	# Filter out invalid source images.
+	if source_image == null or source_image.is_empty():
+		return null
+	
+	# Create an independant copy of the image.
+	var image := Image.create_from_data(
+		source_image.get_width(),
+		source_image.get_height(),
+		source_image.has_mipmaps(),
+		source_image.get_format(),
+		source_image.get_data(),
+	)
+	
+	# Calculate target size while preserving the source aspect ratio.
+	var source_size := Vector2(image.get_width(), image.get_height())
+	var scale_x := float(THUMBNAIL_MAX_SIZE.x) / source_size.x
+	var scale_y := float(THUMBNAIL_MAX_SIZE.y) / source_size.y
+	var scale_factor: float = min(min(scale_x, scale_y), 1.0)
+	var target_size := Vector2i(max(1, roundi(source_size.x * scale_factor)), max(1, roundi(source_size.y * scale_factor)))
+	
+	# Resize image if the target size is different from the current size.
+	if target_size.x != image.get_width() or target_size.y != image.get_height():
+		image.resize(target_size.x, target_size.y, Image.INTERPOLATE_LANCZOS)
+	
+	return image
+
+
 ## Returns a thumbnail path string based on the provided [param slot] number.
 func get_thumbnail_path(slot: int) -> String:
 	var metadata := get_metadata(slot)
@@ -417,34 +446,15 @@ func load_thumbnail(slot: int) -> Image:
 ## If successful, returns file path to the thumbnail file.
 ## Otherwise it returns empty string.
 func _write_thumbnail(slot: int, source_image: Image) -> String:
-	# Filter out processing if the provided source image is null or empty.
-	if source_image == null or source_image.is_empty():
+	# Prepare the thumbnail image.
+	var image := prepare_thumbnail(source_image)
+	
+	# Filter out processing if the image is null or empty.
+	if image == null or image.is_empty():
 		return ""
 	
 	# Make sure that a thumbnail directory does exist.
 	_ensure_thumbnail_directory()
-	
-	# Make an independent copy because resize() mutates the Image.
-	var image := Image.create_from_data(
-		source_image.get_width(),
-		source_image.get_height(),
-		source_image.has_mipmaps(),
-		source_image.get_format(),
-		source_image.get_data(),
-	)
-	
-	# Prepare a new target size for the image to fit the thumbnail target size.
-	var source_size := Vector2(image.get_width(), image.get_height())
-	var scale_x := float(THUMBNAIL_MAX_SIZE.x) / source_size.x
-	var scale_y := float(THUMBNAIL_MAX_SIZE.y) / source_size.y
-	var scale_factor: float = min(min(scale_x, scale_y), 1.0)
-	var target_size := Vector2i(
-		max(1, roundi(source_size.x * scale_factor)),
-		max(1, roundi(source_size.y * scale_factor)),
-	)
-	
-	# Resize image to fit the thumbnail target size.
-	image.resize(target_size.x, target_size.y, Image.INTERPOLATE_LANCZOS)
 	
 	# Get thumbnail file path and save it.
 	var path := _get_thumbnail_path(slot)

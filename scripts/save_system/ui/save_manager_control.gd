@@ -39,7 +39,7 @@ var _sort_mode: SaveUIEnums.SortMode = SaveUIEnums.SortMode.LAST_SAVED_DESCENDIN
 var _current_page: int = FIRST_PAGE
 var _selected_entry: SaveBrowserEntry = null
 
-var _cached_screenshot: Image = null
+var _cached_thumbnail: Image = null
 var _cached_game_metadata: Array[Dictionary] = []
 
 var _tree_was_paused: bool = false
@@ -109,7 +109,7 @@ func open_save_mode(screenshot: Image) -> void:
 	_operation_mode = SaveUIEnums.OperationMode.SAVE
 	_browse_mode = SaveUIEnums.BrowseMode.LIST_VIEW
 	_current_page = FIRST_PAGE
-	_cached_screenshot = screenshot
+	_cached_thumbnail = SaveManager.prepare_thumbnail(screenshot)
 	_cached_game_metadata = SaveManager.capture_current_game_metadata()
 	
 	# Set save manager as not busy.
@@ -150,7 +150,7 @@ func open_load_mode() -> void:
 	_operation_mode = SaveUIEnums.OperationMode.LOAD
 	_browse_mode = SaveUIEnums.BrowseMode.LIST_VIEW
 	_current_page = FIRST_PAGE
-	_cached_screenshot = null
+	_cached_thumbnail = null
 	_cached_game_metadata.clear()
 	
 	# Set save manager as not busy.
@@ -192,7 +192,7 @@ func close() -> void:
 	visible = false
 	
 	# Set the save manager internal display state.
-	_cached_screenshot = null
+	_cached_thumbnail = null
 	_cached_game_metadata.clear()
 	_selected_entry = null
 	
@@ -265,7 +265,7 @@ func _update_details() -> void:
 		_selected_entry.game_metadata = _cached_game_metadata.duplicate(true)
 	
 	# Show save browser entry set as selected.
-	save_details.show_entry(_selected_entry, _operation_mode, _cached_screenshot)
+	save_details.show_entry(_selected_entry, _operation_mode, _cached_thumbnail)
 
 #endregion
 
@@ -1279,7 +1279,7 @@ func _perform_save(entry: SaveBrowserEntry, display_name: String, description: S
 	_set_busy(true, "Saving...")
 	
 	# Initializes and awaits for the result of saving the save into a provided save browser entry slot.
-	var success := await SaveManager.save_user_save(entry.slot, display_name, description, _cached_screenshot)
+	var success := await SaveManager.save_user_save(entry.slot, display_name, description, _cached_thumbnail)
 	
 	# Handle any issues or errors that might have occured during saving operation. 
 	if not success:

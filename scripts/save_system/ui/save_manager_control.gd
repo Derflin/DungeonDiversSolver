@@ -1033,14 +1033,13 @@ func _go_to_page(page: int) -> void:
 	# Set the new current page number.
 	_current_page = page
 	
-	# Select the default entry on the current page as the one selected.
-	_select_default_entry_for_current_page()
-	
 	# Update displayed status message.
 	_set_status("")
 	
-	# Update save manager interfaces.
-	_refresh_interface()
+	# Update save manager interfaces related to the slot view and pages.
+	_rebuild_slot_view()
+	_update_selection_highlights()
+	_apply_interaction_state()
 
 #endregion
 

@@ -31,6 +31,51 @@ func _ready() -> void:
 	clear_details()
 
 
+## Handles user input in order to detect pointer inputs that might require losing focus from the focussable elements in the scene.
+func _input(event: InputEvent) -> void:
+	# Filter out processing if the current scene isn't visible.
+	if not is_visible_in_tree():
+		return
+	
+	# Get focus owner and filter out processing if the focus owner isn't one of the focussable elements managed by this scene.
+	var focus_owner := get_viewport().gui_get_focus_owner()
+	if focus_owner != name_edit and focus_owner != description_edit:
+		return
+	
+	# Get current pointer position based on the used pointer and on which actions should be used for further releasing the focus.
+	var pointer_position: Vector2
+	# Handle mouse as current pointer device.
+	if event is InputEventMouseButton:
+		# Filter out processing if the mouse event doesn't have pressed flag set.
+		if not event.pressed:
+			return
+		
+		# Filter out processing if the mouse event is related in any way to the mouse wheel actions.
+		if event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN, MOUSE_BUTTON_WHEEL_LEFT, MOUSE_BUTTON_WHEEL_RIGHT]:
+			return
+		
+		pointer_position = event.position
+		
+	# Handle touch as current pointer device.
+	elif event is InputEventScreenTouch:
+		# Filter out processing if the screen touch even doesn't have pressed flag set.
+		if not event.pressed:
+			return
+		
+		pointer_position = event.position
+		
+	# Filter out any other event types.
+	else:
+		return
+	
+	# Filter out processing if the input event was performed inside the currently focussed element.
+	if focus_owner.get_global_rect().has_point(pointer_position):
+		return
+	
+	# Release focus from the currently focussed element.
+	focus_owner.release_focus()
+
+
 ## Show save details for the provided [param entry] and sets the provided [param operation_mode] for the save details.
 ## Provided [param pending_thumbnail] will be set as the thumbnail texture, if the entry doesn't already have an existing thumbnail assigned to itself.
 func show_entry(entry: SaveBrowserEntry, operation_mode: SaveUIEnums.OperationMode, pending_thumbnail: Image = null) -> void:

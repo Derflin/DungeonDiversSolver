@@ -1,5 +1,6 @@
 [gd_scene format=3 uid="uid://kwr4qd666g0k"]
 
+[ext_resource type="Theme" uid="uid://cby524paqvken" path="res://themes/save_manager_theme.tres" id="1_l84h1"]
 [ext_resource type="Script" uid="uid://dagt06eubhhm3" path="res://scripts/save_system/ui/save_slot_entry.gd" id="1_oabkp"]
 
 [node name="SaveSlotEntry" type="Button" unique_id=174235215]
@@ -11,6 +12,8 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 3
+theme = ExtResource("1_l84h1")
+theme_type_variation = &"SaveEntryButton"
 toggle_mode = true
 script = ExtResource("1_oabkp")
 

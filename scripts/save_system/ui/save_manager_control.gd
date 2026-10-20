@@ -5,7 +5,7 @@ extends Control
 const FIRST_PAGE: int = 1
 const FIRST_SLOT: int = 1
 const SLOTS_PER_PAGE: int = 5
-
+const NAVIGATION_BUTTON_VARIATION: StringName = &"SaveNavigationButton"
 
 @export var save_slot_entry_scene: PackedScene
 @export var save_list_entry_scene: PackedScene
@@ -25,7 +25,7 @@ const SLOTS_PER_PAGE: int = 5
 
 @onready var list_view: VBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView
 @onready var sort_option: OptionButton = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SortRow/SortOption
-@onready var saves_list: VBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SavesScroll/SavesList
+@onready var saves_list: VBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SavesScroll/MarginContainer/SavesList
 
 @onready var save_details: SaveDetails = $OuterMargin/MainPanel/MainContents/Content/SaveDetails
 @onready var status_label: Label = $OuterMargin/MainPanel/MainContents/StatusLabel
@@ -587,6 +587,9 @@ func _add_pagination_page_button(page: int) -> void:
 	else:
 		button.text = "[" + str(page) + "]"
 	button.toggle_mode = true
+	
+	# Set the theme type variation for the button.
+	button.theme_type_variation = NAVIGATION_BUTTON_VARIATION
 	
 	# Set button pressed state based on current page number and the button page number.
 	button.button_pressed = page == _current_page

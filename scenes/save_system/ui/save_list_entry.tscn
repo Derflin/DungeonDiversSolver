@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://cknktvtqj2ag7"]
 
 [ext_resource type="Script" uid="uid://rhwexwnxc5yr" path="res://scripts/save_system/ui/save_list_entry.gd" id="1_qe2ig"]
+[ext_resource type="Theme" uid="uid://cby524paqvken" path="res://themes/save_manager_theme.tres" id="1_v158h"]
 
 [node name="SaveListEntry" type="Button" unique_id=8007045]
 custom_minimum_size = Vector2(0, 76)
@@ -11,6 +12,8 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 3
+theme = ExtResource("1_v158h")
+theme_type_variation = &"SaveEntryButton"
 toggle_mode = true
 script = ExtResource("1_qe2ig")
 

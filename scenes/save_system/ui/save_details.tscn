@@ -1,5 +1,6 @@
 [gd_scene format=3 uid="uid://dac6vexif8k3u"]
 
+[ext_resource type="Theme" uid="uid://cby524paqvken" path="res://themes/save_manager_theme.tres" id="1_chaje"]
 [ext_resource type="Script" uid="uid://bcde53m7tubq6" path="res://scripts/save_system/ui/save_details.gd" id="1_fngor"]
 
 [node name="SaveDetails" type="PanelContainer" unique_id=1221008773]
@@ -11,6 +12,7 @@ grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+theme = ExtResource("1_chaje")
 script = ExtResource("1_fngor")
 
 [node name="MarginContainer" type="MarginContainer" parent="." unique_id=1703246370]
@@ -98,6 +100,8 @@ size_flags_horizontal = 3
 
 [node name="DeleteButton" type="Button" parent="MarginContainer/ContentsContainer/Footer" unique_id=2068479981]
 layout_mode = 2
+theme_type_variation = &"SaveDangerButton"
 
 [node name="PrimaryButton" type="Button" parent="MarginContainer/ContentsContainer/Footer" unique_id=4661809]
 layout_mode = 2
+theme_type_variation = &"SavePrimaryButton"

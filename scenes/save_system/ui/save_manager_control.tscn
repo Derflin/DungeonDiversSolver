@@ -2,6 +2,7 @@
 
 [ext_resource type="PackedScene" uid="uid://dac6vexif8k3u" path="res://scenes/save_system/ui/save_details.tscn" id="1_1fu6j"]
 [ext_resource type="Script" uid="uid://divaghrtm4in3" path="res://scripts/save_system/ui/save_manager_control.gd" id="1_o3tvv"]
+[ext_resource type="Theme" uid="uid://cby524paqvken" path="res://themes/save_manager_theme.tres" id="1_p5p6e"]
 [ext_resource type="PackedScene" uid="uid://kwr4qd666g0k" path="res://scenes/save_system/ui/save_slot_entry.tscn" id="2_7e8b3"]
 [ext_resource type="PackedScene" uid="uid://d0dhy4jipapar" path="res://scenes/save_system/ui/modal_confirmation_dialog.tscn" id="2_o3tvv"]
 [ext_resource type="PackedScene" uid="uid://cknktvtqj2ag7" path="res://scenes/save_system/ui/save_list_entry.tscn" id="3_akqj1"]
@@ -15,6 +16,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("1_p5p6e")
 script = ExtResource("1_o3tvv")
 save_slot_entry_scene = ExtResource("2_7e8b3")
 save_list_entry_scene = ExtResource("3_akqj1")
@@ -58,16 +60,19 @@ size_flags_horizontal = 3
 
 [node name="SlotViewButton" type="Button" parent="OuterMargin/MainPanel/MainContents/Header" unique_id=143095648]
 layout_mode = 2
+theme_type_variation = &"SaveNavigationButton"
 toggle_mode = true
 text = "Slots"
 
 [node name="ListViewButton" type="Button" parent="OuterMargin/MainPanel/MainContents/Header" unique_id=1522580205]
 layout_mode = 2
+theme_type_variation = &"SaveNavigationButton"
 toggle_mode = true
 text = "Existing Saves"
 
 [node name="CloseButton" type="Button" parent="OuterMargin/MainPanel/MainContents/Header" unique_id=393914659]
 layout_mode = 2
+theme_type_variation = &"SaveDangerButton"
 text = "X"
 
 [node name="Content" type="HSplitContainer" parent="OuterMargin/MainPanel/MainContents" unique_id=1085594961]
@@ -110,6 +115,7 @@ alignment = 1
 
 [node name="PreviousPageButton" type="Button" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotPagination" unique_id=427687897]
 layout_mode = 2
+theme_type_variation = &"SaveNavigationButton"
 text = "<"
 
 [node name="PageButtonsArea" type="Control" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotPagination" unique_id=1195481642]
@@ -131,6 +137,7 @@ alignment = 1
 
 [node name="NextPageButton" type="Button" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotPagination" unique_id=287472989]
 layout_mode = 2
+theme_type_variation = &"SaveNavigationButton"
 text = ">"
 
 [node name="ListView" type="VBoxContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents" unique_id=784824449]
@@ -151,7 +158,14 @@ layout_mode = 2
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="SavesList" type="VBoxContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SavesScroll" unique_id=1487103521]
+[node name="MarginContainer" type="MarginContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SavesScroll" unique_id=825396799]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_right = 4
+
+[node name="SavesList" type="VBoxContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SavesScroll/MarginContainer" unique_id=1487103521]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3

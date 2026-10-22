@@ -78,7 +78,7 @@ func _ready() -> void:
 	name_badge_overlay.resized.connect(_on_unsaved_badge_layout_changed)
 	description_badge_overlay.resized.connect(_on_unsaved_badge_layout_changed)
 	
-	# Update layouts for the editable fields taht have unsaved badge assigned to them.
+	# Update layouts for the editable fields that have unsaved badge assigned to them.
 	call_deferred("_initialize_unsaved_badge_layout")
 	
 	clear_details()
@@ -705,6 +705,8 @@ func _on_unsaved_badge_layout_changed() -> void:
 	call_deferred("_update_unsaved_badge_layouts")
 
 
+## Updates layouts related to the editable fields that have the unsaved badge assigned to them.
+## Updates badge layout to have correct positions and initializes clean states for them.
 func _initialize_unsaved_badge_layout() -> void:
 	# Update layouts.
 	_update_unsaved_badge_layouts()

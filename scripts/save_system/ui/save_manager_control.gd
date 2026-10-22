@@ -52,6 +52,9 @@ var _pagination_rebuild_queued: bool = false
 
 var _confirmation_pending: bool = false
 
+var _new_save_target_slot: int = -1
+var _has_explicit_new_save_target: bool = false
+
 
 func _ready() -> void:
 	# Make sure that the save manager control is always being processed.
@@ -123,8 +126,11 @@ func open_save_mode(screenshot: Image) -> void:
 	# Refresh and initialize save browser entries.
 	SaveManager.refresh_user_saves()
 	
-	# Set the selected save browser entry as the first one available.
-	_selected_entry = SaveManager.get_new_user_save_entry()
+	# Reset new save target to use the automatically selected first empty save slot.
+	_reset_new_save_target()
+	
+	# Set the selected entry as the create new save browser entry that uses the first free save slot.
+	_selected_entry = _get_new_save_target_entry()
 	
 	# Set display title label text.
 	title_label.text = "Save Game"
@@ -200,6 +206,9 @@ func close() -> void:
 	
 	# Reset status label text.
 	status_label.text = ""
+	
+	# Reset state of the new save target to default.
+	_reset_new_save_target()
 	
 	# Clear save details scene.
 	save_details.clear_details()
@@ -390,7 +399,7 @@ func _prepare_selection_for_list_view() -> void:
 	
 	# Sets the selected entry to entry placeholder for creating new saves if the save manager operation mode is set to save.
 	if _operation_mode == SaveUIEnums.OperationMode.SAVE:
-		_selected_entry = SaveManager.get_new_user_save_entry()
+		_selected_entry = _get_new_save_target_entry()
 		return
 	
 	# Otherwise set the first sorted save browser entry as the one selected. 
@@ -440,6 +449,10 @@ func _select_entry(entry: SaveBrowserEntry) -> void:
 			_update_selection_highlights()
 			return
 	
+	# Selecting an empty slot in the save mode in slot view causes it to become a new create new save default target.
+	if _operation_mode == SaveUIEnums.OperationMode.SAVE and _browse_mode == SaveUIEnums.BrowseMode.SLOT_VIEW and entry.is_user_save() and not entry.exists and not entry.is_new_save():
+		_set_explicit_new_save_target(entry.slot)
+	
 	# Set entry as the selected one.
 	_selected_entry = entry
 	
@@ -480,6 +493,54 @@ func _on_entry_selected(entry: SaveBrowserEntry) -> void:
 	# Set entry as selected.
 	_select_entry(entry)
 
+
+#endregion
+
+
+#region New Save Target
+
+## Resets the new save target back to automatic first empty slot behaviour.
+func _reset_new_save_target() -> void:
+	_new_save_target_slot = -1
+	_has_explicit_new_save_target = false
+
+
+## Sets the provided empty user save [param slot] as the explicitly selected target for the create new save entry.
+func _set_explicit_new_save_target(slot: int) -> void:
+	# Filter out processing if the provided slot number isn't valid.
+	if slot < FIRST_SLOT:
+		return
+	
+	# Filter out processing if the provided slot number is for the existing save entry and not for the empty save slot.
+	if SaveManager.has_user_save(slot):
+		return
+	
+	# Set provided slot as the new target for the create new save entry.
+	_new_save_target_slot = slot
+	_has_explicit_new_save_target = true
+
+
+## Creates and returns the create new save pseudo entry for the currently selected new save target.
+## If the new save target wasn't set explicitly, then it will use an automatic save entry target, which would use the first unused save slot.
+func _get_new_save_target_entry() -> SaveBrowserEntry:
+	# Prepare an explicit save entry to be used for the create new save if it was set.
+	if _has_explicit_new_save_target:
+		# Proceed with creating an explicit save entry if it's slot number is valid and it's not for an existing save.
+		if _new_save_target_slot >= FIRST_SLOT and not SaveManager.has_user_save(_new_save_target_slot):
+			# Create new save entry using the explicit save entry and initialize it's state.
+			var explicit_entry := SaveBrowserEntry.create_new_user_save_entry(_new_save_target_slot)
+			explicit_entry.description = "Save to the selected empty slot: Slot %d." % _new_save_target_slot
+			
+			return explicit_entry
+		
+		# Reset new save target if it hasn't passed the above checks.
+		_reset_new_save_target()
+	
+	# Select an automatic save entry as the first one available if the explicit new save target wasn't set or it was invalid.
+	var automatic_entry := SaveManager.get_new_user_save_entry()
+	automatic_entry.description = "Save to the first available slot."
+	
+	return automatic_entry
 
 #endregion
 
@@ -1118,7 +1179,7 @@ func _rebuild_list_view() -> void:
 	# Create a save browser entry placeholder to act as an option to create a new save on top of the list if the save manager operation mode is set to save.
 	if _operation_mode == SaveUIEnums.OperationMode.SAVE:
 		# Create a new save browser entry placeholder instance.
-		var new_save_entry := SaveManager.get_new_user_save_entry()
+		var new_save_entry := _get_new_save_target_entry()
 		
 		# Instantiate new list entry.
 		var new_save_control := save_list_entry_scene.instantiate() as SaveListEntry
@@ -1361,6 +1422,10 @@ func _perform_save(entry: SaveBrowserEntry, display_name: String, description: S
 	
 	# Refresh currently saved selected save browser entry details. 
 	_selected_entry = SaveManager.get_user_save(entry.slot)
+	
+	# Reset new save target if it was set before and it's for the same slot for which the save operation was just performed.
+	if _has_explicit_new_save_target and _new_save_target_slot == entry.slot:
+		_reset_new_save_target()
 	
 	# Marks save manager as no longer busy working on saving operation.
 	_set_busy(false, "Saved.")

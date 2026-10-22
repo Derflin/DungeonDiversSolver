@@ -1603,6 +1603,53 @@ func _select_after_delete(deleted_slot: int) -> void:
 #endregion
 
 
+#region Confirmation
+
+## Checks if there aren't any other pending confirmation dialogs and creates a new one if that's case.
+## All provided parameters are used as call parameters for requesting confirmation dialog.
+func _request_confirmation(title: String, message: String, confirm_text: String = "Confirm", cancel_text: String = "Cancel", focus_cancel: bool = false) -> bool:
+	# Filter out processing if there is already an existing confirmation pending.
+	if _confirmation_pending:
+		return false
+	
+	# Mark confirmation as currently pending.
+	_confirmation_pending = true
+	
+	# Show user the confirmation dialog and await his response.
+	var confirmed := await confirmation_dialog.request_confirmation(
+		title,
+		message,
+		confirm_text,
+		cancel_text,
+		focus_cancel,
+	)
+	
+	# Mark confirmation as no longer pending.
+	_confirmation_pending = false
+	
+	return confirmed
+
+
+## Warns user if there would so unsaved changes in the save details that he might lose if he decides to proceed.
+## Opens up the confirmation dialog for user to decide if he want to lose the unsaved changes and returns his decision.
+## Returns true if there aren't any unsaved changes.
+func _confirm_discard_unsaved_changes(action_message: String) -> bool:
+	# No confirmation is required if the displayed save details don't have any unsaved changes.
+	if not save_details.has_unsaved_changes():
+		return true
+	
+	# Warn user that there are some unsaved changes that he might lose if he decides to proceed.
+	return await _request_confirmation(
+		"Unsaved Changes",
+		"You have unsaved changes to this save's details.\n\n%s" % action_message,
+		"Discard Changes",
+		"Cancel",
+		true,
+	)
+
+#endregion
+
+
 #region Busy State
 
 ## Sets save manager busy state using the provided [param busy] and sets the status message using the provided [param status] text.
@@ -1683,48 +1730,5 @@ func _clear_container(container: Node) -> void:
 	for child: Node in container.get_children():
 		container.remove_child(child)
 		child.queue_free()
-
-
-## Checks if there aren't any other pending confirmation dialogs and creates a new one if that's case.
-## All provided parameters are used as call parameters for requesting confirmation dialog.
-func _request_confirmation(title: String, message: String, confirm_text: String = "Confirm", cancel_text: String = "Cancel", focus_cancel: bool = false) -> bool:
-	# Filter out processing if there is already an existing confirmation pending.
-	if _confirmation_pending:
-		return false
-	
-	# Mark confirmation as currently pending.
-	_confirmation_pending = true
-	
-	# Show user the confirmation dialog and await his response.
-	var confirmed := await confirmation_dialog.request_confirmation(
-		title,
-		message,
-		confirm_text,
-		cancel_text,
-		focus_cancel,
-	)
-	
-	# Mark confirmation as no longer pending.
-	_confirmation_pending = false
-	
-	return confirmed
-
-
-## Warns user if there would so unsaved changes in the save details that he might lose if he decides to proceed.
-## Opens up the confirmation dialog for user to decide if he want to lose the unsaved changes and returns his decision.
-## Returns true if there aren't any unsaved changes.
-func _confirm_discard_unsaved_changes(action_message: String) -> bool:
-	# No confirmation is required if the displayed save details don't have any unsaved changes.
-	if not save_details.has_unsaved_changes():
-		return true
-	
-	# Warn user that there are some unsaved changes that he might lose if he decides to proceed.
-	return await _request_confirmation(
-		"Unsaved Changes",
-		"You have unsaved changes to this save's details.\n\n%s" % action_message,
-		"Discard Changes",
-		"Cancel",
-		true,
-	)
 
 #endregion

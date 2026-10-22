@@ -714,3 +714,8 @@ func _initialize_unsaved_badge_layout() -> void:
 	# Initialize clean state for the name and description fields.
 	_set_name_dirty(false, false)
 	_set_description_dirty(false, false)
+
+
+## Returns a bool value indicating if any of the editable fields have some unsaved changes in them.
+func has_unsaved_changes() -> bool:
+	return _name_dirty or _description_dirty

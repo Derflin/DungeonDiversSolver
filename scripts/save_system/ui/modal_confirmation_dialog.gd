@@ -17,8 +17,9 @@ func _ready() -> void:
 
 
 ## Populates modal confirmation dialog, shows it, waits for a response from it and then hides it.
+## By default the confirm button will be focussed on, but [param focus_cancel] flag can be set to set focus to the cancel button.
 ## Returns a bool value representing the confirmation response.
-func request_confirmation(title: String, message: String, confirm_text: String = "Confirm", cancel_text: String = "Cancel") -> bool:
+func request_confirmation(title: String, message: String, confirm_text: String = "Confirm", cancel_text: String = "Cancel", focus_cancel: bool = false) -> bool:
 	# Populate modal confirmation dialog.
 	title_label.text = title
 	message_label.text = message
@@ -29,7 +30,10 @@ func request_confirmation(title: String, message: String, confirm_text: String =
 	visible = true
 	
 	# Set confirmation button as focussed.
-	confirm_button.grab_focus()
+	if focus_cancel:
+		cancel_button.grab_focus()
+	else:
+		confirm_button.grab_focus()
 	
 	# Wait for a signal containing a response from the modal. 
 	var confirmed: bool = await decision_made

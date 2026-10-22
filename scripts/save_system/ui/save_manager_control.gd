@@ -50,6 +50,8 @@ var _visible_list_entries: Array[SaveListEntry] = []
 
 var _pagination_rebuild_queued: bool = false
 
+var _confirmation_pending: bool = false
+
 
 func _ready() -> void:
 	# Make sure that the save manager control is always being processed.
@@ -209,6 +211,32 @@ func close() -> void:
 	
 	# Return tree paused state to what was set before opening the save manager display.
 	get_tree().paused = _tree_was_paused
+
+
+## Closes save manager display after making sure there aren't any unsaved changes in the save manager.
+## If there would be any unsaved changes, it will display first the confirmation dialog to the user.
+func request_close() -> void:
+	# Filter out processing if the save manager display is already closed.
+	if not visible:
+		return
+	
+	# Filter out processing if the save manager display is currently busy working on something else.
+	if _is_busy:
+		return
+	
+	# Filter out processing if another confirmation is already awaiting a response.
+	if _confirmation_pending:
+		return
+	
+	# Show user the confirmation dialog and await his response.
+	var confirmed := await _confirm_discard_unsaved_changes("Closing the save manager will discard any unsaved changes.")
+	
+	# Filter out processing if user didn't confirm.
+	if not confirmed:
+		return
+	
+	# Perform the close operation.
+	close()
 
 #endregion
 
@@ -378,6 +406,39 @@ func _select_entry(entry: SaveBrowserEntry) -> void:
 	# Filter out processing if the save manager display is currently busy working on something else.
 	if _is_busy:
 		return
+	
+	# Filter out processing if another confirmation is already awaiting a response.
+	if _confirmation_pending:
+		return
+	
+	# Filter out processing if the provided entry doesn't exist.
+	if entry == null:
+		return
+	
+	# Check if the selected entry represents the same logical save as the currently selected one.
+	var same_entry: bool = _selected_entry != null and _selected_entry.entry_id == entry.entry_id
+	
+	# Updated selected entry highlight and filter out further processing if the provided entry is the same as the already selected one and there aren't any unsaved changes.
+	if same_entry and not save_details.has_unsaved_changes():
+		_update_selection_highlights()
+		return
+	
+	# Request confirmation before discarding any existing unsaved edits if there are any.
+	if save_details.has_unsaved_changes():
+		# Prepare a discard message to be displayed inside the confirmation dialog.
+		var discard_message: String
+		if same_entry:
+			discard_message = "Reloading this save will discard any unsaved changes."
+		else:
+			discard_message = "Selecting another save will discard any unsaved changes."
+		
+		# Show user the confirmation dialog and await his response.
+		var confirmed := await _confirm_discard_unsaved_changes(discard_message)
+		
+		# Keep the current entry selection and unsaved changes if the user cancels.
+		if not confirmed:
+			_update_selection_highlights()
+			return
 	
 	# Set entry as the selected one.
 	_selected_entry = entry
@@ -1270,7 +1331,7 @@ func _on_save_requested(entry: SaveBrowserEntry, display_name: String, descripti
 		
 		# Show user the confirmation dialog and await his response.
 		#TODO: make sure that a name_for_message is correct and that it shouldn't be an old name
-		var confirmed := await confirmation_dialog.request_confirmation(
+		var confirmed := await _request_confirmation(
 			"Overwrite Save",
 			"Overwrite \"%s\"?" % name_for_message,
 			"Overwrite",
@@ -1339,7 +1400,7 @@ func _on_load_requested(entry: SaveBrowserEntry) -> void:
 		return
 	
 	# Show user the confirmation dialog and await his response.
-	var confirmed := await confirmation_dialog.request_confirmation(
+	var confirmed := await _request_confirmation(
 		"Load Save",
 		"Load \"%s\"?" % entry.display_name,
 		"Load",
@@ -1393,7 +1454,7 @@ func _on_delete_requested(entry: SaveBrowserEntry) -> void:
 		return
 	
 	# Show user the confirmation dialog and await his response.
-	var confirmed := await confirmation_dialog.request_confirmation(
+	var confirmed := await _request_confirmation(
 		"Delete Save",
 		"Delete \"%s\"?\n\nThis cannot be undone." % entry.display_name,
 		"Delete",
@@ -1545,12 +1606,7 @@ func _set_status(text: String) -> void:
 
 ## Handles close button pressed signal to manage closing down of the save manager display.
 func _on_close_button_pressed() -> void:
-	# Filter out processing if the save manager display is currently busy working on something else.
-	if _is_busy:
-		return
-	
-	# Close save manager display.
-	close()
+	await request_close()
 
 #endregion
 
@@ -1562,5 +1618,48 @@ func _clear_container(container: Node) -> void:
 	for child: Node in container.get_children():
 		container.remove_child(child)
 		child.queue_free()
+
+
+## Checks if there aren't any other pending confirmation dialogs and creates a new one if that's case.
+## All provided parameters are used as call parameters for requesting confirmation dialog.
+func _request_confirmation(title: String, message: String, confirm_text: String = "Confirm", cancel_text: String = "Cancel", focus_cancel: bool = false) -> bool:
+	# Filter out processing if there is already an existing confirmation pending.
+	if _confirmation_pending:
+		return false
+	
+	# Mark confirmation as currently pending.
+	_confirmation_pending = true
+	
+	# Show user the confirmation dialog and await his response.
+	var confirmed := await confirmation_dialog.request_confirmation(
+		title,
+		message,
+		confirm_text,
+		cancel_text,
+		focus_cancel,
+	)
+	
+	# Mark confirmation as no longer pending.
+	_confirmation_pending = false
+	
+	return confirmed
+
+
+## Warns user if there would so unsaved changes in the save details that he might lose if he decides to proceed.
+## Opens up the confirmation dialog for user to decide if he want to lose the unsaved changes and returns his decision.
+## Returns true if there aren't any unsaved changes.
+func _confirm_discard_unsaved_changes(action_message: String) -> bool:
+	# No confirmation is required if the displayed save details don't have any unsaved changes.
+	if not save_details.has_unsaved_changes():
+		return true
+	
+	# Warn user that there are some unsaved changes that he might lose if he decides to proceed.
+	return await _request_confirmation(
+		"Unsaved Changes",
+		"You have unsaved changes to this save's details.\n\n%s" % action_message,
+		"Discard Changes",
+		"Cancel",
+		true,
+	)
 
 #endregion

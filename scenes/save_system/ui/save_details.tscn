@@ -47,8 +47,32 @@ layout_mode = 2
 layout_mode = 2
 text = "SAVE NAME"
 
-[node name="NameEdit" type="LineEdit" parent="MarginContainer/ContentsContainer" unique_id=687843361]
+[node name="NameField" type="MarginContainer" parent="MarginContainer/ContentsContainer" unique_id=2378399]
 layout_mode = 2
+
+[node name="NameEdit" type="LineEdit" parent="MarginContainer/ContentsContainer/NameField" unique_id=687843361]
+layout_mode = 2
+
+[node name="BadgeOverlay" type="Control" parent="MarginContainer/ContentsContainer/NameField" unique_id=890282090]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="UnsavedBadge" type="PanelContainer" parent="MarginContainer/ContentsContainer/NameField/BadgeOverlay" unique_id=1337563801]
+z_index = 1
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -40.0
+offset_bottom = 40.0
+grow_horizontal = 0
+mouse_filter = 2
+
+[node name="Label" type="Label" parent="MarginContainer/ContentsContainer/NameField/BadgeOverlay/UnsavedBadge" unique_id=1057472526]
+layout_mode = 2
+text = "UNSAVED"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="ThumbnailFrame" type="PanelContainer" parent="MarginContainer/ContentsContainer" unique_id=360525847]
 layout_mode = 2
@@ -80,9 +104,33 @@ size_flags_vertical = 3
 layout_mode = 2
 text = "DESCRIPTION"
 
-[node name="DescriptionEdit" type="TextEdit" parent="MarginContainer/ContentsContainer" unique_id=1451077768]
+[node name="DescriptionField" type="MarginContainer" parent="MarginContainer/ContentsContainer" unique_id=2060554506]
+layout_mode = 2
+
+[node name="DescriptionEdit" type="TextEdit" parent="MarginContainer/ContentsContainer/DescriptionField" unique_id=1451077768]
 custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
+
+[node name="BadgeOverlay" type="Control" parent="MarginContainer/ContentsContainer/DescriptionField" unique_id=374447317]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="UnsavedBadge" type="PanelContainer" parent="MarginContainer/ContentsContainer/DescriptionField/BadgeOverlay" unique_id=1659431361]
+z_index = 1
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -40.0
+offset_bottom = 40.0
+grow_horizontal = 0
+mouse_filter = 2
+
+[node name="Label" type="Label" parent="MarginContainer/ContentsContainer/DescriptionField/BadgeOverlay/UnsavedBadge" unique_id=1181635083]
+layout_mode = 2
+text = "UNSAVED"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="Footer" type="HBoxContainer" parent="MarginContainer/ContentsContainer" unique_id=1198554619]
 layout_mode = 2

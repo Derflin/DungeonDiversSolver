@@ -7,13 +7,11 @@ enum OperationMode {
 	LOAD,
 }
 
-
 enum BrowseMode {
 	SLOT_VIEW,
 	LIST_VIEW,
 	EXAMPLES_VIEW,
 }
-
 
 enum SortMode {
 	LAST_SAVED_ASCENDING,

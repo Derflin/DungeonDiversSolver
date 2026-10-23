@@ -29,7 +29,6 @@ enum SubmenuAngleMode {
 	FIXED,
 }
 
-
 const RADIAL_MENU_INPUT_BLOCKER_GROUP: StringName = &"blocks_radial_menu_input"
 
 

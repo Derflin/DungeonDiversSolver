@@ -10,17 +10,6 @@ signal cursor_hidden(result_cursor: MapSolverResultCursor)
 const CORNERS_ANIMATION_NAME := &"default"
 
 
-var _cursor_animation: Tween
-var _map_solver_result_coord: MapSolverResultCoord = null
-var _map_solver_result_solve_stage: MapSolverResult.SolveStage
-
-
-@onready var value_label_root: Node2D = $ValueLabelRoot
-@onready var value_label: ScrambleLabel = $ValueLabelRoot/ValueLabel
-@onready var corners_sprite: Sprite2D = $Corners
-@onready var corners_animation_player: AnimationPlayer = $Corners/AnimationPlayer
-
-
 @export_group("Value Label", "value_label_")
 ## Target area into which value label will be downscaled into to fit it's text parameter.
 @export var value_label_area_size: Vector2 = Vector2(15.0, 15.0)
@@ -31,7 +20,6 @@ var _map_solver_result_solve_stage: MapSolverResult.SolveStage
 ## Visual offset used for value label applied to it's position parameter after fitting value label text in it.
 @export var value_label_visual_offset := Vector2(0.0, -1.0)
 
-
 @export_group("Cursor Animation", "cursor_animation_")
 ## Enables the cursor animation for handling it's show/hide states.
 @export var cursor_animation_enabled: bool = true
@@ -41,6 +29,17 @@ var cursor_animation_show_duration: float = 0.2
 ## Hide animation duration in seconds.
 @export_range(0.0, 1.0, 0.01)
 var cursor_animation_hide_duration: float = 0.2
+
+
+var _cursor_animation: Tween
+var _map_solver_result_coord: MapSolverResultCoord = null
+var _map_solver_result_solve_stage: MapSolverResult.SolveStage
+
+
+@onready var value_label_root: Node2D = $ValueLabelRoot
+@onready var value_label: ScrambleLabel = $ValueLabelRoot/ValueLabel
+@onready var corners_sprite: Sprite2D = $Corners
+@onready var corners_animation_player: AnimationPlayer = $Corners/AnimationPlayer
 
 
 func _ready() -> void:

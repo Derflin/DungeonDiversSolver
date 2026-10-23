@@ -2,10 +2,6 @@ class_name ScrambleLabel
 extends Label
 
 
-var _target_text: String
-var _animation_id: int = 0
-
-
 @export_group("Scramble", "scramble_")
 ## Enables/disables the scramble animation for the label.
 @export var scramble_enabled: bool = true
@@ -63,6 +59,10 @@ var scramble_opacity_min_value: float = 0.4
 ## Opacity maximum value for selecting a random opacity for a scrambled texture during scramble animation.
 @export_range(0.0, 1.0, 0.01)
 var scramble_opacity_max_value: float = 0.6
+
+
+var _target_text: String
+var _animation_id: int = 0
 
 
 func _ready() -> void:

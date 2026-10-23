@@ -2,13 +2,6 @@ class_name MapSolverStatusPanel
 extends PanelContainer
 
 
-var _panel_animation: Tween
-
-@onready var content_root: Control = $ContentRoot
-@onready var margin_container: MarginContainer = $ContentRoot/MarginContainer
-@onready var status_label: ScrambleLabel = $ContentRoot/MarginContainer/StatusContainer/StatusLabel
-
-
 @export_group("Animation", "animation_")
 @export var animation_enabled: bool = true
 @export_range(0.0, 1.0, 0.01)
@@ -17,6 +10,13 @@ var animation_show_duration: float = 0.2
 var animation_hide_duration: float = 0.2
 @export_range(0.0, 1.0, 0.01)
 var animation_resize_duration: float = 0.2
+
+
+var _panel_animation: Tween
+
+@onready var content_root: Control = $ContentRoot
+@onready var margin_container: MarginContainer = $ContentRoot/MarginContainer
+@onready var status_label: ScrambleLabel = $ContentRoot/MarginContainer/StatusContainer/StatusLabel
 
 
 func _ready() -> void:

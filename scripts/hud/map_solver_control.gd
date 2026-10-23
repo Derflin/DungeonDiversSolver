@@ -1,11 +1,21 @@
 class_name MapSolverControl
 extends Control
 
+
 const MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS = {
 	GameState.MapSolverState.PLACEMENT_HINT: "Hint Placement",
 	GameState.MapSolverState.WEIGHT_HINT: "Hint Weight",
 	GameState.MapSolverState.SOLUTION_SHOW: "Show Solution",
 }
+
+
+@export_group("Menu Layout", "menu_")
+@export_range(0, 1, 0.01)
+var menu_max_width_coverage: float = 0.8
+@export_range(1, 4, 1)
+var menu_preferred_ui_scale: int = 2
+@export_range(1, 4, 1)
+var menu_minimum_ui_scale: int = 2
 
 
 var _menu_effective_ui_scale: int = 1
@@ -24,15 +34,6 @@ var _menu_dropdowns: Dictionary[MenuDropdown, GameState.MapSolverState]
 
 @onready var solver_state_panel: PanelContainer = $MenuAnchor/MenuRoot/MenuContents/StatePanel
 @onready var solver_status_panel: PanelContainer = $StatusAnchor/StatusRoot/StatusContents/StatusPanel
-
-
-@export_group("Menu Layout", "menu_")
-@export_range(0, 1, 0.01)
-var menu_max_width_coverage: float = 0.8
-@export_range(1, 4, 1)
-var menu_preferred_ui_scale: int = 2
-@export_range(1, 4, 1)
-var menu_minimum_ui_scale: int = 2
 
 
 func _ready() -> void:

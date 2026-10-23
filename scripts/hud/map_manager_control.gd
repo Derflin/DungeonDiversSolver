@@ -2,16 +2,6 @@ class_name MapManagerControl
 extends Control
 
 
-var _menu_effective_ui_scale: int = 1
-
-
-@onready var menu_root: Control = $MenuAnchor/MenuRoot
-@onready var menu_contents: Control = $MenuAnchor/MenuRoot/MenuContents
-
-@onready var save_button: Button = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons/SaveButton
-@onready var load_button: Button = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons/LoadButton
-
-
 @export var save_manager_control: SaveManagerControl
 
 @export_group("Menu Layout", "menu_")
@@ -21,6 +11,16 @@ var menu_max_width_coverage: float = 0.8
 var menu_preferred_ui_scale: int = 2
 @export_range(1, 4, 1)
 var menu_minimum_ui_scale: int = 2
+
+
+var _menu_effective_ui_scale: int = 1
+
+
+@onready var menu_root: Control = $MenuAnchor/MenuRoot
+@onready var menu_contents: Control = $MenuAnchor/MenuRoot/MenuContents
+
+@onready var save_button: Button = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons/SaveButton
+@onready var load_button: Button = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons/LoadButton
 
 
 func _ready() -> void:

@@ -3,6 +3,8 @@ extends Node2D
 
 
 const _result_cursor_scene: PackedScene = preload("res://scenes/map/map_solver_result_cursor.tscn")
+
+
 var result_cursors: Dictionary[Vector2i, MapSolverResultCursor] = {}
 var result_cursors_deleted: Array[MapSolverResultCursor] = []
 

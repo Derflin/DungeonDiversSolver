@@ -5,9 +5,6 @@ const GRID_LINE_WIDTH = 1
 const GRID_OUTER_CELL_COUNT = 2
 
 
-var grid_offset: Vector2 = Vector2(0.5, 0.5)
-
-
 @export var grid_parent_node: GridSpace
 
 @export_group("Internal Lines", "internal_")
@@ -15,6 +12,9 @@ var grid_offset: Vector2 = Vector2(0.5, 0.5)
 
 @export_group("External Lines", "external_")
 @export var external_line_color: Color = Color.from_rgba8(115, 39, 44, 40)
+
+
+var grid_offset: Vector2 = Vector2(0.5, 0.5)
 
 
 func _draw() -> void:

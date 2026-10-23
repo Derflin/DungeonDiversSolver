@@ -1,6 +1,7 @@
 class_name RoomCorridorCatalog
 extends Resource
 
+
 @export var room_types: Array[RoomCorridorType] = []
 
 

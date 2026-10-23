@@ -2,6 +2,16 @@ class_name MapSolverStatePanel
 extends PanelContainer
 
 
+@export_group("Animation", "animation_")
+@export var animation_enabled: bool = true
+@export_range(0.0, 1.0, 0.01)
+var animation_show_duration: float = 0.2
+@export_range(0.0, 1.0, 0.01)
+var animation_hide_duration: float = 0.2
+@export_range(0.0, 1.0, 0.01)
+var animation_resize_duration: float = 0.2
+
+
 var _panel_animation: Tween
 var _solver_label_static_text: String
 var _first_separator_static_text: String
@@ -15,16 +25,6 @@ var _second_separator_static_text: String
 @onready var second_separator_label: ScrambleLabel = $ContentRoot/MarginContainer/StateContainer/SecondSeparatorLabel
 @onready var state_icon: ScrambleTextureRect = $ContentRoot/MarginContainer/StateContainer/StateIcon
 @onready var state_room_type_label: ScrambleLabel = $ContentRoot/MarginContainer/StateContainer/StateRoomTypeLabel
-
-
-@export_group("Animation", "animation_")
-@export var animation_enabled: bool = true
-@export_range(0.0, 1.0, 0.01)
-var animation_show_duration: float = 0.2
-@export_range(0.0, 1.0, 0.01)
-var animation_hide_duration: float = 0.2
-@export_range(0.0, 1.0, 0.01)
-var animation_resize_duration: float = 0.2
 
 
 func _ready() -> void:

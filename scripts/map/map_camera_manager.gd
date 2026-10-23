@@ -4,17 +4,6 @@ extends Node2D
 const MAP_CAMERA_INPUT_ALLOW_GROUP: StringName = &"allow_map_camera_input"
 
 
-var grid_rect: Rect2 = Rect2(0, 0, 0, 0)
-var _pan_candidate = false
-var _is_panning = false
-var _pan_start_screen_position = Vector2.ZERO
-var _minimum_zoom: float
-var _maximum_zoom: float
-
-
-@onready var map_camera: Camera2D = $MapCamera
-
-
 @export_group("Initial View")
 @export_range(-100.0, 100.0, 1.0)
 var fit_padding = 32.0
@@ -36,6 +25,17 @@ var minimum_visible_fraction_per_axis := 0.5
 ## Distance in screen pixels before a click becomes a drag.
 @export_range(0.0, 20.0, 1.0)
 var pan_drag_threshold = 4.0
+
+
+var grid_rect: Rect2 = Rect2(0, 0, 0, 0)
+var _pan_candidate = false
+var _is_panning = false
+var _pan_start_screen_position = Vector2.ZERO
+var _minimum_zoom: float
+var _maximum_zoom: float
+
+
+@onready var map_camera: Camera2D = $MapCamera
 
 
 func _ready() -> void:

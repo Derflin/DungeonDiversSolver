@@ -1,5 +1,6 @@
 extends Node
 
+
 @export_group("Room Catalogs")
 @export var room_corridor_types: RoomCorridorCatalog
 @export var room_secret_types: RoomSecretCatalog

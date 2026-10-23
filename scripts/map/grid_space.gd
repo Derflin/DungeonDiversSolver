@@ -6,6 +6,8 @@ signal selected_room_changed(room_center_position: Vector2)
 
 
 const _room_cell_scene: PackedScene = preload("res://scenes/map/room_cell.tscn")
+
+
 var room_cells: Dictionary[Vector2i, RoomCell] = {}
 
 

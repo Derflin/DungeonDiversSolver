@@ -2,6 +2,21 @@ class_name MapParametersControl
 extends Control
 
 
+@export_group("Drawer Layout", "drawer_")
+@export var drawer_width_offset: float = 0.0
+@export var drawer_collapsed_width_offset: float = 0.0
+@export var drawer_slide_duration: float = 0.2
+@export var drawer_screen_vertical_margin: float = 8.0
+@export_range(1, 4, 1)
+var drawer_preferred_ui_scale: int = 2
+@export_range(1, 4, 1)
+var drawer_minimum_ui_scale: int = 2
+
+@export_group("Drawer Toggle Button", "drawer_toggle_")
+@export var drawer_toggle_expand_icon: Texture2D
+@export var drawer_toggle_collapse_icon: Texture2D
+
+
 var _map_parameter_entry = preload("res://scenes/hud/map_parameter_entry.tscn")
 
 var _drawer_open: bool = false
@@ -20,21 +35,6 @@ var _drawer_effective_ui_scale: int = 1
 
 @onready var map_grid_settings_container := $DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/DrawerContents/MapGridSettingsMarginContainer/ContainerContents/MapGridSettingsContainer
 @onready var map_secret_settings_container := $DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/DrawerContents/MapSecretSettingsMarginContainer/ContainerContents/MapSecretSettingsContainer
-
-
-@export_group("Drawer Layout", "drawer_")
-@export var drawer_width_offset: float = 0.0
-@export var drawer_collapsed_width_offset: float = 0.0
-@export var drawer_slide_duration: float = 0.2
-@export var drawer_screen_vertical_margin: float = 8.0
-@export_range(1, 4, 1)
-var drawer_preferred_ui_scale: int = 2
-@export_range(1, 4, 1)
-var drawer_minimum_ui_scale: int = 2
-
-@export_group("Drawer Toggle Button", "drawer_toggle_")
-@export var drawer_toggle_expand_icon: Texture2D
-@export var drawer_toggle_collapse_icon: Texture2D
 
 
 func _ready() -> void:

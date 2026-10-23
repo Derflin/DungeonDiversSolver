@@ -27,10 +27,6 @@ const connection_direction_menu_order: Array[RoomInstanceData.ConnectionDirectio
 ]
 
 
-@onready var room_editor_menu = $RoomEditorMenu
-@onready var room_editor_menu_hover_label = $HoverLabel
-
-
 @export_group("Main menu - Icons", "icon_")
 @export var icon_delete_room_texture: Texture2D
 @export var icon_barricades_texture: Texture2D
@@ -51,6 +47,10 @@ var icon_barricades_directions_spritesheet_texture_vframe: int = 1
 var icon_connections_directions_spritesheet_texture_hframe: int = 8
 @export_range(1.0, 128.0, 1.0)
 var icon_connections_directions_spritesheet_texture_vframe: int = 1
+
+
+@onready var room_editor_menu = $RoomEditorMenu
+@onready var room_editor_menu_hover_label = $HoverLabel
 
 
 func _ready() -> void:

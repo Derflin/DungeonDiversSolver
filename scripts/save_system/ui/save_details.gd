@@ -7,23 +7,6 @@ signal load_requested(entry: SaveBrowserEntry)
 signal delete_requested(entry: SaveBrowserEntry)
 
 
-@onready var contents_container: VBoxContainer = $MarginContainer/ContentsContainer
-@onready var source_label: Label = $MarginContainer/ContentsContainer/Header/SourceLabel
-@onready var name_edit: LineEdit = $MarginContainer/ContentsContainer/NameField/NameEdit
-@onready var name_badge_overlay: Control = $MarginContainer/ContentsContainer/NameField/BadgeOverlay
-@onready var name_badge_unsaved: PanelContainer = $MarginContainer/ContentsContainer/NameField/BadgeOverlay/UnsavedBadge
-@onready var name_badge_unsaved_label: Label = $MarginContainer/ContentsContainer/NameField/BadgeOverlay/UnsavedBadge/Label
-@onready var thumbnail: TextureRect = $MarginContainer/ContentsContainer/ThumbnailFrame/Thumbnail
-@onready var metadata_container: VBoxContainer = $MarginContainer/ContentsContainer/MetadataScrollContainer/MetadataContainer
-@onready var description_edit: TextEdit = $MarginContainer/ContentsContainer/DescriptionField/DescriptionEdit
-@onready var description_badge_overlay: Control = $MarginContainer/ContentsContainer/DescriptionField/BadgeOverlay
-@onready var description_badge_unsaved: PanelContainer = $MarginContainer/ContentsContainer/DescriptionField/BadgeOverlay/UnsavedBadge
-@onready var description_badge_unsaved_label: Label = $MarginContainer/ContentsContainer/DescriptionField/BadgeOverlay/UnsavedBadge/Label
-@onready var saved_label: Label = $MarginContainer/ContentsContainer/Footer/SavedLabel
-@onready var delete_button: Button = $MarginContainer/ContentsContainer/Footer/DeleteButton
-@onready var primary_button: Button = $MarginContainer/ContentsContainer/Footer/PrimaryButton
-
-
 @export_group("Transitions", "transition_")
 @export_range(0.01, 0.50, 0.01)
 var transition_fade_out_duration: float = 0.15
@@ -69,6 +52,23 @@ var _description_clean_read_only_border: Color
 var _description_badge_visible_position: Vector2
 
 var _content_transition_tween: Tween = null
+
+
+@onready var contents_container: VBoxContainer = $MarginContainer/ContentsContainer
+@onready var source_label: Label = $MarginContainer/ContentsContainer/Header/SourceLabel
+@onready var name_edit: LineEdit = $MarginContainer/ContentsContainer/NameField/NameEdit
+@onready var name_badge_overlay: Control = $MarginContainer/ContentsContainer/NameField/BadgeOverlay
+@onready var name_badge_unsaved: PanelContainer = $MarginContainer/ContentsContainer/NameField/BadgeOverlay/UnsavedBadge
+@onready var name_badge_unsaved_label: Label = $MarginContainer/ContentsContainer/NameField/BadgeOverlay/UnsavedBadge/Label
+@onready var thumbnail: TextureRect = $MarginContainer/ContentsContainer/ThumbnailFrame/Thumbnail
+@onready var metadata_container: VBoxContainer = $MarginContainer/ContentsContainer/MetadataScrollContainer/MetadataContainer
+@onready var description_edit: TextEdit = $MarginContainer/ContentsContainer/DescriptionField/DescriptionEdit
+@onready var description_badge_overlay: Control = $MarginContainer/ContentsContainer/DescriptionField/BadgeOverlay
+@onready var description_badge_unsaved: PanelContainer = $MarginContainer/ContentsContainer/DescriptionField/BadgeOverlay/UnsavedBadge
+@onready var description_badge_unsaved_label: Label = $MarginContainer/ContentsContainer/DescriptionField/BadgeOverlay/UnsavedBadge/Label
+@onready var saved_label: Label = $MarginContainer/ContentsContainer/Footer/SavedLabel
+@onready var delete_button: Button = $MarginContainer/ContentsContainer/Footer/DeleteButton
+@onready var primary_button: Button = $MarginContainer/ContentsContainer/Footer/PrimaryButton
 
 
 func _ready() -> void:

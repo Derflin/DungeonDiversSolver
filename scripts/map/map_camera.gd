@@ -1,5 +1,6 @@
 extends Camera2D
 
+
 @export_group("Smoothing Parameters", "smoothing_")
 @export var smoothing_position_enabled: bool = true
 @export_range(0.1, 30.0, 0.1)

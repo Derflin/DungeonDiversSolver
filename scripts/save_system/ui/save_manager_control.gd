@@ -7,6 +7,7 @@ const FIRST_SLOT: int = 1
 const SLOTS_PER_PAGE: int = 5
 const NAVIGATION_BUTTON_VARIATION: StringName = &"SaveNavigationButton"
 
+
 @export var save_slot_entry_scene: PackedScene
 @export var save_list_entry_scene: PackedScene
 
@@ -21,30 +22,6 @@ var transition_display_fade_in_duration: float = 0.30
 var transition_entry_fade_out_duration: float = 0.17
 @export_range(0.01, 0.50, 0.01)
 var transition_entry_fade_in_duration: float = 0.20
-
-
-@onready var title_label: Label = $OuterMargin/MainPanel/MainContents/Header/TitleLabel
-@onready var slot_view_button: Button = $OuterMargin/MainPanel/MainContents/Header/SlotViewButton
-@onready var list_view_button: Button = $OuterMargin/MainPanel/MainContents/Header/ListViewButton
-@onready var close_button: Button = $OuterMargin/MainPanel/MainContents/Header/CloseButton
-
-@onready var slot_view: VBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView
-@onready var slot_grid: GridContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotScroll/SlotGrid
-@onready var previous_page_button: Button = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotPagination/PreviousPageButton
-@onready var page_buttons_area: Control = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotPagination/PageButtonsArea
-@onready var page_buttons: HBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotPagination/PageButtonsArea/PageButtonsCenter/PageButtons
-@onready var next_page_button: Button = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotPagination/NextPageButton
-
-@onready var list_view: VBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView
-@onready var sort_option: OptionButton = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SortRow/SortOption
-@onready var saves_search_edit: LineEdit = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SearchEdit 
-@onready var saves_list: VBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SavesScroll/MarginContainer/SavesList
-@onready var saves_list_new_save_section: VBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SavesScroll/MarginContainer/SavesList/NewSaveSection
-@onready var saves_list_existing_saves_container: VBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SavesScroll/MarginContainer/SavesList/ExistingSavesContainer
-
-@onready var save_details: SaveDetails = $OuterMargin/MainPanel/MainContents/Content/SaveDetails
-@onready var status_label: Label = $OuterMargin/MainPanel/MainContents/StatusLabel
-@onready var confirmation_dialog: ModalConfirmationDialog = $ModalConfirmationDialog
 
 
 var _operation_mode: SaveUIEnums.OperationMode = SaveUIEnums.OperationMode.LOAD
@@ -79,6 +56,30 @@ var _confirmation_pending: bool = false
 
 var _new_save_target_slot: int = -1
 var _has_explicit_new_save_target: bool = false
+
+
+@onready var title_label: Label = $OuterMargin/MainPanel/MainContents/Header/TitleLabel
+@onready var slot_view_button: Button = $OuterMargin/MainPanel/MainContents/Header/SlotViewButton
+@onready var list_view_button: Button = $OuterMargin/MainPanel/MainContents/Header/ListViewButton
+@onready var close_button: Button = $OuterMargin/MainPanel/MainContents/Header/CloseButton
+
+@onready var slot_view: VBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView
+@onready var slot_grid: GridContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotScroll/SlotGrid
+@onready var previous_page_button: Button = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotPagination/PreviousPageButton
+@onready var page_buttons_area: Control = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotPagination/PageButtonsArea
+@onready var page_buttons: HBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotPagination/PageButtonsArea/PageButtonsCenter/PageButtons
+@onready var next_page_button: Button = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotPagination/NextPageButton
+
+@onready var list_view: VBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView
+@onready var sort_option: OptionButton = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SortRow/SortOption
+@onready var saves_search_edit: LineEdit = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SearchEdit 
+@onready var saves_list: VBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SavesScroll/MarginContainer/SavesList
+@onready var saves_list_new_save_section: VBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SavesScroll/MarginContainer/SavesList/NewSaveSection
+@onready var saves_list_existing_saves_container: VBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SavesScroll/MarginContainer/SavesList/ExistingSavesContainer
+
+@onready var save_details: SaveDetails = $OuterMargin/MainPanel/MainContents/Content/SaveDetails
+@onready var status_label: Label = $OuterMargin/MainPanel/MainContents/StatusLabel
+@onready var confirmation_dialog: ModalConfirmationDialog = $ModalConfirmationDialog
 
 
 func _ready() -> void:

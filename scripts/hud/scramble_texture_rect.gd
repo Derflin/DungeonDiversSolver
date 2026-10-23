@@ -2,10 +2,6 @@ class_name ScrambleTextureRect
 extends TextureRect
 
 
-var _animation_id: int = 0
-var _shader_material: ShaderMaterial
-
-
 @export_group("Scramble", "scramble_")
 ## Enables/disables the scramble animation for the texture rect.
 @export var scramble_enabled: bool = true
@@ -48,6 +44,10 @@ var scramble_noise_max_amount: float = 0.75
 var scramble_noise_block_size: float = 4.0
 ## Color used for generated noise pixels.
 @export var scramble_noise_color: Color = Color.BLACK
+
+
+var _animation_id: int = 0
+var _shader_material: ShaderMaterial
 
 
 func _ready() -> void:

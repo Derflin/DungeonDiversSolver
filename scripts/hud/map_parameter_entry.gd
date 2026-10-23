@@ -9,6 +9,12 @@ enum ParameterType {
 }
 
 
+@export_group("Label Parameters", "label_")
+@export var label_default_color := Color.WHITE
+@export var label_valid_color := Color.LIME_GREEN
+@export var label_invalid_color := Color.RED
+
+
 var parameter_type: ParameterType = ParameterType.NONE
 var secret_type_kind: RoomSecretType.Kind = RoomSecretType.Kind.NONE
 var map_grid_size: Vector2i = Vector2i(0, 0)
@@ -20,12 +26,6 @@ var secret_type_value_max: int = 0
 @onready var entry_count_label := $CountLabel
 @onready var entry_description_label := $DescriptionLabel
 @onready var entry_value_editor := $ValueEditor
-
-
-@export_group("Label Parameters", "label_")
-@export var label_default_color := Color.WHITE
-@export var label_valid_color := Color.LIME_GREEN
-@export var label_invalid_color := Color.RED
 
 
 func initialize_map_grid_size() -> void:

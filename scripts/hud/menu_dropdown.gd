@@ -8,22 +8,6 @@ signal option_selected(option_id: int)
 const OPTION_SCENE: PackedScene = preload("res://scenes/hud/menu_dropdown_option.tscn")
 
 
-var selected_option_id: int = -1
-var _option_texts: Dictionary = {}
-var _option_icons: Dictionary = {}
-var _submenu_rest_position: Vector2
-var _animation: Tween
-
-var _submenu_original_parent: Node
-var _submenu_is_in_overlay_container: bool = false
-var _submenu_original_scale: Vector2
-
-
-@onready var submenu_panel: PanelContainer = %SubmenuPanel
-@onready var scroll_container: ScrollContainer = %ScrollContainer
-@onready var options_list: VBoxContainer = %OptionsList
-
-
 @export_group("Dropdown State Affixes", "dropdown_state_affixes_")
 @export var dropdown_state_affixes_enabled: bool = true
 @export var dropdown_state_affixes_button_text_add_prefix: bool = false
@@ -54,6 +38,22 @@ var animation_close_duration: float = 0.12
 @export_group("Scroll Container", "scroll_")
 @export var scroll_bottom_screen_edge_offset: int = 20
 @export var scroll_bar_vertical_width: float = 3.0
+
+
+var selected_option_id: int = -1
+var _option_texts: Dictionary = {}
+var _option_icons: Dictionary = {}
+var _submenu_rest_position: Vector2
+var _animation: Tween
+
+var _submenu_original_parent: Node
+var _submenu_is_in_overlay_container: bool = false
+var _submenu_original_scale: Vector2
+
+
+@onready var submenu_panel: PanelContainer = %SubmenuPanel
+@onready var scroll_container: ScrollContainer = %ScrollContainer
+@onready var options_list: VBoxContainer = %OptionsList
 
 
 func _ready() -> void:

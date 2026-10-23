@@ -1,6 +1,7 @@
 class_name RoomSecretType
 extends RoomType
 
+
 enum Kind {
 	NONE = -1,
 	COMMON_ROOM = 10,
@@ -17,7 +18,6 @@ enum Kind {
 	ERROR_ROOM = 120,
 }
 
-
 const ROOM_SECRET_TYPE_CREATE_ORDER: Array[Kind] = [
 	Kind.PORTAL_ROOM,
 	Kind.COMMON_ROOM,
@@ -32,9 +32,6 @@ const ROOM_SECRET_TYPE_CREATE_ORDER: Array[Kind] = [
 	Kind.ERROR_ROOM,
 	Kind.RED_ROOM,
 ]
-
-
-var _merged_static_texture: Texture2D
 
 
 @export var kind: Kind = Kind.NONE
@@ -78,6 +75,9 @@ var animation_random_max_timer_interval: float = 2.0
 
 @export_group("Placement Config", "placement_")
 @export var placement_config: SecretPlacementConfig = null
+
+
+var _merged_static_texture: Texture2D
 
 
 func generate_secret_background_icon_pair_frames(seed_id: int, background_check: bool = false, icon_check: bool = false) -> Dictionary:

@@ -9,7 +9,6 @@ var wheel_scroll_amount: float = -1.0
 ## Minimum scroll speed in one scroll bar unit per second that will be used during scrolling animation easing.
 var minimum_scroll_speed: float = 60.0
 
-
 var scroll_bar: ScrollBar
 var target_value: float
 var active: bool = false

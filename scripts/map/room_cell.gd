@@ -30,6 +30,11 @@ extends Node2D
 @export var room_coords: Vector2i = Vector2i(-1, -1)
 
 
+var refresh_room_seed: int
+var background_last_frame: int = -1
+var icon_last_frame: int = -1
+
+
 @onready var connection_sprites: Dictionary = {
 	RoomInstanceData.ConnectionDirectionFlags.UP: $Content/Connections/ConnectionUp,
 	RoomInstanceData.ConnectionDirectionFlags.DOWN: $Content/Connections/ConnectionDown,
@@ -47,11 +52,6 @@ extends Node2D
 	RoomInstanceData.BarricadeDirectionFlags.LEFT: $Content/Barricades/BarricadeLeft,
 	RoomInstanceData.BarricadeDirectionFlags.RIGHT: $Content/Barricades/BarricadeRight,
 }
-
-
-var refresh_room_seed: int
-var background_last_frame: int = -1
-var icon_last_frame: int = -1
 
 
 func create(_room_instance_data: RoomInstanceData) -> void:

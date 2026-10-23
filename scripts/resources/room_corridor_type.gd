@@ -6,27 +6,6 @@ enum Kind {
 	BASE = 10,
 }
 
-
-@export var kind: Kind = Kind.NONE
-
-@export_group("Floor", "floor_")
-@export var floor_variants: SpriteFrames
-
-@export_group("Connections", "connections_")
-@export var connections_texture: Texture2D
-@export_range(1.0, 128.0, 1.0)
-var connections_texture_hframes: int = 8
-@export_range(1.0, 128.0, 1.0)
-var connections_texture_vframes: int = 1
-
-@export_group("Barricades", "barricades_")
-@export var barricades_texture: Texture2D
-@export_range(1.0, 128.0, 1.0)
-var barricades_texture_hframes: int = 4
-@export_range(1.0, 128.0, 1.0)
-var barricades_texture_vframes: int = 1
-
-
 const CONNECTION_FRAME_BY_DIRECTION: Dictionary[RoomInstanceData.ConnectionDirectionFlags, int] = {
 	RoomInstanceData.ConnectionDirectionFlags.UP: 0,
 	RoomInstanceData.ConnectionDirectionFlags.DOWN: 1,
@@ -62,6 +41,26 @@ const BARRICADE_DISPLAY_NAME_BY_DIRECTION: Dictionary[RoomInstanceData.Barricade
 	RoomInstanceData.BarricadeDirectionFlags.LEFT: "Left",
 	RoomInstanceData.BarricadeDirectionFlags.RIGHT: "Right",
 }
+
+
+@export var kind: Kind = Kind.NONE
+
+@export_group("Floor", "floor_")
+@export var floor_variants: SpriteFrames
+
+@export_group("Connections", "connections_")
+@export var connections_texture: Texture2D
+@export_range(1.0, 128.0, 1.0)
+var connections_texture_hframes: int = 8
+@export_range(1.0, 128.0, 1.0)
+var connections_texture_vframes: int = 1
+
+@export_group("Barricades", "barricades_")
+@export var barricades_texture: Texture2D
+@export_range(1.0, 128.0, 1.0)
+var barricades_texture_hframes: int = 4
+@export_range(1.0, 128.0, 1.0)
+var barricades_texture_vframes: int = 1
 
 
 func get_kind() -> Kind:

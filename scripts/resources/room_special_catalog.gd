@@ -1,6 +1,7 @@
 class_name RoomSpecialCatalog
 extends Resource
 
+
 @export var room_types: Array[RoomSpecialType] = []
 
 

@@ -23,9 +23,6 @@ enum BarricadeDirectionFlags {
 }
 
 
-var instance_seed_value: int = -1
-
-
 @export var corridor_type: RoomCorridorType
 @export var special_type: RoomSpecialType = null
 @export var secret_type: RoomSecretType = null
@@ -51,6 +48,9 @@ var connection_directions_mask: int = ConnectionDirectionFlags.NONE
 	"Right:8",
 )
 var barricade_directions_mask: int = BarricadeDirectionFlags.NONE
+
+
+var instance_seed_value: int = -1
 
 
 func _init(ignore_default_init: bool = false) -> void:

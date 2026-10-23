@@ -13,9 +13,6 @@ enum Kind {
 }
 
 
-var _merged_static_texture: Texture2D
-
-
 @export var kind: Kind = Kind.NONE
 
 @export_group("Icon")
@@ -35,6 +32,9 @@ var background_hframes: int = 1
 var background_vframes: int = 1
 @export_range(0.0, 127.0, 1.0)
 var background_frame: int = 0
+
+
+var _merged_static_texture: Texture2D
 
 
 func get_kind() -> Kind:

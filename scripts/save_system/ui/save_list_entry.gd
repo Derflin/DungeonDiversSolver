@@ -29,7 +29,7 @@ func setup(new_entry: SaveBrowserEntry) -> void:
 		thumbnail.texture = null
 		name_label.text = "Create new save"
 		saved_label.text = "-"
-		description_label.text = entry.description
+		description_label.text = entry.browser_hint
 		return
 	
 	# Set the list entry details.

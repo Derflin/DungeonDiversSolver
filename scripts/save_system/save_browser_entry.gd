@@ -20,6 +20,7 @@ var description: String = ""
 var timestamp: int = 0
 var thumbnail_path: String = ""
 var game_metadata: Array[Dictionary] = []
+var browser_hint: String = ""
 
 
 ## Creates and returns a SaveBrowserEntry instance with data collected from the provided [param metadata] stored for each existing saved slot.

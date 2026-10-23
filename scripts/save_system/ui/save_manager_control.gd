@@ -596,7 +596,7 @@ func _get_new_save_target_entry() -> SaveBrowserEntry:
 		if _new_save_target_slot >= FIRST_SLOT and not SaveManager.has_user_save(_new_save_target_slot):
 			# Create new save entry using the explicit save entry and initialize it's state.
 			var explicit_entry := SaveBrowserEntry.create_new_user_save_entry(_new_save_target_slot)
-			explicit_entry.description = "Save to the selected empty slot: Slot %d." % _new_save_target_slot
+			explicit_entry.browser_hint = "Save to the selected empty slot: Slot %d." % _new_save_target_slot
 			
 			return explicit_entry
 		
@@ -605,7 +605,7 @@ func _get_new_save_target_entry() -> SaveBrowserEntry:
 	
 	# Select an automatic save entry as the first one available if the explicit new save target wasn't set or it was invalid.
 	var automatic_entry := SaveManager.get_new_user_save_entry()
-	automatic_entry.description = "Save to the first available slot."
+	automatic_entry.browser_hint = "Save to the first available slot."
 	
 	return automatic_entry
 

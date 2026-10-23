@@ -465,12 +465,14 @@ func _prepare_selection_for_list_view() -> void:
 
 ## Sets provided [param entry] as the selected one and updates the display elements dependant on the selected entry.
 func _select_entry(entry: SaveBrowserEntry) -> void:
-	# Filter out processing if the save manager display is currently busy working on something else or performing another transition.
+	# Update selection highlights to restore correct state and filter out processing if the save manager display is currently busy working on something else or performing another transition.
 	if _is_busy or _is_transitioning:
+		_update_selection_highlights()
 		return
 	
-	# Filter out processing if another confirmation is already awaiting a response.
+	# Update selection highlights to restore correct state and filter out processing if another confirmation is already awaiting a response.
 	if _confirmation_pending:
+		_update_selection_highlights()
 		return
 	
 	# Filter out processing if the provided entry doesn't exist.

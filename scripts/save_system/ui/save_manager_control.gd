@@ -1036,9 +1036,19 @@ func _get_occupied_page_numbers() -> Array[int]:
 
 ## Returns a list of available page numbers based on the existing saves.
 func _get_available_page_numbers() -> Array[int]:
+	# Get currently occupied pages numbers.
+	var occupied_pages := _get_occupied_page_numbers()
+	
+	# Return first page or the list of occupied pages numbers (if any exist) if current operation mode is set to load.
+	if _operation_mode == SaveUIEnums.OperationMode.LOAD:
+		if occupied_pages.is_empty():
+			return [FIRST_PAGE]
+		
+		return occupied_pages
+	
 	# Prepare a dictionary for marking which pages exist for the existing saves.
 	var page_set: Dictionary[int, bool] = {FIRST_PAGE: true}
-	for page:int in _get_occupied_page_numbers():
+	for page:int in occupied_pages:
 		page_set[page] = true
 	
 	# Mark the current page as existing if the save manager operation mode is set to save and the current page isn't listed in the page set.

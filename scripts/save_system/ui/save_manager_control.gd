@@ -10,6 +10,12 @@ const NAVIGATION_BUTTON_VARIATION: StringName = &"SaveNavigationButton"
 @export var save_slot_entry_scene: PackedScene
 @export var save_list_entry_scene: PackedScene
 
+@export_group("Transitions", "transition_")
+@export_range(0.01, 0.50, 0.01)
+var transition_fade_out_duration: float = 0.27
+@export_range(0.01, 0.50, 0.01)
+var transition_fade_in_duration: float = 0.30
+
 
 @onready var title_label: Label = $OuterMargin/MainPanel/MainContents/Header/TitleLabel
 @onready var slot_view_button: Button = $OuterMargin/MainPanel/MainContents/Header/SlotViewButton
@@ -44,6 +50,9 @@ var _cached_game_metadata: Array[Dictionary] = []
 
 var _tree_was_paused: bool = false
 var _is_busy: bool = false
+
+var _is_transitioning: bool = false
+var _display_transition_tween: Tween = null
 
 var _visible_slot_entries: Array[SaveSlotEntry] = []
 var _visible_list_entries: Array[SaveListEntry] = []
@@ -94,8 +103,9 @@ func _ready() -> void:
 	# Initialize status label initial text.
 	status_label.text = ""
 	
-	# Make sure that save manager control is hidden by default.
+	# Make sure that save manager control is hidden by default and set as transparent.
 	visible = false
+	_set_display_alpha(0.0)
 
 
 #region Opening/Closing
@@ -135,6 +145,15 @@ func open_save_mode(screenshot: Image) -> void:
 	# Set display title label text.
 	title_label.text = "Save Game"
 	
+	# Mark save manager as currently transitioning.
+	_set_transitioning(true)
+	
+	# Prepare the display as fully transparent before showing it.
+	_set_display_alpha(0.0)
+	
+	# Reset save details contents opacity in case a previous transition changed it.
+	save_details.reset_content_transition()
+	
 	# Make the display visible.
 	visible = true
 	
@@ -143,6 +162,12 @@ func open_save_mode(screenshot: Image) -> void:
 	
 	# Update save manager interfaces.
 	_refresh_interface()
+	
+	# Fade in the complete save manager display.
+	await _fade_display_to(1.0, transition_fade_in_duration)
+	
+	# Mark transition as finished.
+	_set_transitioning(false)
 
 
 ## Opens save manager display in load mode. 
@@ -176,6 +201,15 @@ func open_load_mode() -> void:
 	# Set display title label text.
 	title_label.text = "Load Game"
 	
+	# Mark save manager as currently transitioning.
+	_set_transitioning(true)
+	
+	# Prepare the display as fully transparent before showing it.
+	_set_display_alpha(0.0)
+	
+	# Reset save details contents opacity in case a previous transition changed it.
+	save_details.reset_content_transition()
+	
 	# Make the display visible.
 	visible = true
 	
@@ -184,6 +218,12 @@ func open_load_mode() -> void:
 	
 	# Update save manager interfaces.
 	_refresh_interface()
+	
+	# Fade in the complete save manager display.
+	await _fade_display_to(1.0, transition_fade_in_duration)
+	
+	# Mark transition as finished.
+	_set_transitioning(false)
 
 
 ## Closes save manager display.
@@ -192,12 +232,21 @@ func close() -> void:
 	if not visible:
 		return
 	
-	# Filter out processing if the save manager display is currently busy working on something else.
-	if _is_busy:
+	# Filter out processing if the save manager display is currently busy working on something else or performing another transition.
+	if _is_busy or _is_transitioning:
 		return
+	
+	# Mark save manager as currently transitioning.
+	_set_transitioning(true)
+	
+	# Fade out complete display before hiding and cleaning it.
+	await _fade_display_to(0.0, transition_fade_out_duration)
 	
 	# Make the display hidden.
 	visible = false
+	
+	# Reset opacity while hidden so the control has a clean resting state.
+	_set_display_alpha(1.0)
 	
 	# Set the save manager internal display state.
 	_cached_thumbnail = null
@@ -212,6 +261,7 @@ func close() -> void:
 	
 	# Clear save details scene.
 	save_details.clear_details()
+	save_details.reset_content_transition()
 	
 	# Clear all save browser entries.
 	_clear_slot_entries()
@@ -220,6 +270,9 @@ func close() -> void:
 	
 	# Return tree paused state to what was set before opening the save manager display.
 	get_tree().paused = _tree_was_paused
+	
+	# Mark transition as finished.
+	_set_transitioning(false)
 
 
 ## Closes save manager display after making sure there aren't any unsaved changes in the save manager.
@@ -229,8 +282,8 @@ func request_close() -> void:
 	if not visible:
 		return
 	
-	# Filter out processing if the save manager display is currently busy working on something else.
-	if _is_busy:
+	# Filter out processing if the save manager display is currently busy working on something else or performing another transition.
+	if _is_busy or _is_transitioning:
 		return
 	
 	# Filter out processing if another confirmation is already awaiting a response.
@@ -313,8 +366,8 @@ func _update_details(preserve_edits: bool = false) -> void:
 
 ## Handles slot view button pressed signal to set the save manager browse mode to slot view.
 func _on_slot_view_button_pressed() -> void:
-	# Filter out processing if the save manager display is currently busy working on something else.
-	if _is_busy:
+	# Filter out processing if the save manager display is currently busy working on something else or performing another transition.
+	if _is_busy or _is_transitioning:
 		return
 	
 	# Update displayed status message.
@@ -326,8 +379,8 @@ func _on_slot_view_button_pressed() -> void:
 
 ## Handles list view button pressed signal to set the save manager browse mode to list view.
 func _on_list_view_button_pressed() -> void:
-	# Filter out processing if the save manager display is currently busy working on something else.
-	if _is_busy:
+	# Filter out processing if the save manager display is currently busy working on something else or performing another transition.
+	if _is_busy or _is_transitioning:
 		return
 	
 	# Update displayed status message.
@@ -412,8 +465,8 @@ func _prepare_selection_for_list_view() -> void:
 
 ## Sets provided [param entry] as the selected one and updates the display elements dependant on the selected entry.
 func _select_entry(entry: SaveBrowserEntry) -> void:
-	# Filter out processing if the save manager display is currently busy working on something else.
-	if _is_busy:
+	# Filter out processing if the save manager display is currently busy working on something else or performing another transition.
+	if _is_busy or _is_transitioning:
 		return
 	
 	# Filter out processing if another confirmation is already awaiting a response.
@@ -453,6 +506,12 @@ func _select_entry(entry: SaveBrowserEntry) -> void:
 	if _operation_mode == SaveUIEnums.OperationMode.SAVE and _browse_mode == SaveUIEnums.BrowseMode.SLOT_VIEW and entry.is_user_save() and not entry.exists and not entry.is_new_save():
 		_set_explicit_new_save_target(entry.slot)
 	
+	# Mark save manager as currently transitioning between save entries.
+	_set_transitioning(true)
+	
+	# Fade out current save details before replacing their contents.
+	await save_details.fade_contents_out()
+	
 	# Set entry as the selected one.
 	_selected_entry = entry
 	
@@ -464,6 +523,12 @@ func _select_entry(entry: SaveBrowserEntry) -> void:
 	
 	# Updated selected entry highlight.
 	_update_selection_highlights()
+	
+	# Fade in newly populated save details back.
+	await save_details.fade_contents_in()
+	
+	# Mark entry transition as finished.
+	_set_transitioning(false)
 
 
 ## Updates selected state for existing save slot entries and save list entries.
@@ -1019,8 +1084,8 @@ func _update_pagination_navigation() -> void:
 
 ## Handles previous page button pressed signal to change the displayed page to a previous one available.
 func _on_previous_page_button_pressed() -> void:
-	# Filter out processing if the save manager display is busy working on something else.
-	if _is_busy:
+	# Filter out processing if the save manager display is currently busy working on something else or performing another transition.
+	if _is_busy or _is_transitioning:
 		return
 	
 	# Simply decrement page number if the save manager operation mode is set to save.
@@ -1048,8 +1113,8 @@ func _on_previous_page_button_pressed() -> void:
 
 ## Handles next page button pressed signal to change the displayed page to a next one available.
 func _on_next_page_button_pressed() -> void:
-	# Filter out processing if the save manager display is busy working on something else.
-	if _is_busy:
+	# Filter out processing if the save manager display is currently busy working on something else or performing another transition.
+	if _is_busy or _is_transitioning:
 		return
 	
 	# Simply increment page number if the save manager operation mode is set to save.
@@ -1121,8 +1186,8 @@ func _rebuild_pagination_after_layout() -> void:
 
 ## Handles page number button pressed signal to change the displayed page to the provided [param page] number.
 func _on_page_number_pressed(page: int) -> void:
-	# Filter out processing if the save manager display is busy working on something else.
-	if _is_busy:
+	# Filter out processing if the save manager display is currently busy working on something else or performing another transition.
+	if _is_busy or _is_transitioning:
 		return
 	
 	# Set the current page number to the provided page number.
@@ -1267,8 +1332,8 @@ func _setup_sort_options() -> void:
 
 ## Handles sort option selected signal to change the current sort mode into the selected option.
 func _on_sort_option_selected(index: int) -> void:
-	# Filter out processing if the save manager display is currently busy working on something else.
-	if _is_busy:
+	# Filter out processing if the save manager display is currently busy working on something else or performing another transition.
+	if _is_busy or _is_transitioning:
 		return
 	
 	# Set the current sort mode according to the selected option.
@@ -1367,8 +1432,8 @@ func _get_first_sorted_existing_save() -> SaveBrowserEntry:
 ## If the provided [param entry] save is for the existing user save, then it will first await user confirmation through opened confirmation dialog.
 ## Provided [param display_name] and [param description] will be saved as the created save entry details. 
 func _on_save_requested(entry: SaveBrowserEntry, display_name: String, description: String) -> void:
-	# Filter out processing if the save manager display is currently busy working on something else.
-	if _is_busy:
+	# Filter out processing if the save manager display is currently busy working on something else or performing another transition.
+	if _is_busy or _is_transitioning:
 		return
 	
 	# Filter out processing if the provided save browser entry doesn't exist.
@@ -1440,8 +1505,8 @@ func _perform_save(entry: SaveBrowserEntry, display_name: String, description: S
 
 ## Handles load requested signal to perform a load operation from the provided [param entry] save.
 func _on_load_requested(entry: SaveBrowserEntry) -> void:
-	# Filter out processing if the save manager display is currently busy working on something else.
-	if _is_busy:
+	# Filter out processing if the save manager display is currently busy working on something else or performing another transition.
+	if _is_busy or _is_transitioning:
 		return
 	
 	# Filter out processing if the provided save browser entry doesn't exist.
@@ -1506,8 +1571,8 @@ func _perform_load(entry: SaveBrowserEntry) -> void:
 
 ## Handles delete requested signal to perform a delete operation on the provided [param entry] save.
 func _on_delete_requested(entry: SaveBrowserEntry) -> void:
-	# Filter out processing if the save manager display is currently busy working on something else.
-	if _is_busy:
+	# Filter out processing if the save manager display is currently busy working on something else or performing another transition.
+	if _is_busy or _is_transitioning:
 		return
 	
 	# Filter out processing if the provided save browser entry doesn't exist.
@@ -1650,6 +1715,48 @@ func _confirm_discard_unsaved_changes(action_message: String) -> bool:
 #endregion
 
 
+#region Transitions
+
+## Sets flag whether the save manager is currently performing a visual transition.
+func _set_transitioning(transitioning: bool) -> void:
+	_is_transitioning = transitioning
+
+
+## Fades the complete save manager display to the provided target opacity.
+func _fade_display_to(target_alpha: float, duration: float) -> void:
+	# Kill existing animation if it does exist.
+	if _display_transition_tween != null and _display_transition_tween.is_valid():
+		_display_transition_tween.kill()
+	_display_transition_tween = null
+	
+	# Filter out processing if the display already uses the target opacity.
+	if is_equal_approx(modulate.a, target_alpha):
+		return
+	
+	# Create tween for the animation.
+	_display_transition_tween = create_tween()
+	_display_transition_tween.set_trans(Tween.TRANS_QUAD)
+	_display_transition_tween.set_ease(Tween.EASE_OUT)
+	
+	# Animate styles.
+	_display_transition_tween.tween_property(self, "modulate:a", target_alpha, duration)
+	
+	# Wait until transition finishes.
+	await _display_transition_tween.finished
+	
+	# Remove assigned transition after it has finished.
+	_display_transition_tween = null
+
+
+## Immediately sets the complete save manager display opacity.
+func _set_display_alpha(alpha: float) -> void:
+	var display_modulate := modulate
+	display_modulate.a = alpha
+	modulate = display_modulate
+
+#endregion
+
+
 #region Busy State
 
 ## Sets save manager busy state using the provided [param busy] and sets the status message using the provided [param status] text.
@@ -1666,41 +1773,44 @@ func _set_busy(busy: bool, status: String = "") -> void:
 
 ## Updates interaction state of save manager display buttons based on the busy state of save manager along with it's operating mode.
 func _apply_interaction_state() -> void:
+	# Check what should be the interaction state.
+	var interaction_blocked: bool = _is_busy
+	
 	# Update disabled state of close button.
-	close_button.disabled = _is_busy
+	close_button.disabled = interaction_blocked
 	
 	# Update disabled state of view modes buttons.
-	slot_view_button.disabled = _is_busy
-	list_view_button.disabled = _is_busy
+	slot_view_button.disabled = interaction_blocked
+	list_view_button.disabled = interaction_blocked
 	
 	# Update disabled state of sort option button/options for the list view.
-	sort_option.disabled = _is_busy
+	sort_option.disabled = interaction_blocked
 	
 	# Update disabled state of slot entry buttons inside the slot entries container.
 	for slot_entry: SaveSlotEntry in _visible_slot_entries:
-		if _is_busy:
+		if interaction_blocked:
 			slot_entry.disabled = true
 		else:
 			slot_entry.disabled = _operation_mode == SaveUIEnums.OperationMode.LOAD and not slot_entry.entry.exists
 	
 	# Update disabled state of list entry buttons inside the list entries container.
 	for list_entry: SaveListEntry in _visible_list_entries:
-		list_entry.disabled = _is_busy
+		list_entry.disabled = interaction_blocked
 	
 	# Update disabled state of the page buttons inside the pagination container.
 	for child: Node in page_buttons.get_children():
 		if child is Button:
-			child.disabled = _is_busy
+			child.disabled = interaction_blocked
 	
 	# Update disabled state of the pagination buttons inside the slot view pagination container.
-	if _is_busy:
+	if interaction_blocked:
 		previous_page_button.disabled = true
 		next_page_button.disabled = true
 	else:
 		_update_pagination_navigation()
 	
 	# Update user interactions inside save details scene.
-	save_details.set_interaction_enabled(not _is_busy)
+	save_details.set_interaction_enabled(not interaction_blocked)
 
 #endregion
 

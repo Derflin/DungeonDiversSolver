@@ -7,6 +7,7 @@ signal load_requested(entry: SaveBrowserEntry)
 signal delete_requested(entry: SaveBrowserEntry)
 
 
+@onready var contents_container: VBoxContainer = $MarginContainer/ContentsContainer
 @onready var source_label: Label = $MarginContainer/ContentsContainer/Header/SourceLabel
 @onready var name_edit: LineEdit = $MarginContainer/ContentsContainer/NameField/NameEdit
 @onready var name_badge_overlay: Control = $MarginContainer/ContentsContainer/NameField/BadgeOverlay
@@ -22,6 +23,12 @@ signal delete_requested(entry: SaveBrowserEntry)
 @onready var delete_button: Button = $MarginContainer/ContentsContainer/Footer/DeleteButton
 @onready var primary_button: Button = $MarginContainer/ContentsContainer/Footer/PrimaryButton
 
+
+@export_group("Transitions", "transition_")
+@export_range(0.01, 0.50, 0.01)
+var transition_fade_out_duration: float = 0.15
+@export_range(0.01, 0.50, 0.01)
+var transition_fade_in_duration: float = 0.18
 
 @export_group("Badge Unsaved Changes", "badge_unsaved_")
 @export var badge_unsaved_min_transition_duration: float = 0.04
@@ -60,6 +67,8 @@ var _description_clean_normal_border: Color
 var _description_clean_focus_border: Color
 var _description_clean_read_only_border: Color
 var _description_badge_visible_position: Vector2
+
+var _content_transition_tween: Tween = null
 
 
 func _ready() -> void:
@@ -719,3 +728,56 @@ func _initialize_unsaved_badge_layout() -> void:
 ## Returns a bool value indicating if any of the editable fields have some unsaved changes in them.
 func has_unsaved_changes() -> bool:
 	return _name_dirty or _description_dirty
+
+
+#region Contents Transitions
+
+## Fades out currently displayed save details contents. 
+func fade_contents_out() -> void:
+	await _fade_contents_to(0.0, transition_fade_out_duration)
+
+
+## Fades in currently displayed save details contents.
+func fade_contents_in() -> void:
+	await _fade_contents_to(1.0, transition_fade_in_duration)
+
+
+## Resets save details contents to their normal fully visible state.
+func reset_content_transition() -> void:
+	# Kill existing animation if it does exist.
+	if _content_transition_tween != null and _content_transition_tween.is_valid():
+		_content_transition_tween.kill()
+	_content_transition_tween = null
+	
+	# Reset opacity setting to fully visible.
+	var content_modulate := contents_container.modulate
+	content_modulate.a = 1.0
+	contents_container.modulate = content_modulate
+
+
+## Fades save details contents to the provided target opacity.
+func _fade_contents_to(target_alpha: float, duration: float) -> void:
+	# Kill existing animation if it does exist.
+	if _content_transition_tween != null and _content_transition_tween.is_valid():
+		_content_transition_tween.kill()
+	_content_transition_tween = null
+	
+	# Filter out processing if contents already use the target opacity.
+	if is_equal_approx(contents_container.modulate.a, target_alpha):
+		return
+	
+	# Create tween for the animation.
+	_content_transition_tween = create_tween()
+	_content_transition_tween.set_trans(Tween.TRANS_QUAD)
+	_content_transition_tween.set_ease(Tween.EASE_OUT)
+	
+	# Animate styles.
+	_content_transition_tween.tween_property(contents_container, "modulate:a", target_alpha, duration)
+	
+	# Wait until transition finishes.
+	await _content_transition_tween.finished
+	
+	# Remove assigned transition after it has finished.
+	_content_transition_tween = null
+
+#endregion

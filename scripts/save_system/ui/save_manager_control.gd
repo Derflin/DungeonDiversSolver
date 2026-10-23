@@ -1660,16 +1660,10 @@ func _on_save_requested(entry: SaveBrowserEntry, display_name: String, descripti
 	
 	# Handle overwrite save if the save browser entry already had an existing user save assigned to it.
 	if entry.exists:
-		# Prepare a new entry name to be displayed inside confirmation dialog.
-		var name_for_message := display_name.strip_edges()
-		if name_for_message.is_empty():
-			name_for_message = entry.display_name
-		
 		# Show user the confirmation dialog and await his response.
-		#TODO: make sure that a name_for_message is correct and that it shouldn't be an old name
 		var confirmed := await _request_confirmation(
 			"Overwrite Save",
-			"Overwrite \"%s\"?" % name_for_message,
+			"Overwrite existing save \"%s\"?" % entry.display_name,
 			"Overwrite",
 			"Cancel",
 		)

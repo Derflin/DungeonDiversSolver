@@ -10,11 +10,17 @@ const NAVIGATION_BUTTON_VARIATION: StringName = &"SaveNavigationButton"
 @export var save_slot_entry_scene: PackedScene
 @export var save_list_entry_scene: PackedScene
 
-@export_group("Transitions", "transition_")
+@export_group("Display Transitions", "transition_display_")
 @export_range(0.01, 0.50, 0.01)
-var transition_fade_out_duration: float = 0.27
+var transition_display_fade_out_duration: float = 0.27
 @export_range(0.01, 0.50, 0.01)
-var transition_fade_in_duration: float = 0.30
+var transition_display_fade_in_duration: float = 0.30
+
+@export_group("Entry Transitions", "transition_entry_")
+@export_range(0.01, 0.50, 0.01)
+var transition_entry_fade_out_duration: float = 0.17
+@export_range(0.01, 0.50, 0.01)
+var transition_entry_fade_in_duration: float = 0.20
 
 
 @onready var title_label: Label = $OuterMargin/MainPanel/MainContents/Header/TitleLabel
@@ -31,7 +37,10 @@ var transition_fade_in_duration: float = 0.30
 
 @onready var list_view: VBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView
 @onready var sort_option: OptionButton = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SortRow/SortOption
+@onready var saves_search_edit: LineEdit = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SearchEdit 
 @onready var saves_list: VBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SavesScroll/MarginContainer/SavesList
+@onready var saves_list_new_save_section: VBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SavesScroll/MarginContainer/SavesList/NewSaveSection
+@onready var saves_list_existing_saves_container: VBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SavesScroll/MarginContainer/SavesList/ExistingSavesContainer
 
 @onready var save_details: SaveDetails = $OuterMargin/MainPanel/MainContents/Content/SaveDetails
 @onready var status_label: Label = $OuterMargin/MainPanel/MainContents/StatusLabel
@@ -42,6 +51,11 @@ var _operation_mode: SaveUIEnums.OperationMode = SaveUIEnums.OperationMode.LOAD
 var _browse_mode: SaveUIEnums.BrowseMode = SaveUIEnums.BrowseMode.LIST_VIEW
 var _sort_mode: SaveUIEnums.SortMode = SaveUIEnums.SortMode.LAST_SAVED_DESCENDING
 
+var _search_query: String = ""
+var _search_total_count: int = 0
+var _search_result_count: int = 0
+var _updating_search_edit: bool = false
+
 var _current_page: int = FIRST_PAGE
 var _selected_entry: SaveBrowserEntry = null
 
@@ -50,9 +64,11 @@ var _cached_game_metadata: Array[Dictionary] = []
 
 var _tree_was_paused: bool = false
 var _is_busy: bool = false
-
 var _is_transitioning: bool = false
+
 var _display_transition_tween: Tween = null
+var _saves_list_transition_tween: Tween = null
+var _saves_slot_transition_tween: Tween = null
 
 var _visible_slot_entries: Array[SaveSlotEntry] = []
 var _visible_list_entries: Array[SaveListEntry] = []
@@ -91,6 +107,7 @@ func _ready() -> void:
 	
 	# Connect list view nodes signals.
 	sort_option.item_selected.connect(_on_sort_option_selected)
+	saves_search_edit.text_changed.connect(_on_search_text_changed)
 	
 	# Connect save details scene signals.
 	save_details.save_requested.connect(_on_save_requested)
@@ -160,11 +177,14 @@ func open_save_mode(screenshot: Image) -> void:
 	# Set the tree paused state as true.
 	get_tree().paused = true
 	
+	# Reset saves search field state.
+	_reset_search()
+	
 	# Update save manager interfaces.
 	_refresh_interface()
 	
 	# Fade in the complete save manager display.
-	await _fade_display_to(1.0, transition_fade_in_duration)
+	await _fade_display_to(1.0, transition_display_fade_in_duration)
 	
 	# Mark transition as finished.
 	_set_transitioning(false)
@@ -216,11 +236,14 @@ func open_load_mode() -> void:
 	# Set the tree paused state as true.
 	get_tree().paused = true
 	
+	# Reset saves search field state.
+	_reset_search()
+	
 	# Update save manager interfaces.
 	_refresh_interface()
 	
 	# Fade in the complete save manager display.
-	await _fade_display_to(1.0, transition_fade_in_duration)
+	await _fade_display_to(1.0, transition_display_fade_in_duration)
 	
 	# Mark transition as finished.
 	_set_transitioning(false)
@@ -240,7 +263,7 @@ func close() -> void:
 	_set_transitioning(true)
 	
 	# Fade out complete display before hiding and cleaning it.
-	await _fade_display_to(0.0, transition_fade_out_duration)
+	await _fade_display_to(0.0, transition_display_fade_out_duration)
 	
 	# Make the display hidden.
 	visible = false
@@ -252,6 +275,9 @@ func close() -> void:
 	_cached_thumbnail = null
 	_cached_game_metadata.clear()
 	_selected_entry = null
+	
+	# Reset saves search field state.
+	_reset_search()
 	
 	# Reset status label text.
 	status_label.text = ""
@@ -370,11 +396,11 @@ func _on_slot_view_button_pressed() -> void:
 	if _is_busy or _is_transitioning:
 		return
 	
-	# Update displayed status message.
-	_set_status("")
-	
 	# Set slot view browse mode.
 	_set_browse_mode(SaveUIEnums.BrowseMode.SLOT_VIEW)
+	
+	# Update displayed status message.
+	_restore_default_status()
 
 
 ## Handles list view button pressed signal to set the save manager browse mode to list view.
@@ -383,11 +409,11 @@ func _on_list_view_button_pressed() -> void:
 	if _is_busy or _is_transitioning:
 		return
 	
-	# Update displayed status message.
-	_set_status("")
-	
 	# Set list view browse mode.
 	_set_browse_mode(SaveUIEnums.BrowseMode.LIST_VIEW)
+	
+	# Update displayed status message.
+	_restore_default_status()
 
 
 ## Sets a [param new_mode] for the browser, updates selected save entry for it and refreshes itnerfaces that might have been affected by the changes.
@@ -518,7 +544,7 @@ func _select_entry(entry: SaveBrowserEntry) -> void:
 	_selected_entry = entry
 	
 	# Update displayed status message.
-	_set_status("")
+	_restore_default_status()
 	
 	# Update save details display.
 	_update_details()
@@ -1209,8 +1235,9 @@ func _rebuild_pagination_after_layout() -> void:
 
 ## Handles page number button pressed signal to change the displayed page to the provided [param page] number.
 func _on_page_number_pressed(page: int) -> void:
-	# Filter out processing if the save manager display is currently busy working on something else or performing another transition.
+	# Rebuild pagination to restore its correct state and filter out processing if the save manager display is currently busy working on something else or performing another transition.
 	if _is_busy or _is_transitioning:
+		_rebuild_pagination()
 		return
 	
 	# Set the current page number to the provided page number.
@@ -1240,16 +1267,31 @@ func _go_to_page(page: int) -> void:
 		_update_selection_highlights()
 		return
 	
+	# Mark save manager as currently transitioning.
+	_set_transitioning(true)
+	
 	# Set the new current page number.
 	_current_page = page
 	
 	# Update displayed status message.
-	_set_status("")
+	_restore_default_status()
+	
+	# Update pagination immediately while the old page contents are still shown.
+	_rebuild_pagination()
+	
+	# Fade out old page contents.
+	await _fade_slot_grid_to(0.0, transition_entry_fade_out_duration)
 	
 	# Update save manager interfaces related to the slot view and pages.
 	_rebuild_slot_view()
 	_update_selection_highlights()
 	_apply_interaction_state()
+	
+	# Fade in new page contents.
+	await _fade_slot_grid_to(1.0, transition_entry_fade_in_duration)
+	
+	# Mark entry transition as finished.
+	_set_transitioning(false)
 
 #endregion
 
@@ -1258,57 +1300,77 @@ func _go_to_page(page: int) -> void:
 
 ## Rebuilds save list view by clearing out existing list entries and populating new ones.
 func _rebuild_list_view() -> void:
-	# Clear out existing slot entries.
-	_clear_list_entries()
+	# Stop any partial saves list transition and restore its opacity.
+	_reset_save_list_transition()
+	
+	# Rebuild the pinned create new save section.
+	_rebuild_new_save_section()
+	
+	# Rebuild the existing saves contaienr using the current search and sort settings.
+	_rebuild_existing_saves_container()
+
+
+## Rebuild the create new save section.
+func _rebuild_new_save_section() -> void:
+	# Clear existing nodes in the new save section.
+	_clear_new_save_section()
+	
+	# Set the new save section visibility based on the current operation mode.
+	saves_list_new_save_section.visible = _operation_mode == SaveUIEnums.OperationMode.SAVE
+	
+	# Filter out processing if the new save section is set to be hidden.
+	if not saves_list_new_save_section.visible:
+		return
+	
+	# Create a new save browser entry placeholder instance.
+	var new_save_entry := _get_new_save_target_entry()
+	
+	# Instantiate new list entry.
+	var new_save_control := save_list_entry_scene.instantiate() as SaveListEntry
+	
+	# Add the list entry to the saves list container.
+	saves_list_new_save_section.add_child(new_save_control)
+	
+	# Populate list entry with the save browser entry placeholder details.
+	new_save_control.setup(new_save_entry)
+	
+	# Connect entry placeholder selected signal from the list entry to the local handler function.
+	new_save_control.entry_selected.connect(_on_entry_selected)
+	
+	# Append created list entry placeholder to the field that aggregates all existing list entries.
+	_visible_list_entries.append(new_save_control)
+	
+	# Create a horizontal separator and place it after the list entry placeholder.  
+	var separator := HSeparator.new()
+	saves_list_new_save_section.add_child(separator)
+
+
+## Rebuild the existing saves container.
+func _rebuild_existing_saves_container() -> void:
+	# Clear existing nodes in the existing saves container.
+	_clear_existing_saves_container()
 	
 	# Get list of existing save browser entries.
-	var entries := _get_sorted_existing_saves()
+	var sorted_entries := _get_sorted_existing_saves()
 	
-	# Create a save browser entry placeholder to act as an option to create a new save on top of the list if the save manager operation mode is set to save.
-	if _operation_mode == SaveUIEnums.OperationMode.SAVE:
-		# Create a new save browser entry placeholder instance.
-		var new_save_entry := _get_new_save_target_entry()
-		
-		# Instantiate new list entry.
-		var new_save_control := save_list_entry_scene.instantiate() as SaveListEntry
-		
-		# Add the list entry to the saves list container.
-		saves_list.add_child(new_save_control)
-		
-		# Populate list entry with the save browser entry placeholder details.
-		new_save_control.setup(new_save_entry)
-		
-		# Connect entry placeholder selected signal from the list entry to the local handler function.
-		new_save_control.entry_selected.connect(_on_entry_selected)
-		
-		# Append created list entry placeholder to the field that aggregates all existing list entries.
-		_visible_list_entries.append(new_save_control)
-		
-		# Create a horizontal separator and place it after the list entry placeholder.  
-		var separator := HSeparator.new()
-		saves_list.add_child(separator)
+	# Save the unfiltered count of save entries.
+	_search_total_count = sorted_entries.size()
 	
-	# Prepare empty label to be put inside save list view if there wouldn't be any existing save browser entries.
+	# Prepare filtered save entries results.
+	var entries: Array[SaveBrowserEntry] = []
+	for entry: SaveBrowserEntry in sorted_entries:
+		if _entry_matches_search(entry):
+			entries.append(entry)
+	
+	# Save the filtered count of save entries.
+	_search_result_count = entries.size()
+	
+	# Prepare empty saves message to be put inside save list view if there wouldn't be any existing save browser entries.
 	if entries.is_empty():
-		# Create an empty container for expanding over the whole empty area.
-		var empty_container := MarginContainer.new()
-		empty_container.add_theme_constant_override("margin_left", 6)
-		empty_container.add_theme_constant_override("margin_top", 6)
-		empty_container.add_theme_constant_override("margin_right", 6)
-		empty_container.add_theme_constant_override("margin_bottom", 6)
-		empty_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		empty_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		
-		# Create an empty label.
-		var empty_label := Label.new()
-		empty_label.text = "No saves found."
-		empty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		
-		# Add empty label as a child of the empty container.
-		empty_container.add_child(empty_label)
-		
-		# Add empty container as a child of the saves list.
-		saves_list.add_child(empty_container)
+		if not _search_query.is_empty() and _search_total_count > 0:
+			_add_existing_saves_container_message("No saves match your search.")
+		else:
+			_add_existing_saves_container_message("No saves found.")
 		
 		return
 	
@@ -1318,7 +1380,7 @@ func _rebuild_list_view() -> void:
 		var list_control := save_list_entry_scene.instantiate() as SaveListEntry
 		
 		# Add the list entry to the saves list container.
-		saves_list.add_child(list_control)
+		saves_list_existing_saves_container.add_child(list_control)
 		
 		# Populate list entry with the save browser entry details.
 		list_control.setup(entry)
@@ -1330,13 +1392,59 @@ func _rebuild_list_view() -> void:
 		_visible_list_entries.append(list_control)
 
 
+## Adds a centered informational message to the saves list.
+func _add_existing_saves_container_message(message: String) -> void:
+	# Create an empty container for expanding over the whole empty area.
+	var empty_container := MarginContainer.new()
+	empty_container.add_theme_constant_override("margin_left", 6)
+	empty_container.add_theme_constant_override("margin_top", 6)
+	empty_container.add_theme_constant_override("margin_right", 6)
+	empty_container.add_theme_constant_override("margin_bottom", 6)
+	empty_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	empty_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	
+	# Create an empty label.
+	var empty_label := Label.new()
+	empty_label.text = message
+	empty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	
+	# Add empty label as a child of the empty container.
+	empty_container.add_child(empty_label)
+	
+	# Add empty container as a child of the existing saves container.
+	saves_list_existing_saves_container.add_child(empty_container)
+
+
+## Clears out all existing list entries set in the new save section.
+func _clear_new_save_section() -> void:
+	# Clear internal list used to aggregate all existing list entries.
+	for child: Node in saves_list_new_save_section.get_children():
+		if child is SaveListEntry:
+			_visible_list_entries.erase(child)
+	
+	# Clear out all list entries children assigned to the new save section.
+	_clear_container(saves_list_new_save_section)
+
+
+## Clears out all existing list entries set in the existing saves container.
+func _clear_existing_saves_container() -> void:
+	# Clear internal list used to aggregate all existing list entries.
+	for child: Node in saves_list_existing_saves_container.get_children():
+		if child is SaveListEntry:
+			_visible_list_entries.erase(child)
+	
+	# Clear out all list entries children assigned to the existing saves container.
+	_clear_container(saves_list_existing_saves_container)
+
+
 ## Clears out all existing list entries.
 func _clear_list_entries() -> void:
+	# Clear out all list entries children assigned to new save section and existing saves container.
+	_clear_new_save_section()
+	_clear_existing_saves_container()
+	
 	# Clear internal list used to aggregate all existing list entries.
 	_visible_list_entries.clear()
-	
-	# Clear out all list entries children assigned to saves list container.
-	_clear_container(saves_list)
 
 
 ## Populates and initializes the default sort option for the list view display.
@@ -1363,18 +1471,11 @@ func _on_sort_option_selected(index: int) -> void:
 	_sort_mode = sort_option.get_item_id(index) as SaveUIEnums.SortMode
 	
 	# Update displayed status message.
-	_set_status("")
+	_restore_default_status()
 	
 	# Handle the state and rebuild the list view display to handle the changed sort mode.
 	if _browse_mode == SaveUIEnums.BrowseMode.LIST_VIEW:
-		# Clear and repopulate the list view display.
-		_rebuild_list_view()
-		
-		# Updated selected entry highlight.
-		_update_selection_highlights()
-		
-		# Update state of user interactive elements of the display.
-		_apply_interaction_state()
+		_start_save_list_transition()
 
 
 ## Returns a list of existing save browser entries.
@@ -1445,6 +1546,45 @@ func _get_first_sorted_existing_save() -> SaveBrowserEntry:
 	
 	# Return first available entry.
 	return entries[0]
+
+#endregion
+
+
+#region Search
+
+## Handles changes to the list view search field.
+## Provided [param text] string is the current string value assigned to the search field when the signal triggered.
+func _on_search_text_changed(text: String) -> void:
+	# Filter out processing if the search edit is currently being updated.
+	if _updating_search_edit:
+		return
+	
+	# Save search query inside an internal variable.
+	_search_query = text.strip_edges()
+	
+	# Rebuild list view for the existing saves container.
+	_start_save_list_transition()
+
+
+## Checks whether an existing save matches the current search query.
+## Returns bool value indicating if the provided [param entry] matches to the search query.
+func _entry_matches_search(entry: SaveBrowserEntry) -> bool:
+	# Return true if search query is empty.
+	if _search_query.is_empty():
+		return true
+	
+	return entry.display_name.containsn(_search_query)
+
+
+## Resets the current state of the saves search field.
+func _reset_search() -> void:
+	_search_query = ""
+	_search_total_count = 0
+	_search_result_count = 0
+	
+	_updating_search_edit = true
+	saves_search_edit.text = ""
+	_updating_search_edit = false
 
 #endregion
 
@@ -1740,12 +1880,12 @@ func _confirm_discard_unsaved_changes(action_message: String) -> bool:
 
 #region Transitions
 
-## Sets flag whether the save manager is currently performing a visual transition.
+## Sets flag whether the save manager is currently performing a visual transition to the provided [param transitioning] flag.
 func _set_transitioning(transitioning: bool) -> void:
 	_is_transitioning = transitioning
 
 
-## Fades the complete save manager display to the provided target opacity.
+## Fades the save manager display target opacity to the provided [param target_alpha] value over the provided [param duration] in seconds.
 func _fade_display_to(target_alpha: float, duration: float) -> void:
 	# Kill existing animation if it does exist.
 	if _display_transition_tween != null and _display_transition_tween.is_valid():
@@ -1771,11 +1911,93 @@ func _fade_display_to(target_alpha: float, duration: float) -> void:
 	_display_transition_tween = null
 
 
-## Immediately sets the complete save manager display opacity.
+## Immediately sets the save manager display opacity to the provided [param alpha] value.
 func _set_display_alpha(alpha: float) -> void:
 	var display_modulate := modulate
 	display_modulate.a = alpha
 	modulate = display_modulate
+
+
+## Initialize and start save list transition to animate fade out and in animation for the list save browser entries.
+func _start_save_list_transition() -> void:
+	# Kill existing animation if it does exist.
+	if _saves_list_transition_tween != null and _saves_list_transition_tween.is_valid():
+		_saves_list_transition_tween.kill()
+	_saves_list_transition_tween = null
+	
+	# Create tween for the animation.
+	var tween := create_tween()
+	_saves_list_transition_tween = tween
+	tween.set_trans(Tween.TRANS_QUAD)
+	tween.set_ease(Tween.EASE_OUT)
+	
+	# Animate styles.
+	tween.tween_property(saves_list_existing_saves_container, "modulate:a", 0.0, transition_entry_fade_out_duration)
+	
+	# Set callback function to trigger after transition ends.
+	tween.tween_callback(_refresh_save_list_after_transition)
+	
+	# Fade in the latest results.
+	tween.tween_property(saves_list_existing_saves_container, "modulate:a", 1.0, transition_entry_fade_in_duration)
+	
+	# Set signal handler to detect finished transition.
+	tween.finished.connect(_on_save_list_transition_finished.bind(tween))
+
+
+## Rebuilds the current search results while they are invisible.
+func _refresh_save_list_after_transition() -> void:
+	_rebuild_existing_saves_container()
+	_update_selection_highlights()
+	_apply_interaction_state()
+	_restore_default_status()
+
+
+## Handles save list transition tween finished signal to mark it as done.
+## Uses provided [param finished_tween] whether it's the same tween as the one currently active and if yes, then it clears it.
+func _on_save_list_transition_finished(finished_tween: Tween) -> void:
+	if _saves_list_transition_tween == finished_tween:
+		_saves_list_transition_tween = null
+
+
+## Stops the search/saves list transition and resotres normal visibility.
+func _reset_save_list_transition() -> void:
+	# Kill existing animation if it does exist.
+	if _saves_list_transition_tween != null and _saves_list_transition_tween.is_valid():
+		_saves_list_transition_tween.kill()
+	_saves_list_transition_tween = null
+	
+	# Immediately sets the opacity styles to the node.
+	var container_modulate := saves_list_existing_saves_container.modulate
+	container_modulate.a = 1.0
+	saves_list_existing_saves_container.modulate = container_modulate
+
+
+## Fades the saves slot grid to the provided target opacity [param target_alpha] over the provided [param duration] in seconds.
+func _fade_slot_grid_to(target_alpha: float, duration: float) -> void:
+	# Kill existing animation if it does exist.
+	if _saves_slot_transition_tween != null and _saves_slot_transition_tween.is_valid():
+		_saves_slot_transition_tween.kill()
+	_saves_slot_transition_tween = null
+	
+	# Filter out processing if the slot grid already uses the target opacity.
+	if is_equal_approx(slot_grid.modulate.a, target_alpha):
+		return
+	
+	# Create tween for the animation.
+	var tween := create_tween()
+	_saves_slot_transition_tween = tween
+	tween.set_trans(Tween.TRANS_QUAD)
+	tween.set_ease(Tween.EASE_OUT)
+	
+	# Animate styles.
+	tween.tween_property(slot_grid, "modulate:a", target_alpha, duration)
+	
+	# Wait until transition finishes.
+	await tween.finished
+	
+	# Remove assigned transition after it has finished.
+	if _saves_slot_transition_tween == tween:
+		_saves_slot_transition_tween = null
 
 #endregion
 
@@ -1808,6 +2030,9 @@ func _apply_interaction_state() -> void:
 	
 	# Update disabled state of sort option button/options for the list view.
 	sort_option.disabled = interaction_blocked
+	
+	# Update editable state of the search field for the save list view.
+	saves_search_edit.editable = not interaction_blocked
 	
 	# Update disabled state of slot entry buttons inside the slot entries container.
 	for slot_entry: SaveSlotEntry in _visible_slot_entries:
@@ -1843,6 +2068,17 @@ func _apply_interaction_state() -> void:
 ## Sets a new status label text using the provided [param text].
 func _set_status(text: String) -> void:
 	status_label.text = text
+
+
+## Restores the passive/default status message contents.
+## Search results are displayed while an active search exists in list view.
+func _restore_default_status() -> void:
+	# Set status message as the search results if the browse mode is set to list view and there exists a search query that isn't empty.
+	if _browse_mode == SaveUIEnums.BrowseMode.LIST_VIEW and not _search_query.is_empty():
+		_set_status("%d of %d saves found." % [_search_result_count, _search_total_count])
+		return
+	
+	_set_status("")
 
 #endregion
 

@@ -154,6 +154,11 @@ text = "Sort:"
 [node name="SortOption" type="OptionButton" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SortRow" unique_id=1563297835]
 layout_mode = 2
 
+[node name="SearchEdit" type="LineEdit" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView" unique_id=580064937]
+layout_mode = 2
+placeholder_text = "Search save names..."
+clear_button_enabled = true
+
 [node name="SavesScroll" type="ScrollContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView" unique_id=1971339262]
 layout_mode = 2
 size_flags_vertical = 3
@@ -168,6 +173,13 @@ theme_override_constants/margin_right = 4
 [node name="SavesList" type="VBoxContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SavesScroll/MarginContainer" unique_id=1487103521]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="NewSaveSection" type="VBoxContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SavesScroll/MarginContainer/SavesList" unique_id=2074971295]
+layout_mode = 2
+
+[node name="ExistingSavesContainer" type="VBoxContainer" parent="OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SavesScroll/MarginContainer/SavesList" unique_id=1665054764]
+layout_mode = 2
 size_flags_vertical = 3
 
 [node name="SaveDetails" parent="OuterMargin/MainPanel/MainContents/Content" unique_id=1221008773 instance=ExtResource("1_1fu6j")]

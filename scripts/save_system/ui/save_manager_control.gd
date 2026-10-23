@@ -671,10 +671,17 @@ func _normalize_current_page() -> void:
 	if _operation_mode == SaveUIEnums.OperationMode.SAVE:
 		return
 	
-	# Set current page counter to first one if current page counter doesn't belong to any page that exists for the existing saves. 
+	# Get available pages numbers.
 	var pages := _get_available_page_numbers()
-	if not pages.has(_current_page):
+	
+	# Set current page to first one if there aren't any available pages.
+	if pages.is_empty():
 		_current_page = FIRST_PAGE
+		return
+	
+	# Set current page counter to first one available if current page counter doesn't belong to any page that exists for the existing saves. 
+	if not pages.has(_current_page):
+		_current_page = pages[0]
 
 
 ## Calculates and returns an integer representing first slot number for the provided [param page] number. 
@@ -832,13 +839,17 @@ func _pagination_pages_fit(pages: Array[int], available_width: float) -> bool:
 
 ## Returns pages that should normally never be removed while truncating pagination.
 ## Those include: page 1, nearest occupied page before current, current page, nearest occupied page after current, last occupied page.
+## In load operation mode the page 1 will be replaced by the first available page if any occupied page exists.
 ## Uses provided [param occupied_pages] to determine what is the previous, next and the last available page that contain any saves at all.
 func _get_required_pagination_pages(occupied_pages: Array[int]) -> Array[int]:
 	# Prepare variable to store the result to return.
 	var pages: Array[int] = []
 	
-	# Append first page to the result.
-	_append_unique_page(pages, FIRST_PAGE)
+	# Append first available page to the result.
+	if _operation_mode == SaveUIEnums.OperationMode.LOAD and not occupied_pages.is_empty():
+		_append_unique_page(pages, occupied_pages[0])
+	else:
+		_append_unique_page(pages, FIRST_PAGE)
 	
 	# Append previous page to the result if it exists.
 	var previous_page := _get_previous_occupied_page(occupied_pages, _current_page)

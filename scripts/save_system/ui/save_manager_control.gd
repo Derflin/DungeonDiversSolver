@@ -17,11 +17,11 @@ var transition_display_fade_out_duration: float = 0.27
 @export_range(0.01, 0.50, 0.01)
 var transition_display_fade_in_duration: float = 0.30
 
-@export_group("Entry Transitions", "transition_entry_")
+@export_group("Entry Browser Transitions", "transition_browser_entry_")
 @export_range(0.01, 0.50, 0.01)
-var transition_entry_fade_out_duration: float = 0.17
+var transition_browser_entry_fade_out_duration: float = 0.17
 @export_range(0.01, 0.50, 0.01)
-var transition_entry_fade_in_duration: float = 0.20
+var transition_browser_entry_fade_in_duration: float = 0.20
 
 
 var _operation_mode: SaveUIEnums.OperationMode = SaveUIEnums.OperationMode.LOAD
@@ -42,6 +42,9 @@ var _cached_game_metadata: Array[Dictionary] = []
 var _tree_was_paused: bool = false
 var _is_busy: bool = false
 var _is_transitioning: bool = false
+
+var _selection_transition_active: bool = false
+var _selection_transition_version: int = 0
 
 var _display_transition_tween: Tween = null
 var _saves_list_transition_tween: Tween = null
@@ -437,8 +440,9 @@ func _update_details(preserve_edits: bool = false) -> void:
 
 ## Handles slot view button pressed signal to set the save manager browse mode to slot view.
 func _on_slot_view_button_pressed() -> void:
-	# Filter out processing if the save manager display is currently busy working on something else or performing another transition.
+	# Update view buttons and filter out processing if the save manager display is currently busy working on something else or performing another transition.
 	if _is_busy or _is_transitioning:
+		_update_view_buttons()
 		return
 	
 	# Set slot view browse mode.
@@ -450,8 +454,9 @@ func _on_slot_view_button_pressed() -> void:
 
 ## Handles list view button pressed signal to set the save manager browse mode to list view.
 func _on_list_view_button_pressed() -> void:
-	# Filter out processing if the save manager display is currently busy working on something else or performing another transition.
+	# Update view buttons and filter out processing if the save manager display is currently busy working on something else or performing another transition.
 	if _is_busy or _is_transitioning:
+		_update_view_buttons()
 		return
 	
 	# Set list view browse mode.
@@ -537,7 +542,7 @@ func _prepare_selection_for_list_view() -> void:
 ## Sets provided [param entry] as the selected one and updates the display elements dependant on the selected entry.
 func _select_entry(entry: SaveBrowserEntry) -> void:
 	# Update selection highlights to restore correct state and filter out processing if the save manager display is currently busy working on something else or performing another transition.
-	if _is_busy or _is_transitioning:
+	if _is_busy or (_is_transitioning and not _selection_transition_active):
 		_update_selection_highlights()
 		return
 	
@@ -554,12 +559,12 @@ func _select_entry(entry: SaveBrowserEntry) -> void:
 	var same_entry: bool = _selected_entry != null and _selected_entry.entry_id == entry.entry_id
 	
 	# Updated selected entry highlight and filter out further processing if the provided entry is the same as the already selected one and there aren't any unsaved changes.
-	if same_entry and not save_details.has_unsaved_changes():
+	if same_entry and (not save_details.has_unsaved_changes() or _selection_transition_active):
 		_update_selection_highlights()
 		return
 	
 	# Request confirmation before discarding any existing unsaved edits if there are any.
-	if save_details.has_unsaved_changes():
+	if save_details.has_unsaved_changes() and not _selection_transition_active:
 		# Prepare a discard message to be displayed inside the confirmation dialog.
 		var discard_message: String
 		if same_entry:
@@ -579,29 +584,17 @@ func _select_entry(entry: SaveBrowserEntry) -> void:
 	if _operation_mode == SaveUIEnums.OperationMode.SAVE and _browse_mode == SaveUIEnums.BrowseMode.SLOT_VIEW and entry.is_user_save() and not entry.exists and not entry.is_new_save():
 		_set_explicit_new_save_target(entry.slot)
 	
-	# Mark save manager as currently transitioning between save entries.
-	_set_transitioning(true)
-	
-	# Fade out current save details before replacing their contents.
-	await save_details.fade_contents_out()
-	
 	# Set entry as the selected one.
 	_selected_entry = entry
 	
 	# Update displayed status message.
 	_restore_default_status()
 	
-	# Update save details display.
-	_update_details()
-	
 	# Updated selected entry highlight.
 	_update_selection_highlights()
 	
-	# Fade in newly populated save details back.
-	await save_details.fade_contents_in()
-	
-	# Mark entry transition as finished.
-	_set_transitioning(false)
+	# Start or restart the save details transition.
+	_start_selection_transition()
 
 
 ## Updates selected state for existing save slot entries and save list entries.
@@ -1325,7 +1318,7 @@ func _go_to_page(page: int) -> void:
 	_rebuild_pagination()
 	
 	# Fade out old page contents.
-	await _fade_slot_grid_to(0.0, transition_entry_fade_out_duration)
+	await _fade_slot_grid_to(0.0, transition_browser_entry_fade_out_duration)
 	
 	# Update save manager interfaces related to the slot view and pages.
 	_rebuild_slot_view()
@@ -1333,7 +1326,7 @@ func _go_to_page(page: int) -> void:
 	_apply_interaction_state()
 	
 	# Fade in new page contents.
-	await _fade_slot_grid_to(1.0, transition_entry_fade_in_duration)
+	await _fade_slot_grid_to(1.0, transition_browser_entry_fade_in_duration)
 	
 	# Mark entry transition as finished.
 	_set_transitioning(false)
@@ -1508,8 +1501,9 @@ func _setup_sort_options() -> void:
 
 ## Handles sort option selected signal to change the current sort mode into the selected option.
 func _on_sort_option_selected(index: int) -> void:
-	# Filter out processing if the save manager display is currently busy working on something else or performing another transition.
+	# Update sort option selection field and filter out processing if the save manager display is currently busy working on something else or performing another transition.
 	if _is_busy or _is_transitioning:
+		_update_sort_option_selection()
 		return
 	
 	# Set the current sort mode according to the selected option.
@@ -1521,6 +1515,14 @@ func _on_sort_option_selected(index: int) -> void:
 	# Handle the state and rebuild the list view display to handle the changed sort mode.
 	if _browse_mode == SaveUIEnums.BrowseMode.LIST_VIEW:
 		_start_save_list_transition()
+
+
+## Updates sort option selection by checking which sort mode should be selected based on the saved sort option and selecting it.
+func _update_sort_option_selection() -> void:
+	for index: int in range(sort_option.item_count):
+		if sort_option.get_item_id(index) == _sort_mode:
+			sort_option.select(index)
+			return
 
 
 ## Returns a list of existing save browser entries.
@@ -1977,13 +1979,13 @@ func _start_save_list_transition() -> void:
 	tween.set_ease(Tween.EASE_OUT)
 	
 	# Animate styles.
-	tween.tween_property(saves_list_existing_saves_container, "modulate:a", 0.0, transition_entry_fade_out_duration)
+	tween.tween_property(saves_list_existing_saves_container, "modulate:a", 0.0, transition_browser_entry_fade_out_duration)
 	
 	# Set callback function to trigger after transition ends.
 	tween.tween_callback(_refresh_save_list_after_transition)
 	
 	# Fade in the latest results.
-	tween.tween_property(saves_list_existing_saves_container, "modulate:a", 1.0, transition_entry_fade_in_duration)
+	tween.tween_property(saves_list_existing_saves_container, "modulate:a", 1.0, transition_browser_entry_fade_in_duration)
 	
 	# Set signal handler to detect finished transition.
 	tween.finished.connect(_on_save_list_transition_finished.bind(tween))
@@ -2044,6 +2046,72 @@ func _fade_slot_grid_to(target_alpha: float, duration: float) -> void:
 	if _saves_slot_transition_tween == tween:
 		_saves_slot_transition_tween = null
 
+
+## Starts an entry selection transition by assigning a new transition version, setting up save details state and starting the fade out transition.
+## Also connects the transition tween fade in code section to trigger after finished signal by calling "_on_selection_fade_out_finished" function.
+func _start_selection_transition() -> void:
+	# Assign and save the new transition version to keep track which version current tween uses.
+	_selection_transition_version += 1
+	var transition_version := _selection_transition_version
+	
+	# Mark this specific kind of transition as active.
+	_selection_transition_active = true
+	_set_transitioning(true)
+	
+	# Disable interactions with save details, since the visible contents may temporarily belong to the previous selection while transition is running.
+	save_details.set_interaction_enabled(false)
+	
+	# Get transition tween after starting the old contents fade out.
+	var tween := save_details.start_contents_fade_out()
+	
+	# Proceed directly to the after fade out finished section if the transition tween is empty.
+	if tween == null:
+		_on_selection_fade_out_finished(transition_version)
+		return
+	
+	# Connect transition tween finished signal to trigger the after fade out finished section.
+	tween.finished.connect(_on_selection_fade_out_finished.bind(transition_version), CONNECT_ONE_SHOT)
+
+
+## Handles transition tween fade out finished signal by updating the save details with the selected save entry and starting the fade in transition.
+## Also connects the transition tween clean up code section to trigger after finished signal by calling "_on_selection_fade_in_finished" function.
+## Provided [param transition_version] is used to determine whether a different transition hasn't started in the meantime, in which case this transition should stop.
+func _on_selection_fade_out_finished(transition_version: int) -> void:
+	# Filter out processing if the current transition version is different then the provided transition version for the finished transition.
+	# This means that another transition has started in the meantime, which should result in current transition being stopped. 
+	if transition_version != _selection_transition_version:
+		return
+	
+	# Populate save details for the latest selected entry.
+	_update_details()
+	
+	# Get transition tween after starting the new contents fade in.
+	var tween := save_details.start_contents_fade_in()
+	
+	# Proceed directly to the after fade in finished section if the transition tween is empty.
+	if tween == null:
+		_on_selection_fade_in_finished(transition_version)
+		return
+	
+	# Connect transition tween finished signal to trigger the after fade in finished section.
+	tween.finished.connect(_on_selection_fade_in_finished.bind(transition_version), CONNECT_ONE_SHOT)
+
+
+## Handles transition tween fade in finished signal by cleaning up after finishing the transition. Disable the transition flag and updates interactions.
+## Provided [param transition_version] is used to determine whether a different transition hasn't started in the meantime, in which case this transition should
+func _on_selection_fade_in_finished(transition_version: int) -> void:
+	# Filter out processing if the current transition version is different then the provided transition version for the finished transition.
+	# This means that another transition has started in the meantime, which should result in current transition being stopped. 
+	if transition_version != _selection_transition_version:
+		return
+	
+	# Clean transition state after finishing it up.
+	_selection_transition_active = false
+	_set_transitioning(false)
+	
+	# Update state of user interactive elements of the display.
+	_apply_interaction_state()
+
 #endregion
 
 
@@ -2103,7 +2171,8 @@ func _apply_interaction_state() -> void:
 		_update_pagination_navigation()
 	
 	# Update user interactions inside save details scene.
-	save_details.set_interaction_enabled(not interaction_blocked)
+	var details_interactions_blocked: bool = interaction_blocked or _selection_transition_active
+	save_details.set_interaction_enabled(not details_interactions_blocked)
 
 #endregion
 

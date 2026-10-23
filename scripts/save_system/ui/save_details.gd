@@ -732,16 +732,6 @@ func has_unsaved_changes() -> bool:
 
 #region Contents Transitions
 
-## Fades out currently displayed save details contents. 
-func fade_contents_out() -> void:
-	await _fade_contents_to(0.0, transition_fade_out_duration)
-
-
-## Fades in currently displayed save details contents.
-func fade_contents_in() -> void:
-	await _fade_contents_to(1.0, transition_fade_in_duration)
-
-
 ## Resets save details contents to their normal fully visible state.
 func reset_content_transition() -> void:
 	# Kill existing animation if it does exist.
@@ -755,29 +745,55 @@ func reset_content_transition() -> void:
 	contents_container.modulate = content_modulate
 
 
-## Fades save details contents to the provided target opacity.
-func _fade_contents_to(target_alpha: float, duration: float) -> void:
+## Starts currently displayed save details contents fade out.
+func start_contents_fade_out() -> Tween:
+	return _start_contents_fade_to(0.0, transition_fade_out_duration)
+
+
+## Starts currently displayed save details contents fade in.
+func start_contents_fade_in() -> Tween:
+	return _start_contents_fade_to(1.0, transition_fade_in_duration)
+
+
+## Starts save details contents opacity fade to the provided [param target_alpha] value over the provided [param duration] in seconds.
+func _start_contents_fade_to(target_alpha: float, duration: float) -> Tween:
 	# Kill existing animation if it does exist.
 	if _content_transition_tween != null and _content_transition_tween.is_valid():
 		_content_transition_tween.kill()
 	_content_transition_tween = null
 	
-	# Filter out processing if contents already use the target opacity.
-	if is_equal_approx(contents_container.modulate.a, target_alpha):
-		return
+	# Calculate remaining distance based on the opacity state.
+	var remaining_distance: float = abs(contents_container.modulate.a - target_alpha)
+	
+	# Apply visual state immediately and filter out further processing if the calculated distance is almost or just done.
+	if remaining_distance <= 0.001:
+		var content_modulate := contents_container.modulate
+		content_modulate.a = target_alpha
+		contents_container.modulate = content_modulate
+		return null
+	
+	# Calculate animation parameters.
+	var actual_duration := duration * remaining_distance
 	
 	# Create tween for the animation.
-	_content_transition_tween = create_tween()
-	_content_transition_tween.set_trans(Tween.TRANS_QUAD)
-	_content_transition_tween.set_ease(Tween.EASE_OUT)
+	var tween := create_tween()
+	_content_transition_tween = tween
+	tween.set_trans(Tween.TRANS_QUAD)
+	tween.set_ease(Tween.EASE_OUT)
 	
 	# Animate styles.
-	_content_transition_tween.tween_property(contents_container, "modulate:a", target_alpha, duration)
+	tween.tween_property(contents_container, "modulate:a", target_alpha, actual_duration)
 	
-	# Wait until transition finishes.
-	await _content_transition_tween.finished
+	# Connect tween finished signal to handle cleaning up after the tween.
+	tween.finished.connect(_on_content_transition_finished.bind(tween), CONNECT_ONE_SHOT)
 	
-	# Remove assigned transition after it has finished.
-	_content_transition_tween = null
+	return tween
+
+
+## Handles content transition tween finished signal to mark it as done.
+## Uses provided [param finished_tween] whether it's the same tween as the one currently active and if yes, then it clears it.
+func _on_content_transition_finished(finished_tween: Tween) -> void:
+	if _content_transition_tween == finished_tween:
+		_content_transition_tween = null
 
 #endregion

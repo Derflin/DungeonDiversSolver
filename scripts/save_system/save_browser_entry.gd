@@ -7,11 +7,14 @@ enum Source {
 	EXAMPLE,
 }
 
+const DEFAULT_EXAMPLE_ORDER: int = 1000
+
 
 var source: Source = Source.USER_SAVE
 var entry_id: String = ""
 var slot: int = -1
 var example_id: String = ""
+var example_order: int = DEFAULT_EXAMPLE_ORDER
 
 var is_new_save_entry: bool = false
 var exists: bool = false
@@ -37,6 +40,33 @@ static func from_user_metadata(metadata: SaveMetadata) -> SaveBrowserEntry:
 	entry.thumbnail_path = metadata.thumbnail_path
 	entry.display_name = str(metadata.custom.get("display_name", "Save %d" % metadata.slot))
 	entry.description = str(metadata.custom.get("description", ""))
+	
+	var saved_game_metadata: Variant = metadata.custom.get("game_metadata", [])
+	if saved_game_metadata is Array:
+		for item: Variant in saved_game_metadata:
+			if item is Dictionary:
+				entry.game_metadata.append(item.duplicate(true))
+	
+	# Return prepared save browser entry.
+	return entry
+
+
+## Creates and returns a SaveBrowserEntry instance representing a packaged read-only example save.
+static func from_example_metadata(_example_id: String, metadata: SaveMetadata) -> SaveBrowserEntry:
+	# Instantiate save browser entry.
+	var entry := SaveBrowserEntry.new()
+	
+	# Initialize it with the provided metadata.
+	entry.source = Source.EXAMPLE
+	entry.example_id = _example_id
+	entry.entry_id = "example:%s" % _example_id
+	entry.slot = -1
+	entry.exists = true
+	entry.timestamp = 0
+	var fallback_name := _example_id.replace("_", " ").capitalize()
+	entry.display_name = str(metadata.custom.get("display_name", fallback_name))
+	entry.description = str(metadata.custom.get("description", ""))
+	entry.example_order = int(metadata.custom.get("example_order", DEFAULT_EXAMPLE_ORDER))
 	
 	var saved_game_metadata: Variant = metadata.custom.get("game_metadata", [])
 	if saved_game_metadata is Array:

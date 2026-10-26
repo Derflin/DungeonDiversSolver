@@ -36,7 +36,12 @@ func setup(new_entry: SaveBrowserEntry) -> void:
 	thumbnail.visible = true
 	thumbnail.texture = SaveManager.get_thumbnail_texture(entry)
 	name_label.text = entry.display_name
-	saved_label.text = SaveManager.format_timestamp(entry.timestamp)
+	if entry.is_example():
+		saved_label.text = "Example"
+	else:
+		saved_label.text = SaveManager.format_timestamp(entry.timestamp)
+		if saved_label.text.is_empty():
+			saved_label.text = "-"
 	description_label.text = _get_description_preview(entry.description)
 	if description_label.text.strip_edges().is_empty():
 		description_label.text = "-"

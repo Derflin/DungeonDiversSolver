@@ -27,14 +27,21 @@ var transition_browser_entry_fade_in_duration: float = 0.20
 var _operation_mode: SaveUIEnums.OperationMode = SaveUIEnums.OperationMode.LOAD
 var _browse_mode: SaveUIEnums.BrowseMode = SaveUIEnums.BrowseMode.LIST_VIEW
 var _sort_mode: SaveUIEnums.SortMode = SaveUIEnums.SortMode.LAST_SAVED_DESCENDING
+var _user_saves_sort_mode: SaveUIEnums.SortMode = SaveUIEnums.SortMode.LAST_SAVED_DESCENDING
+var _example_saves_sort_mode: SaveUIEnums.SortMode = SaveUIEnums.SortMode.EXAMPLE_ORDER_ASCENDING
+var _updating_sort_option: bool = false
 
 var _search_query: String = ""
+var _user_saves_search_query: String = ""
+var _example_saves_search_query: String = ""
 var _search_total_count: int = 0
 var _search_result_count: int = 0
 var _updating_search_edit: bool = false
 
 var _current_page: int = FIRST_PAGE
 var _selected_entry: SaveBrowserEntry = null
+var _last_selected_user_slot: int = -1
+var _last_selected_example_id: String = ""
 
 var _cached_thumbnail: Image = null
 var _cached_game_metadata: Array[Dictionary] = []
@@ -64,6 +71,8 @@ var _has_explicit_new_save_target: bool = false
 @onready var title_label: Label = $OuterMargin/MainPanel/MainContents/Header/TitleLabel
 @onready var slot_view_button: Button = $OuterMargin/MainPanel/MainContents/Header/SlotViewButton
 @onready var list_view_button: Button = $OuterMargin/MainPanel/MainContents/Header/ListViewButton
+@onready var view_separator: VSeparator = $OuterMargin/MainPanel/MainContents/Header/ViewSeparator
+@onready var examples_view_button: Button = $OuterMargin/MainPanel/MainContents/Header/ExampleViewButton
 @onready var close_button: Button = $OuterMargin/MainPanel/MainContents/Header/CloseButton
 
 @onready var slot_view: VBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView
@@ -74,6 +83,7 @@ var _has_explicit_new_save_target: bool = false
 @onready var next_page_button: Button = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/SlotView/SlotPagination/NextPageButton
 
 @onready var list_view: VBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView
+@onready var sort_row: HBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SortRow
 @onready var sort_option: OptionButton = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SortRow/SortOption
 @onready var saves_search_edit: LineEdit = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SearchEdit 
 @onready var saves_list: VBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SavesScroll/MarginContainer/SavesList
@@ -102,6 +112,7 @@ func _ready() -> void:
 	# Connect header nodes signals.
 	slot_view_button.pressed.connect(_on_slot_view_button_pressed)
 	list_view_button.pressed.connect(_on_list_view_button_pressed)
+	examples_view_button.pressed.connect(_on_examples_view_button_pressed)
 	close_button.pressed.connect(_on_close_button_pressed)
 	
 	# Connect slot view nodes signals.
@@ -117,9 +128,6 @@ func _ready() -> void:
 	save_details.save_requested.connect(_on_save_requested)
 	save_details.load_requested.connect(_on_load_requested)
 	save_details.delete_requested.connect(_on_delete_requested)
-	
-	# Populate and initialize the sort options for the list view display.
-	_setup_sort_options()
 	
 	# Initialize status label initial text.
 	status_label.text = ""
@@ -198,6 +206,10 @@ func open_save_mode(screenshot: Image) -> void:
 	# Reset status label text.
 	status_label.text = ""
 	
+	# Populate and initialize the sort options.
+	_reset_sort_options()
+	_setup_sort_options_for_current_view()
+	
 	# Refresh and initialize save browser entries.
 	SaveManager.refresh_user_saves()
 	
@@ -206,6 +218,9 @@ func open_save_mode(screenshot: Image) -> void:
 	
 	# Set the selected entry as the create new save browser entry that uses the first free save slot.
 	_selected_entry = _get_new_save_target_entry()
+	
+	# Save the selected entry in the last selected fields.
+	_remember_selected_entry(_selected_entry)
 	
 	# Set display title label text.
 	title_label.text = "Save Game"
@@ -260,11 +275,19 @@ func open_load_mode() -> void:
 	# Reset status label text.
 	status_label.text = ""
 	
+	# Populate and initialize the sort options.
+	_reset_sort_options()
+	_setup_sort_options_for_current_view()
+	
 	# Refresh and initialize save browser entries.
 	SaveManager.refresh_user_saves()
+	SaveManager.refresh_example_saves()
 	
 	# Set the selected save browser entry as the first one available.
 	_selected_entry = _get_first_sorted_existing_save()
+	
+	# Save the selected entry in the last selected fields.
+	_remember_selected_entry(_selected_entry)
 	
 	# Set display title label text.
 	title_label.text = "Load Game"
@@ -323,9 +346,15 @@ func close() -> void:
 	_cached_thumbnail = null
 	_cached_game_metadata.clear()
 	_selected_entry = null
+	_last_selected_user_slot = -1
+	_last_selected_example_id = ""
 	
 	# Reset saves search field state.
 	_reset_search()
+	
+	# Reset sort options field state.
+	_reset_sort_options()
+	_reset_sort_options()
 	
 	# Reset status label text.
 	status_label.text = ""
@@ -393,8 +422,7 @@ func _refresh_interface(preserve_details_edits: bool = false) -> void:
 		SaveUIEnums.BrowseMode.LIST_VIEW:
 			_rebuild_list_view()
 		SaveUIEnums.BrowseMode.EXAMPLES_VIEW:
-			#TODO: Reserved for the later implementation of examples view.
-			pass
+			_rebuild_examples_view()
 	
 	# Update save details display.
 	_update_details(preserve_details_edits)
@@ -409,13 +437,22 @@ func _refresh_interface(preserve_details_edits: bool = false) -> void:
 ## Updates the different saves views visibility state.
 func _update_view_visibility() -> void:
 	slot_view.visible = _browse_mode == SaveUIEnums.BrowseMode.SLOT_VIEW
-	list_view.visible = _browse_mode == SaveUIEnums.BrowseMode.LIST_VIEW
+	list_view.visible = _browse_mode == SaveUIEnums.BrowseMode.LIST_VIEW or _browse_mode == SaveUIEnums.BrowseMode.EXAMPLES_VIEW
 
 
 ## Updates the state of view buttons that are responsible for changing into different saves views.
 func _update_view_buttons() -> void:
+	# Check if nodes related to examples view button should be visible. By default they should be only visible in the load mode.
+	var examples_available := _operation_mode == SaveUIEnums.OperationMode.LOAD
+	
+	# Update visibility of nodes related to examples view button.
+	view_separator.visible = examples_available
+	examples_view_button.visible = examples_available
+	
+	# Update state of all view buttons based on the current browse mode.
 	slot_view_button.button_pressed = _browse_mode == SaveUIEnums.BrowseMode.SLOT_VIEW
 	list_view_button.button_pressed = _browse_mode == SaveUIEnums.BrowseMode.LIST_VIEW
+	examples_view_button.button_pressed = _browse_mode == SaveUIEnums.BrowseMode.EXAMPLES_VIEW
 
 
 ## Updates save details displayed inside the save manager control display based on the save browser entry set as selected.
@@ -466,10 +503,32 @@ func _on_list_view_button_pressed() -> void:
 	_restore_default_status()
 
 
+## Handles examples view button pressed signal to set the save manager browse mode to examples view.
+func _on_examples_view_button_pressed() -> void:
+	# Update view buttons and filter out processing if the save manager display is currently busy working on something else or performing another transition.
+	if _is_busy or _is_transitioning:
+		_update_view_buttons()
+		return
+	
+	# Update view buttons and filter out processing if the save manager is set to some other operation mode then load.
+	# Examples view button should only be visible in the load operation mode.
+	if _operation_mode != SaveUIEnums.OperationMode.LOAD:
+		_update_view_buttons()
+		return
+	
+	# Set list view browse mode.
+	_set_browse_mode(SaveUIEnums.BrowseMode.EXAMPLES_VIEW)
+	
+	# Update displayed status message.
+	_restore_default_status()
+
+
 ## Sets a [param new_mode] for the browser, updates selected save entry for it and refreshes itnerfaces that might have been affected by the changes.
 func _set_browse_mode(new_mode: SaveUIEnums.BrowseMode) -> void:
-	#TODO: Reserved for the later implementation of examples view.
-	if new_mode == SaveUIEnums.BrowseMode.EXAMPLES_VIEW:
+	# Update view buttons and filter out processing if the save manager is set to some other operation mode then load.
+	# Examples view button should only be visible in the load operation mode.
+	if new_mode == SaveUIEnums.BrowseMode.EXAMPLES_VIEW and _operation_mode != SaveUIEnums.OperationMode.LOAD:
+		_update_view_buttons()
 		return
 	
 	# Update view mode buttons and filter out processing if the new selected browse mode is the same as the one already set.
@@ -485,12 +544,20 @@ func _set_browse_mode(new_mode: SaveUIEnums.BrowseMode) -> void:
 	# Save new browse mode.
 	_browse_mode = new_mode
 	
+	# Restore last saved save search query depending on the new browse mode as the current search query.
+	_restore_search_for_current_view()
+	
+	# Adjust the displayed sort options depending on the new browse mode.
+	_setup_sort_options_for_current_view()
+	
 	# Set selected save entry depending on the browse mode.
 	match _browse_mode:
 		SaveUIEnums.BrowseMode.SLOT_VIEW:
 			_prepare_selection_for_slot_view()
 		SaveUIEnums.BrowseMode.LIST_VIEW:
 			_prepare_selection_for_list_view()
+		SaveUIEnums.BrowseMode.EXAMPLES_VIEW:
+			_prepare_selection_for_examples_view()
 	
 	# Check if previous selected entry is for the save as the current one along if save mode is enabled in save manager and if yes, then preserve the user edits inside the save details.
 	var preserve_details_edits: bool = _operation_mode == SaveUIEnums.OperationMode.SAVE and _selected_entry != null and not previous_entry_id.is_empty() and _selected_entry.entry_id == previous_entry_id
@@ -506,9 +573,15 @@ func _prepare_selection_for_slot_view() -> void:
 		# Check current slot page for the selected entry.
 		_current_page = _get_page_for_slot(_selected_entry.slot)
 		
-		# Update assigned selected save browser entry for the slot view.		
+		# Update assigned selected save browser entry for the slot view.
 		_selected_entry = SaveManager.get_user_slot_entry(_selected_entry.slot)
 		
+		return
+	
+	# Handle preparing selected entry if it was already selected before at any point inside the slot or list views and it's not currently selected.
+	if _last_selected_user_slot >= FIRST_SLOT:
+		_current_page = _get_page_for_slot(_last_selected_user_slot)
+		_selected_entry = SaveManager.get_user_slot_entry(_last_selected_user_slot)
 		return
 	
 	# Otherwise set the current page as first one and select the default entry on it as the one selected. 
@@ -526,6 +599,13 @@ func _prepare_selection_for_list_view() -> void:
 			_selected_entry = refreshed_entry
 			return
 	
+	# Handle preparing selected entry if it was already selected before at any point inside the slot or list views and it's not currently selected.
+	if _last_selected_user_slot >= FIRST_SLOT:
+		var remembered_save := SaveManager.get_user_save(_last_selected_user_slot)
+		if remembered_save != null:
+			_selected_entry = remembered_save
+			return
+	
 	# Sets the selected entry to entry placeholder for creating new saves if the save manager operation mode is set to save.
 	if _operation_mode == SaveUIEnums.OperationMode.SAVE:
 		_selected_entry = _get_new_save_target_entry()
@@ -533,6 +613,25 @@ func _prepare_selection_for_list_view() -> void:
 	
 	# Otherwise set the first sorted save browser entry as the one selected. 
 	_selected_entry = _get_first_sorted_existing_save()
+	
+	# Save the selected entry in the last selected fields.
+	_remember_selected_entry(_selected_entry)
+
+
+## Updates selected save browser entry to make sure that it fits the current examples view browse mode.
+func _prepare_selection_for_examples_view() -> void:
+	# Handle preparing selected entry if it was already selected before inside the examples view.
+	if not _last_selected_example_id.is_empty():
+		var remembered_example := SaveManager.get_example_save(_last_selected_example_id)
+		if remembered_example != null:
+			_selected_entry = remembered_example
+			return
+	
+	# Otherwise set the first save browser entry as the one selected.
+	_selected_entry = _get_first_example_save()
+	
+	# Save the selected entry in the last selected fields.
+	_remember_selected_entry(_selected_entry)
 
 #endregion
 
@@ -586,6 +685,9 @@ func _select_entry(entry: SaveBrowserEntry) -> void:
 	
 	# Set entry as the selected one.
 	_selected_entry = entry
+	
+	# Save the selected entry in the last selected fields.
+	_remember_selected_entry(entry)
 	
 	# Update displayed status message.
 	_restore_default_status()
@@ -1341,10 +1443,14 @@ func _rebuild_list_view() -> void:
 	# Stop any partial saves list transition and restore its opacity.
 	_reset_save_list_transition()
 	
+	# Reset visibility state of the list sort row and the saves search placeholder text state to match the list view mode.
+	sort_row.visible = true
+	saves_search_edit.placeholder_text = "Search save names..."
+	
 	# Rebuild the pinned create new save section.
 	_rebuild_new_save_section()
 	
-	# Rebuild the existing saves contaienr using the current search and sort settings.
+	# Rebuild the existing saves container using the current search and sort settings.
 	_rebuild_existing_saves_container()
 
 
@@ -1485,47 +1591,7 @@ func _clear_list_entries() -> void:
 	_visible_list_entries.clear()
 
 
-## Populates and initializes the default sort option for the list view display.
-func _setup_sort_options() -> void:
-	# Populate sort option items to include all sort modes.
-	sort_option.add_item("Last saved - newest first", SaveUIEnums.SortMode.LAST_SAVED_DESCENDING)
-	sort_option.add_item("Last saved - oldest first", SaveUIEnums.SortMode.LAST_SAVED_ASCENDING)
-	sort_option.add_item("Name - A to Z", SaveUIEnums.SortMode.NAME_ASCENDING)
-	sort_option.add_item("Name - Z to A", SaveUIEnums.SortMode.NAME_DESCENDING)
-	sort_option.add_item("Slot - ascending", SaveUIEnums.SortMode.SLOT_ASCENDING)
-	sort_option.add_item("Slot - descending", SaveUIEnums.SortMode.SLOT_DESCENDING)
-	
-	# Select the first sort option as the enabled by default.
-	sort_option.select(0)
-
-
-## Handles sort option selected signal to change the current sort mode into the selected option.
-func _on_sort_option_selected(index: int) -> void:
-	# Update sort option selection field and filter out processing if the save manager display is currently busy working on something else or performing another transition.
-	if _is_busy or _is_transitioning:
-		_update_sort_option_selection()
-		return
-	
-	# Set the current sort mode according to the selected option.
-	_sort_mode = sort_option.get_item_id(index) as SaveUIEnums.SortMode
-	
-	# Update displayed status message.
-	_restore_default_status()
-	
-	# Handle the state and rebuild the list view display to handle the changed sort mode.
-	if _browse_mode == SaveUIEnums.BrowseMode.LIST_VIEW:
-		_start_save_list_transition()
-
-
-## Updates sort option selection by checking which sort mode should be selected based on the saved sort option and selecting it.
-func _update_sort_option_selection() -> void:
-	for index: int in range(sort_option.item_count):
-		if sort_option.get_item_id(index) == _sort_mode:
-			sort_option.select(index)
-			return
-
-
-## Returns a list of existing save browser entries.
+## Returns a list of existing save browser entries sorted.
 func _get_sorted_existing_saves() -> Array[SaveBrowserEntry]:
 	# Get list of existing save browser entries.
 	var entries := SaveManager.get_existing_user_saves()
@@ -1582,7 +1648,7 @@ func _compare_existing_entries(a: SaveBrowserEntry, b: SaveBrowserEntry) -> bool
 	return a.slot < b.slot
 
 
-## Gets first existing save for the list view according to the current sort mode. 
+## Returns first existing save for the list view according to the current sort mode. 
 func _get_first_sorted_existing_save() -> SaveBrowserEntry:
 	# Get list of existing save browser entries.
 	var entries := _get_sorted_existing_saves()
@@ -1593,6 +1659,253 @@ func _get_first_sorted_existing_save() -> SaveBrowserEntry:
 	
 	# Return first available entry.
 	return entries[0]
+
+#endregion
+
+
+#region Examples View
+
+## Rebuilds examples view by clearing out existing list entries and populating new ones.
+func _rebuild_examples_view() -> void:
+	# Stop any partial saves list transition and restore its opacity.
+	_reset_save_list_transition()
+	
+	# Reset visibility state of the list sort row and the saves search placeholder text state to match the examples view mode.
+	sort_row.visible = true
+	saves_search_edit.placeholder_text = "Search example names..."
+	
+	# Hide create new save pseudo from the examples view.
+	_clear_new_save_section()
+	saves_list_new_save_section.visible = false
+	
+	# Rebuild the example saves container using the current search settings.
+	_rebuild_examples_container()
+
+
+## Rebuils the list container using the example saves.
+func _rebuild_examples_container() -> void:
+	# Clear existing nodes in the existing saves container.
+	_clear_existing_saves_container()
+	
+	# Get list of existing save browser entries.
+	var sorted_entries := _get_sorted_example_saves()
+	
+	# Save the unfiltered count of save entries.
+	_search_total_count = sorted_entries.size()
+	
+	# Prepare filtered save entries results.
+	var entries: Array[SaveBrowserEntry] = []
+	for entry: SaveBrowserEntry in sorted_entries:
+		if _entry_matches_search(entry):
+			entries.append(entry)
+	
+	# Save the filtered count of save entries.
+	_search_result_count = entries.size()
+	
+	# Prepare empty saves message to be put inside save examples view if there wouldn't be any existing save browser entries.
+	if entries.is_empty():
+		if not _search_query.is_empty() and _search_total_count > 0:
+			_add_existing_saves_container_message("No examples match your search.")
+		else:
+			_add_existing_saves_container_message("No examples found.")
+		return
+	
+	# Populate list entries for each existing save.
+	for entry: SaveBrowserEntry in entries:
+		# Instantiate new list entry.
+		var list_control := save_list_entry_scene.instantiate() as SaveListEntry
+		
+		# Add the list entry to the saves list container.
+		saves_list_existing_saves_container.add_child(list_control)
+		
+		# Populate list entry with the save browser entry details.
+		list_control.setup(entry)
+		
+		# Connect entry selected signal from the list entry to the local handler function.
+		list_control.entry_selected.connect(_on_entry_selected)
+		
+		# Append created list entry to the field that aggregates all existing list entries.
+		_visible_list_entries.append(list_control)
+
+
+## Returns the first example save entry using the custom ordering.
+func _get_first_example_save() -> SaveBrowserEntry:
+	# Get list of example save browser entries.
+	var examples := _get_sorted_example_saves()
+	
+	# Return null if the list doesn't contain any entries.
+	if examples.is_empty():
+		return null
+	
+	# Return first available entry.
+	return examples[0]
+
+
+## Returns a list of example save browser entries sorted.
+func _get_sorted_example_saves() -> Array[SaveBrowserEntry]:
+	var entries := SaveManager.get_example_saves()
+	
+	entries.sort_custom(_compare_example_entries)
+	
+	return entries
+
+
+## Compares two saves browser entries according to the current sort mode set.
+func _compare_example_entries(a: SaveBrowserEntry, b: SaveBrowserEntry) -> bool:
+	# Handle all custom sort modes.
+	match _sort_mode:
+		# Example order - Ascending
+		SaveUIEnums.SortMode.EXAMPLE_ORDER_ASCENDING:
+			# Compare save entries based on the example_order field.
+			if a.example_order != b.example_order:
+				return a.example_order < b.example_order
+			
+			# Compare save entries based on their display names.
+			var comparison := a.display_name.naturalnocasecmp_to(b.display_name)
+			if comparison != 0:
+				return comparison < 0
+			
+			# Compare save entries based on their example ids.
+			return a.example_id.naturalnocasecmp_to(b.example_id) < 0
+			
+		# Example order - Descending
+		SaveUIEnums.SortMode.EXAMPLE_ORDER_DESCENDING:
+			# Compare save entries based on the example_order field.
+			if a.example_order != b.example_order:
+				return a.example_order > b.example_order
+			
+			# Compare save entries based on their display names.
+			var comparison := a.display_name.naturalnocasecmp_to(b.display_name)
+			if comparison != 0:
+				return comparison < 0
+			
+			# Compare save entries based on their example ids.
+			return a.example_id.naturalnocasecmp_to(b.example_id) < 0
+			
+		# Name - A to Z
+		SaveUIEnums.SortMode.NAME_ASCENDING:
+			# Compare save entries based on their display names.
+			var comparison := a.display_name.naturalnocasecmp_to(b.display_name)
+			if comparison != 0:
+				return comparison < 0
+			
+			# Compare save entries based on the example_order field.
+			if a.example_order != b.example_order:
+				return a.example_order < b.example_order
+			
+			# Compare save entries based on their example ids.
+			return a.example_id.naturalnocasecmp_to(b.example_id) < 0
+			
+		# Name - Z to A
+		SaveUIEnums.SortMode.NAME_DESCENDING:
+			# Compare save entries based on their display names.
+			var comparison := a.display_name.naturalnocasecmp_to(b.display_name)
+			if comparison != 0:
+				return comparison > 0
+			
+			# Compare save entries based on the example_order field.
+			if a.example_order != b.example_order:
+				return a.example_order < b.example_order
+			
+			# Compare save entries based on their example ids.
+			return a.example_id.naturalnocasecmp_to(b.example_id) < 0
+	
+	# Safe fallback to default order.
+	if a.example_order != b.example_order:
+		return a.example_order < b.example_order
+	
+	return a.example_id.naturalnocasecmp_to(b.example_id) < 0
+
+#endregion
+
+
+#region Sort
+
+## Sets up the sort option depending on the current view mode set through browse mode.
+func _setup_sort_options_for_current_view() -> void:
+	# Set updating sort option flag to mark that sort option will be updating.
+	_updating_sort_option = true
+	
+	# Clear existing sort option.
+	sort_option.clear()
+	
+	# Set current sort mode and populate sort option items to include appropriate sort modes depending on the current browse view mode set.
+	match _browse_mode:
+		SaveUIEnums.BrowseMode.LIST_VIEW:
+			# Restore last used sort mode or the default one.
+			_sort_mode = _user_saves_sort_mode
+			
+			# Populate sort options including the last saved, save name and slot number parameters on user saves.
+			sort_option.add_item("Last saved - newest first", SaveUIEnums.SortMode.LAST_SAVED_DESCENDING)
+			sort_option.add_item("Last saved - oldest first", SaveUIEnums.SortMode.LAST_SAVED_ASCENDING)
+			sort_option.add_item("Name - A to Z", SaveUIEnums.SortMode.NAME_ASCENDING)
+			sort_option.add_item("Name - Z to A", SaveUIEnums.SortMode.NAME_DESCENDING)
+			sort_option.add_item("Slot - ascending", SaveUIEnums.SortMode.SLOT_ASCENDING)
+			sort_option.add_item("Slot - descending", SaveUIEnums.SortMode.SLOT_DESCENDING)
+			
+		SaveUIEnums.BrowseMode.EXAMPLES_VIEW:
+			# Restore last used sort mode or the default one.
+			_sort_mode = _example_saves_sort_mode
+			
+			# Populate sort options including the example order and the example name parameters on example saves.
+			sort_option.add_item("Example order - ascending", SaveUIEnums.SortMode.EXAMPLE_ORDER_ASCENDING)
+			sort_option.add_item("Example order - descending", SaveUIEnums.SortMode.EXAMPLE_ORDER_DESCENDING)
+			sort_option.add_item("Name - A to Z", SaveUIEnums.SortMode.NAME_ASCENDING)
+			sort_option.add_item("Name - Z to A", SaveUIEnums.SortMode.NAME_DESCENDING)
+			
+		_:
+			_updating_sort_option = false
+			return
+	
+	# Update sort option selection field based on what was set.
+	_update_sort_option_selection()
+	
+	# Unset updating sort option flag to mark that sort option are finished updating.
+	_updating_sort_option = false
+
+
+## Resets the sort options field to use the default sort modes.
+## Doesn't affect the sort option field directly, but changes the internal fields storing the last used sort mode.
+## Meant to be used before calling the "_setup_sort_options_for_current_view" when opening or closing the save manager.
+func _reset_sort_options() -> void:
+	_user_saves_sort_mode = SaveUIEnums.SortMode.LAST_SAVED_DESCENDING
+	_example_saves_sort_mode = SaveUIEnums.SortMode.EXAMPLE_ORDER_ASCENDING
+
+
+## Handles sort option selected signal to change the current sort mode into the selected option using the provided option [param index].
+func _on_sort_option_selected(index: int) -> void:
+	# Filter out processing if the sort options are being updated currently.
+	if _updating_sort_option:
+		return
+	
+	# Update sort option selection field and filter out processing if the save manager display is currently busy working on something else or performing another transition.
+	if _is_busy or _is_transitioning:
+		_update_sort_option_selection()
+		return
+	
+	# Set the current sort mode according to the selected option.
+	_sort_mode = sort_option.get_item_id(index) as SaveUIEnums.SortMode
+	
+	# Save new save mode in the internal field used to track which sort mode was set last for the current browse mode.
+	match _browse_mode:
+		SaveUIEnums.BrowseMode.LIST_VIEW:
+			_user_saves_sort_mode = _sort_mode
+		SaveUIEnums.BrowseMode.EXAMPLES_VIEW:
+			_example_saves_sort_mode = _sort_mode
+	
+	# Update displayed status message.
+	_restore_default_status()
+	
+	# Handle the state and rebuild the display to handle the changed sort mode.
+	_start_save_list_transition()
+
+
+## Updates sort option selection by checking which sort mode should be selected based on the saved sort option and selecting it.
+func _update_sort_option_selection() -> void:
+	for index: int in range(sort_option.item_count):
+		if sort_option.get_item_id(index) == _sort_mode:
+			sort_option.select(index)
+			return
 
 #endregion
 
@@ -1609,8 +1922,34 @@ func _on_search_text_changed(text: String) -> void:
 	# Save search query inside an internal variable.
 	_search_query = text.strip_edges()
 	
+	# Save current state of the search query in the corresponding variables depending on the browse mode that is currently set.
+	match _browse_mode:
+		SaveUIEnums.BrowseMode.LIST_VIEW:
+			_user_saves_search_query = _search_query
+		SaveUIEnums.BrowseMode.EXAMPLES_VIEW:
+			_example_saves_search_query = _search_query
+	
 	# Rebuild list view for the existing saves container.
 	_start_save_list_transition()
+
+
+## Restores last assigned search query in the current mode as the currently used search query and displays it in the search field node.
+## Used when switching between different browse modes to keep the search field state separated and tracked between them.
+## Switching to a specific browse mode view will cause it to set search query and search field to the last search query that was used in that browse mode by the user.
+func _restore_search_for_current_view() -> void:
+	# Update current search query based on the last search query saved in the current view mode.
+	match _browse_mode:
+		SaveUIEnums.BrowseMode.LIST_VIEW:
+			_search_query = _user_saves_search_query
+		SaveUIEnums.BrowseMode.EXAMPLES_VIEW:
+			_search_query = _example_saves_search_query
+		_:
+			return
+	
+	# Update save search edit field to display the updated search query.
+	_updating_search_edit = true
+	saves_search_edit.text = _search_query
+	_updating_search_edit = false
 
 
 ## Checks whether an existing save matches the current search query.
@@ -1626,6 +1965,9 @@ func _entry_matches_search(entry: SaveBrowserEntry) -> bool:
 ## Resets the current state of the saves search field.
 func _reset_search() -> void:
 	_search_query = ""
+	_user_saves_search_query = ""
+	_example_saves_search_query = ""
+	
 	_search_total_count = 0
 	_search_result_count = 0
 	
@@ -1729,14 +2071,14 @@ func _on_load_requested(entry: SaveBrowserEntry) -> void:
 	if _operation_mode != SaveUIEnums.OperationMode.LOAD:
 		return
 	
-	#TODO: Reserved for the later examples implementation.
-	if entry.is_example():
-		return
+	# Preapre confirmation title and message based on the entry type.
+	var confirmation_title := "Load Save" if not entry.is_example() else "Load Example"
+	var confirmation_message := "Load \"%s\"?" % entry.display_name if not entry.is_example() else "Load example \"%s\"?" % entry.display_name
 	
 	# Show user the confirmation dialog and await his response.
 	var confirmed := await _request_confirmation(
-		"Load Save",
-		"Load \"%s\"?" % entry.display_name,
+		confirmation_title,
+		confirmation_message,
 		"Load",
 		"Cancel",
 	)
@@ -1755,7 +2097,11 @@ func _perform_load(entry: SaveBrowserEntry) -> void:
 	_set_busy(true, "Loading...")
 	
 	# Initializes and awaits for the result of loading the save from the provided save browser entry slot.
-	var success := await SaveManager.load_user_save(entry.slot)
+	var success: bool
+	if entry.is_example():
+		success = SaveManager.load_example_save(entry.example_id)
+	else:
+		success = await SaveManager.load_user_save(entry.slot)
 	
 	# Handle any issues or errors that might have occured during loading operation. 
 	if not success:
@@ -1987,7 +2333,12 @@ func _start_save_list_transition() -> void:
 
 ## Rebuilds the current search results while they are invisible.
 func _refresh_save_list_after_transition() -> void:
-	_rebuild_existing_saves_container()
+	match _browse_mode:
+		SaveUIEnums.BrowseMode.LIST_VIEW:
+			_rebuild_existing_saves_container()
+		SaveUIEnums.BrowseMode.EXAMPLES_VIEW:
+			_rebuild_examples_container()
+	
 	_update_selection_highlights()
 	_apply_interaction_state()
 	_restore_default_status()
@@ -2134,6 +2485,7 @@ func _apply_interaction_state() -> void:
 	# Update disabled state of view modes buttons.
 	slot_view_button.disabled = interaction_blocked
 	list_view_button.disabled = interaction_blocked
+	examples_view_button.disabled = interaction_blocked
 	
 	# Update disabled state of sort option button/options for the list view.
 	sort_option.disabled = interaction_blocked
@@ -2181,10 +2533,16 @@ func _set_status(text: String) -> void:
 ## Restores the passive/default status message contents.
 ## Search results are displayed while an active search exists in list view.
 func _restore_default_status() -> void:
-	# Set status message as the search results if the browse mode is set to list view and there exists a search query that isn't empty.
-	if _browse_mode == SaveUIEnums.BrowseMode.LIST_VIEW and not _search_query.is_empty():
-		_set_status("%d of %d saves found." % [_search_result_count, _search_total_count])
-		return
+	# Set status message as the search results if there exists a search query that isn't empty and the browse mode is set to list view or examples view.
+	if not _search_query.is_empty():
+		match _browse_mode:
+			SaveUIEnums.BrowseMode.LIST_VIEW:
+				_set_status("%d of %d saves found." % [_search_result_count, _search_total_count])
+				return
+				
+			SaveUIEnums.BrowseMode.EXAMPLES_VIEW:
+				_set_status("%d of %d examples found." % [_search_result_count, _search_total_count])
+				return
 	
 	_set_status("")
 
@@ -2201,6 +2559,19 @@ func _on_close_button_pressed() -> void:
 
 
 #region Helpers
+
+## Saves the provided [param entry] in the internal fields to keep track which was selected last in both the slot/list views and the examples view.
+func _remember_selected_entry(entry: SaveBrowserEntry) -> void:
+	# Filter out processing if the provided entry is null.
+	if entry == null:
+		return
+	
+	# Save provided entry in the appropriate last selected field.
+	if entry.is_example():
+		_last_selected_example_id = entry.example_id
+	elif entry.is_user_save() and entry.slot >= FIRST_SLOT:
+		_last_selected_user_slot = entry.slot
+
 
 ## Clears and frees all children node instances from the provided [param container].
 func _clear_container(container: Node) -> void:

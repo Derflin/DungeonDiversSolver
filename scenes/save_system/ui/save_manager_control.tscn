@@ -68,7 +68,19 @@ text = "Slots"
 layout_mode = 2
 theme_type_variation = &"SaveNavigationButton"
 toggle_mode = true
-text = "Existing Saves"
+text = "List"
+
+[node name="ViewSeparator" type="VSeparator" parent="OuterMargin/MainPanel/MainContents/Header" unique_id=25406780]
+visible = false
+custom_minimum_size = Vector2(12, 0)
+layout_mode = 2
+
+[node name="ExampleViewButton" type="Button" parent="OuterMargin/MainPanel/MainContents/Header" unique_id=454002461]
+visible = false
+layout_mode = 2
+theme_type_variation = &"SaveNavigationButton"
+toggle_mode = true
+text = "Examples"
 
 [node name="CloseButton" type="Button" parent="OuterMargin/MainPanel/MainContents/Header" unique_id=393914659]
 layout_mode = 2

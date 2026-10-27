@@ -53,13 +53,20 @@ size_flags_vertical = 4
 [node name="SlotLabel" type="Label" parent="MarginContainer/ContentsContainer/MarginContainer/InfoContainer" unique_id=928626915]
 layout_mode = 2
 size_flags_horizontal = 3
+vertical_alignment = 1
 clip_text = true
 text_overrun_behavior = 3
 
 [node name="NameLabel" type="Label" parent="MarginContainer/ContentsContainer/MarginContainer/InfoContainer" unique_id=1031761817]
 layout_mode = 2
 size_flags_horizontal = 3
+vertical_alignment = 1
+clip_text = true
+text_overrun_behavior = 3
 
 [node name="SavedLabel" type="Label" parent="MarginContainer/ContentsContainer/MarginContainer/InfoContainer" unique_id=1845100806]
 layout_mode = 2
 size_flags_horizontal = 3
+vertical_alignment = 1
+clip_text = true
+text_overrun_behavior = 3

@@ -42,9 +42,30 @@ func setup(new_entry: SaveBrowserEntry) -> void:
 		saved_label.text = SaveManager.format_timestamp(entry.timestamp)
 		if saved_label.text.is_empty():
 			saved_label.text = "-"
-	description_label.text = entry.description
+	description_label.text = _get_single_line_preview(entry.description)
 	if description_label.text.strip_edges().is_empty():
 		description_label.text = "-"
+
+
+## Prepares and returns a single line preview based on the provided [param _text] string.
+## For multiline strings it replaces the new line special character with "|" character to mark where the new lines were placed and to keep it consistent.
+## Removes the empty lines and replaces white spaces that would set together in groups (more than one) leaving only one white space, in order to shorten the preview. 
+func _get_single_line_preview(_text: String) -> String:
+	# Normalize new line and carriage return characters to only use the new line.
+	var normalized := text.replace("\r\n", "\n").replace("\r", "\n")
+	
+	# Split normalized text based on the new line character.
+	var lines := normalized.split("\n", false)
+	
+	# Prepare cleaned lines skipping empty ones.
+	var cleaned_lines: Array[String] = []
+	for line: String in lines:
+		var cleaned_line := line.strip_edges()
+		if not cleaned_line.is_empty():
+			cleaned_lines.append(cleaned_line)
+	
+	# Return single line preview of the text where each new line character is replaced with "|" char.
+	return " | ".join(cleaned_lines)
 
 
 ## Sets list entry button state without emitting it's default signals.

@@ -4,8 +4,8 @@
 [ext_resource type="Texture2D" uid="uid://bplh4qamws0ll" path="res://assets/icons/map_parameters/MapParameters-GridSettings.png" id="2_n2mvx"]
 [ext_resource type="Texture2D" uid="uid://0m43f7n0tcbl" path="res://assets/icons/map_parameters/MapParameters-GridSettings-Close.png" id="3_lglyc"]
 [ext_resource type="Texture2D" uid="uid://ba2y50jahuvqh" path="res://assets/icons/map_parameters/third_party/kenney/fantasy_ui_borders/panel-014.png" id="4_6vuti"]
-[ext_resource type="Script" uid="uid://c300hvn4msg8b" path="res://scripts/hud/smooth_scroll_container.gd" id="5_874ka"]
-[ext_resource type="Script" uid="uid://b4oig3qg3sx1k" path="res://scripts/hud/smooth_scroll_bar.gd" id="5_y71gk"]
+[ext_resource type="Script" uid="uid://c300hvn4msg8b" path="res://scripts/ui/components/smooth_scroll_container.gd" id="5_874ka"]
+[ext_resource type="Script" uid="uid://b4oig3qg3sx1k" path="res://scripts/ui/components/smooth_scroll_bar.gd" id="5_y71gk"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_134i6"]
 texture = ExtResource("4_6vuti")

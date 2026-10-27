@@ -5,7 +5,7 @@ extends Button
 signal option_selected(option_id: int)
 
 
-const OPTION_SCENE: PackedScene = preload("res://scenes/hud/menu_dropdown_option.tscn")
+const OPTION_SCENE: PackedScene = preload("res://scenes/ui/components/menu_dropdown_option.tscn")
 
 
 @export_group("Dropdown State Affixes", "dropdown_state_affixes_")

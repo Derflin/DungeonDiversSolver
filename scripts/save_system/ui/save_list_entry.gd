@@ -42,7 +42,7 @@ func setup(new_entry: SaveBrowserEntry) -> void:
 		saved_label.text = SaveManager.format_timestamp(entry.timestamp)
 		if saved_label.text.is_empty():
 			saved_label.text = "-"
-	description_label.text = _get_description_preview(entry.description)
+	description_label.text = entry.description
 	if description_label.text.strip_edges().is_empty():
 		description_label.text = "-"
 
@@ -50,16 +50,6 @@ func setup(new_entry: SaveBrowserEntry) -> void:
 ## Sets list entry button state without emitting it's default signals.
 func set_selected(selected: bool) -> void:
 	set_pressed_no_signal(selected)
-
-
-## Returns a shortened version of the description string if it exceeds a set char limit of 90.
-func _get_description_preview(description: String) -> String:
-	var description_preview := description.strip_edges()
-	
-	if description_preview.length() <= 90:
-		return description_preview
-	
-	return description_preview.left(87) + "..."
 
 
 ## Handle save list entry button pressed signal to emit the [signal entry_selected] signal.

@@ -50,10 +50,13 @@ alignment = 1
 
 [node name="NameLabel" type="Label" parent="MarginContainer/ContentsContainer/MarginContainer/InfoContainer" unique_id=1251656487]
 layout_mode = 2
+vertical_alignment = 1
 
 [node name="SavedLabel" type="Label" parent="MarginContainer/ContentsContainer/MarginContainer/InfoContainer" unique_id=2068588437]
 layout_mode = 2
+vertical_alignment = 1
 
 [node name="DescriptionLabel" type="Label" parent="MarginContainer/ContentsContainer/MarginContainer/InfoContainer" unique_id=388735641]
 layout_mode = 2
-autowrap_mode = 3
+vertical_alignment = 1
+text_overrun_behavior = 4

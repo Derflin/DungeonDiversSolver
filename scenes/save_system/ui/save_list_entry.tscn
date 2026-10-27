@@ -59,4 +59,4 @@ vertical_alignment = 1
 [node name="DescriptionLabel" type="Label" parent="MarginContainer/ContentsContainer/MarginContainer/InfoContainer" unique_id=388735641]
 layout_mode = 2
 vertical_alignment = 1
-text_overrun_behavior = 4
+text_overrun_behavior = 3

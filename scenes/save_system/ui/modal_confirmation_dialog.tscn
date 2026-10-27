@@ -3,6 +3,18 @@
 [ext_resource type="Theme" uid="uid://cby524paqvken" path="res://themes/save_manager_theme.tres" id="1_k4x8d"]
 [ext_resource type="Script" uid="uid://rq4bm18rwfvv" path="res://scripts/save_system/ui/modal_confirmation_dialog.gd" id="1_nx1nm"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_k4x8d"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0.101960786, 0.101960786, 0.101960786, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 5
+
 [node name="ModalConfirmationDialog" type="Control" unique_id=24606316]
 process_mode = 3
 visible = false
@@ -36,6 +48,7 @@ grow_vertical = 2
 [node name="DialogPanel" type="PanelContainer" parent="CenterContainer" unique_id=2127451955]
 custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_k4x8d")
 
 [node name="MarginContainer" type="MarginContainer" parent="CenterContainer/DialogPanel" unique_id=873546506]
 layout_mode = 2

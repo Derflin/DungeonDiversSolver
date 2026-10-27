@@ -91,7 +91,7 @@ var _has_explicit_new_save_target: bool = false
 @onready var saves_list_existing_saves_container: VBoxContainer = $OuterMargin/MainPanel/MainContents/Content/LeftPanel/LeftMargin/LeftContents/ListView/SavesScroll/MarginContainer/SavesList/ExistingSavesContainer
 
 @onready var save_details: SaveDetails = $OuterMargin/MainPanel/MainContents/Content/SaveDetails
-@onready var status_label: Label = $OuterMargin/MainPanel/MainContents/StatusLabel
+@onready var status_label: ScrambleLabel = $OuterMargin/MainPanel/MainContents/StatusLabel
 @onready var confirmation_dialog: ModalConfirmationDialog = $ModalConfirmationDialog
 
 
@@ -130,7 +130,7 @@ func _ready() -> void:
 	save_details.delete_requested.connect(_on_delete_requested)
 	
 	# Initialize status label initial text.
-	status_label.text = ""
+	_set_status("", false)
 	
 	# Make sure that save manager control is hidden by default and set as transparent.
 	visible = false
@@ -204,7 +204,7 @@ func open_save_mode(screenshot: Image) -> void:
 	_is_busy = false
 	
 	# Reset status label text.
-	status_label.text = ""
+	_set_status("", false)
 	
 	# Populate and initialize the sort options.
 	_reset_sort_options()
@@ -273,7 +273,7 @@ func open_load_mode() -> void:
 	_is_busy = false
 	
 	# Reset status label text.
-	status_label.text = ""
+	_set_status("", false)
 	
 	# Populate and initialize the sort options.
 	_reset_sort_options()
@@ -357,7 +357,7 @@ func close() -> void:
 	_reset_sort_options()
 	
 	# Reset status label text.
-	status_label.text = ""
+	_set_status("", false)
 	
 	# Reset state of the new save target to default.
 	_reset_new_save_target()
@@ -2526,8 +2526,8 @@ func _apply_interaction_state() -> void:
 #region Status
 
 ## Sets a new status label text using the provided [param text].
-func _set_status(text: String) -> void:
-	status_label.text = text
+func _set_status(text: String, animate: bool = true) -> void:
+	status_label.change_text(text, animate)
 
 
 ## Restores the passive/default status message contents.

@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://kwr4qd666g0k" path="res://scenes/save_system/ui/save_slot_entry.tscn" id="2_7e8b3"]
 [ext_resource type="PackedScene" uid="uid://d0dhy4jipapar" path="res://scenes/save_system/ui/modal_confirmation_dialog.tscn" id="2_o3tvv"]
 [ext_resource type="PackedScene" uid="uid://cknktvtqj2ag7" path="res://scenes/save_system/ui/save_list_entry.tscn" id="3_akqj1"]
+[ext_resource type="Script" uid="uid://b8x8oocqx8an3" path="res://scripts/ui/components/scramble_label.gd" id="6_dai8t"]
 
 [node name="SaveManagerControl" type="Control" unique_id=1590019939]
 process_mode = 3
@@ -197,11 +198,13 @@ size_flags_vertical = 3
 [node name="SaveDetails" parent="OuterMargin/MainPanel/MainContents/Content" unique_id=1221008773 instance=ExtResource("1_1fu6j")]
 layout_mode = 2
 
-[node name="StatusLabel" type="Label" parent="OuterMargin/MainPanel/MainContents" unique_id=1303756108]
+[node name="StatusLabel" type="Label" parent="OuterMargin/MainPanel/MainContents" unique_id=1805318214]
 custom_minimum_size = Vector2(0, 24)
 layout_mode = 2
 horizontal_alignment = 1
 vertical_alignment = 1
+script = ExtResource("6_dai8t")
+metadata/_custom_type_script = "uid://b8x8oocqx8an3"
 
 [node name="ModalConfirmationDialog" parent="." unique_id=24606316 instance=ExtResource("2_o3tvv")]
 layout_mode = 1

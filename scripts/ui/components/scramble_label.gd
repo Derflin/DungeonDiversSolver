@@ -156,7 +156,7 @@ func change_text(new_text: String, animate: bool = true) -> void:
 		text = displayed_text
 		
 		# Cause size reset to make sure that the label is properly adjusted to the new text size
-		reset_size()
+		#reset_size()
 		
 		# Wait for the next update interval
 		await get_tree().create_timer(scramble_update_interval).timeout
@@ -169,7 +169,7 @@ func change_text(new_text: String, animate: bool = true) -> void:
 			modulate.a = 1.0
 		
 		# Cause size reset to make sure that the label is properly adjusted to the new text size
-		reset_size()
+		#reset_size()
 
 
 ## Changes internal animation id, causing existing animation to stop.
@@ -185,7 +185,7 @@ func set_text_immediate(new_text: String) -> void:
 	text = new_text
 	_target_text = new_text
 	_reset_scramble_visual_state()
-	reset_size()
+	#reset_size()
 
 
 ## Returns a random character from the [member scramble_characters] parameter if it's not empty, otherwise it returns empty space char.

@@ -148,8 +148,12 @@ func restore_save_data(data: Dictionary) -> void:
 	map_state.restore_save_data(data[map_state.get_save_key()])
 	map_secrets_count_current = data["map_secrets_count_current"].duplicate()
 	map_solver_state = data["map_solver_state"]
-	map_solver_state = data["map_solver_secret_kind"]
-	map_solver_result = null if data["map_solver_result"] == null else MapSolverResult.new().map_solver_result.restore_save_data(data["map_solver_result"])
+	map_solver_secret_kind = data["map_solver_secret_kind"]
+	if data["map_solver_result"] == null:
+		map_solver_result = null
+	else:
+		map_solver_result = MapSolverResult.new()
+		map_solver_result.restore_save_data(data["map_solver_result"])
 
 
 ## Captures this Save Provider's current persistant state in form of summary metadata for save data.

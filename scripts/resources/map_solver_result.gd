@@ -225,7 +225,7 @@ func capture_save_data() -> Dictionary:
 
 ## Restores this object's persistent state from previously captured save data.
 func restore_save_data(data: Dictionary) -> void:
-	var loaded_result_coords = []
+	var loaded_result_coords: Array[MapSolverResultCoord] = []
 	for saved_result_coords in data["result_coords"]:
 		var new_result_coords = MapSolverResultCoord.new()
 		new_result_coords.restore_save_data(saved_result_coords)

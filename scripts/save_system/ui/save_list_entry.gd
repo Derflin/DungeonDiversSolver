@@ -52,7 +52,7 @@ func setup(new_entry: SaveBrowserEntry) -> void:
 ## Removes the empty lines and replaces white spaces that would set together in groups (more than one) leaving only one white space, in order to shorten the preview. 
 func _get_single_line_preview(_text: String) -> String:
 	# Normalize new line and carriage return characters to only use the new line.
-	var normalized := text.replace("\r\n", "\n").replace("\r", "\n")
+	var normalized := _text.replace("\r\n", "\n").replace("\r", "\n")
 	
 	# Split normalized text based on the new line character.
 	var lines := normalized.split("\n", false)

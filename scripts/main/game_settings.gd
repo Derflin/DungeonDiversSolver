@@ -1,12 +1,18 @@
 extends Node
 
 
+@warning_ignore("unused_signal")
 signal map_secrets_count_max_changed(kind: RoomSecretType.Kind, value: int)
+@warning_ignore("unused_signal")
 signal map_grid_size_parameter_changed()
+@warning_ignore("unused_signal")
 signal map_grid_room_size_parameter_changed()
 
 
 var map_secrets_count_max: Dictionary[RoomSecretType.Kind, int]
+
+var _is_restoring_save: bool = false
+var _save_restore_signal_queue := SaveRestoreSignalQueue.new()
 
 
 @export_group("Map Grid Parameters", "map_grid_")
@@ -14,14 +20,14 @@ var map_secrets_count_max: Dictionary[RoomSecretType.Kind, int]
 	set(value):
 		map_grid_size = value
 		
-		map_grid_size_parameter_changed.emit()
+		_emit_state_signal(&"map_grid_size_parameter_changed")
 @export var map_grid_size_icon: Texture2D
 
 @export var map_grid_room_size: Vector2i = Vector2i(15, 15):
 	set(value): 
 		map_grid_room_size = value
 		
-		map_grid_room_size_parameter_changed.emit()
+		_emit_state_signal(&"map_grid_room_size_parameter_changed")
 
 
 func _ready() -> void:
@@ -34,7 +40,7 @@ func _ready() -> void:
 func set_map_secrets_count_max(kind: RoomSecretType.Kind, value: int) -> void:
 	if kind not in map_secrets_count_max or map_secrets_count_max[kind] != value:
 		map_secrets_count_max[kind] = value
-		map_secrets_count_max_changed.emit(kind, value)
+		_emit_state_signal(&"map_secrets_count_max_changed", [kind, value])
 
 
 func set_map_grid_size(size: int) -> void:
@@ -59,8 +65,16 @@ func capture_save_data() -> Dictionary:
 
 ## Restores this Save Provider's persistent state from previously captured save data.
 func restore_save_data(data: Dictionary) -> void:
-	map_secrets_count_max = data["map_secrets_count_max"].duplicate()
+	# Restore map_secrets_count_max.
+	var restored_secret_counts: Dictionary = data["map_secrets_count_max"]
+	map_secrets_count_max.clear()
+	for kind: RoomSecretType.Kind in restored_secret_counts:
+		set_map_secrets_count_max(kind, restored_secret_counts[kind])
+	
+	# Restore map_grid_size.
 	map_grid_size = data["map_grid_size"]
+	
+	# Restore map_grid_room_size.
 	map_grid_room_size = data["map_grid_room_size"]
 
 
@@ -74,5 +88,25 @@ func capture_save_metadata() -> Array[Dictionary]:
 	]
 	
 	return save_metadata
+
+
+## Marks an internal flag that restoring data from save has started.
+## It will cause all signals that affect the game state to be postponed after the flag would be unset.
+func begin_save_restore() -> void:
+	_is_restoring_save = true
+	_save_restore_signal_queue.begin()
+
+
+## Marks an internal flag that restoring data from save has finished.
+## It will cause all signal that has been postponed during the save restore to be emitted.
+func finish_save_restore() -> void:
+	_is_restoring_save = false
+	_save_restore_signal_queue.finish(self)
+
+
+## Uses a provided [param signal_name] and it's provided [param arguments] to pass it to the signal queue.
+## Signal queue will either emit them immediately if the save isn't being restored currently or it will queue them for later emit when the save will be finished restoring. 
+func _emit_state_signal(signal_name: StringName, arguments: Array = []) -> void:
+	_save_restore_signal_queue.emit_or_defer(self, signal_name, arguments)
 
 #endregion

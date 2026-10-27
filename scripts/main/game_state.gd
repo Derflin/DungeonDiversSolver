@@ -1,16 +1,17 @@
 extends Node
 
 
+@warning_ignore("unused_signal")
 signal map_secrets_count_current_changed(kind: RoomSecretType.Kind, value: int)
+@warning_ignore("unused_signal")
+signal map_solver_state_change_triggered(state: MapSolverState, secret_room_kind: RoomSecretType.Kind)
+@warning_ignore("unused_signal")
+signal map_solver_state_changed()
 
 @warning_ignore("unused_signal")
 signal map_solver_submenu_opened()
 @warning_ignore("unused_signal")
 signal map_parameters_submenu_opened()
-
-@warning_ignore("unused_signal")
-signal map_solver_state_change_triggered(state: MapSolverState, secret_room_kind: RoomSecretType.Kind)
-signal map_solver_state_changed()
 
 
 enum MapSolverState {
@@ -28,6 +29,9 @@ var map_secrets_count_current: Dictionary[RoomSecretType.Kind, int]
 var map_solver_state: MapSolverState = MapSolverState.NONE
 var map_solver_secret_kind: RoomSecretType.Kind = RoomSecretType.Kind.NONE
 var map_solver_result: MapSolverResult = null
+
+var _is_restoring_save: bool = false
+var _save_restore_signal_queue := SaveRestoreSignalQueue.new()
 
 
 func _ready() -> void:
@@ -48,7 +52,7 @@ func _ready() -> void:
 func set_map_secrets_count_current(kind: RoomSecretType.Kind, value: int) -> void:
 	if kind not in map_secrets_count_current or map_secrets_count_current[kind] != value:
 		map_secrets_count_current[kind] = value
-		map_secrets_count_current_changed.emit(kind, value)
+		_emit_state_signal(&"map_secrets_count_current_changed", [kind, value])
 
 
 ## Returns a current value of the secret room type kind that is assigned to the currently enabled map solver state.
@@ -75,6 +79,10 @@ func _generate_map_solver_result() -> MapSolverResult:
 
 ## Updates map solver result if the map solver is enabled. Meant to be used for updating map solver after any of the related signals that could affect would trigger.
 func _update_map_solver_result_after_signal() -> void:
+	# Filter out processing if the game state is currently restoring it's status from the save.
+	if _is_restoring_save:
+		return
+	
 	# Filter out processing if the map solver is disabled
 	if map_solver_state == MapSolverState.NONE:
 		return
@@ -83,7 +91,7 @@ func _update_map_solver_result_after_signal() -> void:
 	map_solver_result = _generate_map_solver_result()
 	
 	# Emit signal that map solver state has been changed
-	map_solver_state_changed.emit()
+	_emit_state_signal(&"map_solver_state_changed")
 
 
 ## After map state change was triggered, update map solver result.
@@ -118,7 +126,7 @@ func _on_map_solver_state_change_triggered(state: MapSolverState, secret_room_ki
 	map_solver_result = _generate_map_solver_result()
 	
 	# Emit signal that map solver state has been changed
-	map_solver_state_changed.emit()
+	_emit_state_signal(&"map_solver_state_changed")
 
 
 #region Save Provider
@@ -145,15 +153,28 @@ func capture_save_data() -> Dictionary:
 
 ## Restores this Save Provider's persistent state from previously captured save data.
 func restore_save_data(data: Dictionary) -> void:
+	# Restore map_state.
 	map_state.restore_save_data(data[map_state.get_save_key()])
-	map_secrets_count_current = data["map_secrets_count_current"].duplicate()
+	
+	# Restore map_secrets_count_current.
+	var restored_current_counts: Dictionary = data["map_secrets_count_current"]
+	map_secrets_count_current.clear()
+	for kind: RoomSecretType.Kind in restored_current_counts:
+		set_map_secrets_count_current(kind, restored_current_counts[kind])
+	
+	# Restore map_solver_state.
 	map_solver_state = data["map_solver_state"]
+	
+	# Restore map_solver_secret_kind.
 	map_solver_secret_kind = data["map_solver_secret_kind"]
+	
+	# Restore map_solver_result.
 	if data["map_solver_result"] == null:
 		map_solver_result = null
 	else:
 		map_solver_result = MapSolverResult.new()
 		map_solver_result.restore_save_data(data["map_solver_result"])
+	_emit_state_signal(&"map_solver_state_changed")
 
 
 ## Captures this Save Provider's current persistant state in form of summary metadata for save data.
@@ -171,5 +192,25 @@ func capture_save_metadata() -> Array[Dictionary]:
 	save_metadata.append_array(map_state.capture_save_metadata())
 	
 	return save_metadata
+
+
+## Marks an internal flag that restoring data from save has started.
+## It will cause all signals that affect the game state to be postponed after the flag would be unset.
+func begin_save_restore() -> void:
+	_is_restoring_save = true
+	_save_restore_signal_queue.begin()
+
+
+## Marks an internal flag that restoring data from save has finished.
+## It will cause all signal that has been postponed during the save restore to be emitted.
+func finish_save_restore() -> void:
+	_is_restoring_save = false
+	_save_restore_signal_queue.finish(self)
+
+
+## Uses a provided [param signal_name] and it's provided [param arguments] to pass it to the signal queue.
+## Signal queue will either emit them immediately if the save isn't being restored currently or it will queue them for later emit when the save will be finished restoring.
+func _emit_state_signal(signal_name: StringName, arguments: Array = []) -> void:
+	_save_restore_signal_queue.emit_or_defer(self, signal_name, arguments)
 
 #endregion

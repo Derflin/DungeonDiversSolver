@@ -47,6 +47,20 @@ func set_map_grid_size(size: int) -> void:
 	map_grid_size = Vector2i(size, size)
 
 
+#region Reset Game Settings
+
+## Resets game state to it's default empty state.
+func reset_game_settings_to_default() -> void:
+	# Reset map secrets max counts.
+	for secret_kind: RoomSecretType.Kind in map_secrets_count_max.keys():
+		set_map_secrets_count_max(secret_kind, 0)
+	
+	# Rest map size.
+	map_grid_size = Vector2i(17, 17)
+
+#endregion
+
+
 #region Save Provider
 # These functions expose this object's persistent state to the save system.
 

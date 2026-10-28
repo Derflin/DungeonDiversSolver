@@ -46,6 +46,10 @@ layout_mode = 2
 layout_mode = 2
 text = "Reset Map"
 
+[node name="ResetSettingsButton" type="Button" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons" unique_id=1823351849]
+layout_mode = 2
+text = "Reset Settings"
+
 [node name="SectionSeparator" type="HSeparator" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons" unique_id=2104596187]
 layout_mode = 2
 theme_override_constants/separation = 0

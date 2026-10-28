@@ -129,7 +129,7 @@ func _on_map_solver_state_change_triggered(state: MapSolverState, secret_room_ki
 	_emit_state_signal(&"map_solver_state_changed")
 
 
-#region Reset Map
+#region Reset Game State
 
 ## Resets game state to it's default empty state.
 func reset_game_state_to_default() -> void:

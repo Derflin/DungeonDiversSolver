@@ -2,7 +2,7 @@ class_name SaveRestoreSignalQueue
 extends RefCounted
 
 
-var _is_deferring = true
+var _is_deferring = false
 var _queued_signals: Array[Dictionary] = []
 
 

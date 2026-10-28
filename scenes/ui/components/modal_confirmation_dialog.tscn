@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://d0dhy4jipapar"]
 
 [ext_resource type="Theme" uid="uid://cby524paqvken" path="res://themes/save_manager_theme.tres" id="1_k4x8d"]
-[ext_resource type="Script" uid="uid://rq4bm18rwfvv" path="res://scripts/save_system/ui/modal_confirmation_dialog.gd" id="1_nx1nm"]
+[ext_resource type="Script" uid="uid://rq4bm18rwfvv" path="res://scripts/ui/components/modal_confirmation_dialog.gd" id="1_nx1nm"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_k4x8d"]
 content_margin_left = 0.0

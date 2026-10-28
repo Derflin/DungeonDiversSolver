@@ -15,7 +15,7 @@ corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 corner_detail = 5
 
-[node name="ModalConfirmationDialog" type="Control" unique_id=24606316]
+[node name="ModalConfirmationDialog" type="Control" unique_id=24606316 groups=["blocks_radial_menu_input"]]
 process_mode = 3
 visible = false
 z_index = 1000

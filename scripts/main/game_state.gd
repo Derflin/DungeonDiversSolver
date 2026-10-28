@@ -129,6 +129,22 @@ func _on_map_solver_state_change_triggered(state: MapSolverState, secret_room_ki
 	_emit_state_signal(&"map_solver_state_changed")
 
 
+#region Reset Map
+
+## Resets game state to it's default empty state.
+func reset_game_state_to_default() -> void:
+	# Reset map solver status.
+	map_solver_state = MapSolverState.NONE
+	map_solver_secret_kind = RoomSecretType.Kind.NONE
+	map_solver_result = null
+	_emit_state_signal(&"map_solver_state_changed")
+	
+	# Reset map state.
+	map_state.delete_all_rooms()
+
+#endregion
+
+
 #region Save Provider
 # These functions expose this object's persistent state to the save system.
 

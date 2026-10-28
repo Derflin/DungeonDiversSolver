@@ -64,6 +64,11 @@ func is_room_selection_cursor_position(cursor_position: Vector2) -> bool:
 	return room_selection_cursor.position == cursor_position
 
 
+## Returns if the room editor is currently opened by checking it's visibility status.
+func is_room_editor_menu_open() -> bool:
+	return room_editor_container.get_room_editor_visible_status()
+
+
 func hide_room_editor_menu() -> void:
 	room_editor_container.close_room_editor()
 

@@ -2,12 +2,15 @@
 
 [ext_resource type="PackedScene" uid="uid://byxiaffshj4eo" path="res://scenes/map/map_display.tscn" id="1_hyk8p"]
 [ext_resource type="PackedScene" uid="uid://clic7mqmov8r0" path="res://scenes/systems/GameSaveAdapter.tscn" id="1_l3cfh"]
+[ext_resource type="Script" uid="uid://dajs142gr5t7f" path="res://scripts/main/main.gd" id="1_yyfjg"]
 [ext_resource type="PackedScene" uid="uid://q8745vdh26mn" path="res://scenes/hud/map_parameters_control.tscn" id="2_iuonh"]
 [ext_resource type="PackedScene" uid="uid://b65s6cwmlyn4f" path="res://scenes/hud/map_solver_control.tscn" id="3_k2fmo"]
 [ext_resource type="PackedScene" uid="uid://dbher8pgko3e0" path="res://scenes/hud/map_manager_control.tscn" id="5_ow5a4"]
 [ext_resource type="PackedScene" uid="uid://8bk1yrjo8s7q" path="res://scenes/save_system/ui/save_manager_control.tscn" id="6_hujxm"]
+[ext_resource type="PackedScene" uid="uid://d0dhy4jipapar" path="res://scenes/ui/components/modal_confirmation_dialog.tscn" id="8_b1x3f"]
 
 [node name="Main" type="Node" unique_id=107272976]
+script = ExtResource("1_yyfjg")
 
 [node name="Systems" type="Node" parent="." unique_id=1350648501]
 
@@ -44,6 +47,9 @@ save_manager_control = NodePath("../SaveManagerControl")
 
 [node name="SaveManagerControl" parent="HudLayer/HudRoot" unique_id=1590019939 instance=ExtResource("6_hujxm")]
 z_index = 100
+layout_mode = 1
+
+[node name="ModalConfirmationDialog" parent="HudLayer/HudRoot" unique_id=24606316 instance=ExtResource("8_b1x3f")]
 layout_mode = 1
 
 [node name="PauseLayer" type="CanvasLayer" parent="." unique_id=621645473]

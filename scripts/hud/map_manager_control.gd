@@ -2,6 +2,9 @@ class_name MapManagerControl
 extends Control
 
 
+signal map_manager_reset_map_triggered()
+
+
 @export var save_manager_control: SaveManagerControl
 
 @export_group("Menu Layout", "menu_")
@@ -19,6 +22,7 @@ var _menu_effective_ui_scale: int = 1
 @onready var menu_root: Control = $MenuAnchor/MenuRoot
 @onready var menu_contents: Control = $MenuAnchor/MenuRoot/MenuContents
 
+@onready var reset_map_button: Button = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons/ResetMapButton
 @onready var save_button: Button = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons/SaveButton
 @onready var load_button: Button = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons/LoadButton
 
@@ -32,6 +36,9 @@ func _ready() -> void:
 	
 	# Refresh menu layout.
 	call_deferred("_refresh_menu_layout")
+	
+	# Handle map buttons pressed signal by connecting them to appropriate local functions.
+	reset_map_button.pressed.connect(_on_reset_map_button_pressed)
 	
 	# Handle save manager buttons pressed signal by connecting them to appropriate local functions.
 	save_button.pressed.connect(_on_save_button_pressed)
@@ -98,6 +105,11 @@ func _position_menu_root() -> void:
 ## Handles menu resize by refreshing menu layout to fit the resized control node.
 func _on_control_resized() -> void:
 	call_deferred("_refresh_menu_layout")
+
+
+## Handles propagating the reset map signal.
+func _on_reset_map_button_pressed() -> void:
+	map_manager_reset_map_triggered.emit()
 
 
 ## Handles save button pressed signal to open the save manager display in save mode.

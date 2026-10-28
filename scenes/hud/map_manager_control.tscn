@@ -42,6 +42,14 @@ theme_override_constants/margin_bottom = 4
 [node name="Buttons" type="VBoxContainer" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer" unique_id=997932540]
 layout_mode = 2
 
+[node name="ResetMapButton" type="Button" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons" unique_id=922278169]
+layout_mode = 2
+text = "Reset Map"
+
+[node name="SectionSeparator" type="HSeparator" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons" unique_id=2104596187]
+layout_mode = 2
+theme_override_constants/separation = 0
+
 [node name="SaveButton" type="Button" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons" unique_id=1807453228]
 layout_mode = 2
 text = "Save"

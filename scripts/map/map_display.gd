@@ -1,3 +1,4 @@
+class_name MapDisplay
 extends Node2D
 
 
@@ -41,6 +42,11 @@ func update_map_camera_manager_display(instant_fit_map_to_view: bool = false) ->
 	map_camera_manager.set_grid_rect(grid_space.get_map_rect())
 	# Update camera parameters/settings to fit map to view
 	map_camera_manager.fit_map_to_view(instant_fit_map_to_view)
+
+
+# Hides the map room editor menu from the grid space.
+func hide_map_room_editor_menu() -> void:
+	grid_space.hide_map_room_editor_menu()
 
 
 ## After game settings map grid room size parameter change was triggered, update all the affected by it elements. This includes grid space and the camera manager.

@@ -126,6 +126,14 @@ func hide_selected_room_cursor() -> bool:
 	return is_selected_room_cursor_visible
 
 
+## Hides map room editor menu from the grid interaction overlay if it's opened.
+## If it was open, it also hide the selected room cursor that is associated with it.
+func hide_map_room_editor_menu() -> void:
+	if grid_interaction_overlay.is_room_editor_menu_open():
+		grid_interaction_overlay.hide_room_editor_menu()
+		hide_selected_room_cursor()
+
+
 func get_map_rect() -> Rect2:
 	return grid_lines.get_map_rect()
 

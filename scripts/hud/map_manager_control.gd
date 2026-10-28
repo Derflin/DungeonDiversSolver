@@ -2,8 +2,8 @@ class_name MapManagerControl
 extends Control
 
 
-signal map_manager_reset_map_triggered()
-signal map_manager_reset_settings_triggered()
+signal map_manager_reset_map_state_requested()
+signal map_manager_reset_map_settings_requested()
 
 
 @export var save_manager_control: SaveManagerControl
@@ -23,10 +23,10 @@ var _menu_effective_ui_scale: int = 1
 @onready var menu_root: Control = $MenuAnchor/MenuRoot
 @onready var menu_contents: Control = $MenuAnchor/MenuRoot/MenuContents
 
-@onready var reset_map_button: Button = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons/ResetMapButton
-@onready var reset_settings_button: Button = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons/ResetSettingsButton
-@onready var save_button: Button = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons/SaveButton
-@onready var load_button: Button = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons/LoadButton
+@onready var reset_map_state_button: Button = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons/MapManagerContainer/VBoxContainer/ResetMapStateButton
+@onready var reset_map_settings_button: Button = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons/MapManagerContainer/VBoxContainer/ResetMapSettingsButton
+@onready var save_button: Button = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons/SaveManagerContainer/VBoxContainer/SaveButton
+@onready var load_button: Button = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons/SaveManagerContainer/VBoxContainer/LoadButton
 
 
 func _ready() -> void:
@@ -39,9 +39,9 @@ func _ready() -> void:
 	# Refresh menu layout.
 	call_deferred("_refresh_menu_layout")
 	
-	# Handle map buttons pressed signal by connecting them to appropriate local functions.
-	reset_map_button.pressed.connect(_on_reset_map_button_pressed)
-	reset_settings_button.pressed.connect(_on_reset_settings_button_pressed)
+	# Handle map manager buttons pressed signal by connecting them to appropriate local functions.
+	reset_map_state_button.pressed.connect(_on_reset_map_state_button_pressed)
+	reset_map_settings_button.pressed.connect(_on_reset_map_settings_button_pressed)
 	
 	# Handle save manager buttons pressed signal by connecting them to appropriate local functions.
 	save_button.pressed.connect(_on_save_button_pressed)
@@ -110,14 +110,14 @@ func _on_control_resized() -> void:
 	call_deferred("_refresh_menu_layout")
 
 
-## Handles propagating the reset map signal.
-func _on_reset_map_button_pressed() -> void:
-	map_manager_reset_map_triggered.emit()
+## Handles propagating the reset map state requested signal.
+func _on_reset_map_state_button_pressed() -> void:
+	map_manager_reset_map_state_requested.emit()
 
 
-## Handles propagating the reset settings signal.
-func _on_reset_settings_button_pressed() -> void:
-	map_manager_reset_settings_triggered.emit()
+## Handles propagating the reset map settings requested signal.
+func _on_reset_map_settings_button_pressed() -> void:
+	map_manager_reset_map_settings_requested.emit()
 
 
 ## Handles save button pressed signal to open the save manager display in save mode.

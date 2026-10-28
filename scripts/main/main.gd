@@ -12,16 +12,16 @@ var _confirmation_pending: bool = false
 
 
 func _ready() -> void:
-	# Connect signal from map manager to handle reset map triggered signal.
-	map_manager_control.map_manager_reset_map_triggered.connect(_on_map_manager_control_reset_map_triggered)
+	# Connect signal from map manager to handle reset map state requested signal.
+	map_manager_control.map_manager_reset_map_state_requested.connect(_on_map_manager_control_reset_map_state_requested)
 	
-	# Connect signal from map manager to handle reset settings triggered signal.
-	map_manager_control.map_manager_reset_settings_triggered.connect(_on_map_manager_control_reset_settings_triggered)
+	# Connect signal from map manager to handle reset map settings requested signal.
+	map_manager_control.map_manager_reset_map_settings_requested.connect(_on_map_manager_control_reset_map_settings_requested)
 
 
-## Handles opening up the confirmation dialog for the map reset and then if confirmed also handles map reset process.
-## After confirmation calls appropriate function from the GameState autoloaded scene to trigger the map reset.
-func _on_map_manager_control_reset_map_triggered() -> void:
+## Handles opening up the confirmation dialog for the map state reset and then if confirmed also handles map state reset process.
+## After confirmation calls appropriate function from the GameState autoloaded scene to trigger the map state reset.
+func _on_map_manager_control_reset_map_state_requested() -> void:
 	# Show user the confirmation dialog and await his response.
 	var confirmed := await _request_confirmation(
 		"Reset Map",
@@ -31,20 +31,20 @@ func _on_map_manager_control_reset_map_triggered() -> void:
 		true
 	)
 	
-	# Filter out processing if the user didn't confirm the overwrite save operation.
+	# Filter out processing if the user didn't confirm the reset operation.
 	if not confirmed:
 		return
 	
 	# Clear the map display room editor menu if it's opened.
 	map_display.hide_map_room_editor_menu()
 	
-	# Reset game state.
-	GameState.reset_game_state_to_default()
+	# Reset game map state.
+	GameState.reset_map_state_to_default()
 
 
-## Handles opening up the confirmation dialog for the settings reset and then if confirmed also handles settings reset process.
-## After confirmation calls appropriate function from the GameSettings autoloaded scene to trigger the settings reset.
-func _on_map_manager_control_reset_settings_triggered() -> void:
+## Handles opening up the confirmation dialog for the map settings reset and then if confirmed also handles map settings reset process.
+## After confirmation calls appropriate function from the GameSettings autoloaded scene to trigger the map settings reset.
+func _on_map_manager_control_reset_map_settings_requested() -> void:
 	# Show user the confirmation dialog and await his response.
 	var confirmed := await _request_confirmation(
 		"Reset Settings",
@@ -54,12 +54,12 @@ func _on_map_manager_control_reset_settings_triggered() -> void:
 		true
 	)
 	
-	# Filter out processing if the user didn't confirm the overwrite save operation.
+	# Filter out processing if the user didn't confirm the reset operation.
 	if not confirmed:
 		return
 	
-	# Reset game settings.
-	GameSettings.reset_game_settings_to_default()
+	# Reset game map settings.
+	GameSettings.reset_map_settings_to_default()
 
 
 #region Confirmation

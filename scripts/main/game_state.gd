@@ -131,8 +131,8 @@ func _on_map_solver_state_change_triggered(state: MapSolverState, secret_room_ki
 
 #region Reset Game State
 
-## Resets game state to it's default empty state.
-func reset_game_state_to_default() -> void:
+## Resets game map state to it's default empty state.
+func reset_map_state_to_default() -> void:
 	# Reset map solver status.
 	map_solver_state = MapSolverState.NONE
 	map_solver_secret_kind = RoomSecretType.Kind.NONE

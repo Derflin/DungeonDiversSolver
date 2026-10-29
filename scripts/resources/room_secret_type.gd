@@ -28,9 +28,9 @@ const ROOM_SECRET_TYPE_CREATE_ORDER: Array[Kind] = [
 	Kind.ANGEL_ROOM,
 	Kind.BLACK_MARKET,
 	Kind.BARRICADE_ROOM,
+	Kind.RED_ROOM,
 	Kind.OUTSIDER_ROOM,
 	Kind.ERROR_ROOM,
-	Kind.RED_ROOM,
 ]
 
 

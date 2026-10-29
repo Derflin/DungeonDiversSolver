@@ -41,14 +41,6 @@ Currently working on:
 - [ ] Add option to automatically close the map parameters control hud menu, when the user clicks outside of it.
 - [ ] Add animation for room cell show/hide states.
 - [ ] Check if it would be a good idea to move some MapSolver functions logic to specific SecretPlacementConfig/SecretPlacementType/SecretPlacementType* to make it less messy and more organized.
-- [ ] Implement SaveManager to save/load current map state to/from file.
-	- [ ] Decide which data would need to saved/loaded.
-	- [ ] For each source of this data add function that would be used to import/export state of this data in form of the dict or anything similar that would be enough for this.
-	- [ ] Add system node that would be used as SaveGameManagerAbstract or something like that, that will orchestrate from which nodes that will be exported/imported upon save/load options.
-	- [ ] Add autoloaded SaveManager scene, which will be responsible for all the save/load operations with help of SaveGameManagerAbstract and some existing extension/plugin for managing saves.
-	- [ ] Add SaveControl scene, which will be responsible for displaying the Save/Load buttons in the bottom left corner of the screen.
-		- [ ] Later maybe add option to hide this section and make it a drawer.
-	- [ ] Add SaveBrowserControl scene, which will be responsible for displaying all the available saves to the user after clicking appropriate buttons inside the SaveControl scene.
 
 Things currently planned for future versions:
 

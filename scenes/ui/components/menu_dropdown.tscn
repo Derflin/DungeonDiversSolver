@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://dvexut8dssl25"]
 
-[ext_resource type="Script" uid="uid://pf2i81y8emkx" path="res://scripts/systems/menu_dropdown.gd" id="1_avs1r"]
+[ext_resource type="Script" uid="uid://pf2i81y8emkx" path="res://scripts/ui/components/menu_dropdown.gd" id="1_avs1r"]
 [ext_resource type="Script" uid="uid://c300hvn4msg8b" path="res://scripts/ui/components/smooth_scroll_container.gd" id="2_50086"]
 
 [node name="MapSolverDropdown" type="Button" unique_id=953268487]

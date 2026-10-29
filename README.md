@@ -38,7 +38,6 @@ Currently working on:
 - [ ] Implement MapSolver feature along with displaying it's results on map.
 	- [ ] Make sure that the map solver results from the last stage don't conflict with each other.
 	- [ ] Fix issue with invalid room placements if they are only located next to a secret room and no other room is connected to them (weight 0).
-- [ ] Add option to automatically close the map parameters control hud menu, when the user clicks outside of it.
 - [ ] Add animation for room cell show/hide states.
 - [ ] Check if it would be a good idea to move some MapSolver functions logic to specific SecretPlacementConfig/SecretPlacementType/SecretPlacementType* to make it less messy and more organized.
 

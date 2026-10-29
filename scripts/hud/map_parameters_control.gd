@@ -54,6 +54,56 @@ func _ready() -> void:
 	GameState.map_solver_submenu_opened.connect(_on_other_menu_submenu_opened)
 
 
+func _input(event: InputEvent) -> void:
+	# Close the drawer if it's open and the input event click was triggered outside of it.
+	if _drawer_open and check_if_input_click_outside_drawer(event):
+		_set_drawer_open(not _drawer_open)
+
+
+## Checks if the provided input event was for the pressed input event outside of the DrawerPanel and DrawerStrip nodes and returns a bool value.
+## Returned true value indicates that an input event was a valid input event that passed validation and the click was triggered outside of the specified nodes.
+## Returned false value indicates that an input event either wasn't a valid input or that click was done inside either of the specified nodes. 
+func check_if_input_click_outside_drawer(event: InputEvent) -> bool:
+	# Get current pointer position based on the used pointer.
+	var event_position: Vector2
+	# Handle mouse as current pointer device.
+	if event is InputEventMouseButton:
+		# Filter out processing if the event pressed state flag is unset.
+		if not event.pressed:
+			return false
+		
+		# Ignore mouse wheel scrolling.
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP or event.button_index == MOUSE_BUTTON_WHEEL_DOWN or event.button_index == MOUSE_BUTTON_WHEEL_LEFT or event.button_index == MOUSE_BUTTON_WHEEL_RIGHT:
+			return false
+		
+		event_position = event.position
+		
+	# Handle touch as current pointer device.
+	elif event is InputEventScreenTouch:
+		# Filter out processing if the event pressed state flag is unset.
+		if not event.pressed:
+			return false
+		
+		event_position = event.position
+		
+	# Filter out any other event types.
+	else:
+		return false
+	
+	# Convert viewport coordinates to DrawerPanel and DrawerStrip local coordinates.
+	var drawer_local_position := drawer_panel.make_canvas_position_local(event_position)
+	var strip_local_position := drawer_strip.make_canvas_position_local(event_position)
+	
+	# Check whether the event occured outside the panel.
+	var panel_rect := Rect2(Vector2.ZERO, drawer_panel.size)
+	var strip_rect := Rect2(Vector2.ZERO, drawer_strip.size)
+	if not panel_rect.has_point(drawer_local_position) and not strip_rect.has_point(strip_local_position):
+		return true
+	
+	# Otherwise return false.
+	return false
+
+
 func _populate_parameter_entries() -> void:
 	_create_static_map_grid_size_entry()
 	_create_dynamic_secret_settings_entries()

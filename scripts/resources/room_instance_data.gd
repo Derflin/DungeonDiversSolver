@@ -268,6 +268,13 @@ func set_special_type(special_kind: RoomSpecialType.Kind) -> bool:
 	return false
 
 
+func has_secret_type() -> bool:
+	if secret_type == null or (secret_type.kind is RoomSecretType.Kind and secret_type.kind == RoomSecretType.Kind.NONE):
+		return false
+	
+	return true
+
+
 func get_secret_type_kind() -> RoomSecretType.Kind:
 	if secret_type == null:
 		return RoomSecretType.Kind.NONE

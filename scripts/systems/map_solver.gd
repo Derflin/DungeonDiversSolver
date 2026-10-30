@@ -149,6 +149,7 @@ func _find_valid_placements(result: MapSolverResult, placement_config: SecretPla
 
 func _check_if_room_coords_distance_from_nearest_room(room_coords: Vector2i, room_expected_distance: int) -> bool:
 	var rooms_at_expected_distance_counter := 0
+	var non_secret_room_at_expected_distance_counter := 0
 	
 	# Check every possible room coords in distance range
 	for column_offset in range(-room_expected_distance, room_expected_distance + 1):
@@ -169,10 +170,20 @@ func _check_if_room_coords_distance_from_nearest_room(room_coords: Vector2i, roo
 				if coords_distance_from_center < room_expected_distance:
 					return false
 				else:
+					# Count the room instance.
 					rooms_at_expected_distance_counter += 1
+					
+					# Count the non secret room instance if the checked room isn't for a secret room.
+					var current_coords_room_instance := _map_state.get_room_instance(current_coords) 
+					if not current_coords_room_instance.has_secret_type():
+						non_secret_room_at_expected_distance_counter += 1
 	
 	# Check if there were any rooms at the expected range
 	if rooms_at_expected_distance_counter == 0:
+		return false
+	
+	# Check if there is at least one room that isn't a secret room at the expected range
+	if non_secret_room_at_expected_distance_counter == 0:
 		return false
 	
 	return true

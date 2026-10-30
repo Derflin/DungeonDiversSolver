@@ -2139,6 +2139,7 @@ func _on_delete_requested(entry: SaveBrowserEntry) -> void:
 		"Delete \"%s\"?\n\nThis cannot be undone." % entry.display_name,
 		"Delete",
 		"Cancel",
+		true
 	)
 	
 	# Filter out processing if the user didn't confirm the load operation.

@@ -434,7 +434,7 @@ func _assign_neighbour_group_room_connection(coords_to_group_id: Dictionary[Vect
 	# Recursively propagate assigning groups to neighbouring compatible rooms
 	for current_dir: Direction in Direction.values():
 		# For each direction apart from the default NONE direction and the last made direction
-		if current_dir == Direction.NONE or current_dir == DIRECTION_TO_OPPOSITE_DIRECTION[last_room_dir]:
+		if current_dir == Direction.NONE or (last_room_dir != Direction.NONE and current_dir == DIRECTION_TO_OPPOSITE_DIRECTION[last_room_dir]):
 			continue
 		
 		# Filter out the coords if neighbour doesn't exist for it

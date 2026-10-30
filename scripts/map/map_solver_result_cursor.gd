@@ -133,9 +133,9 @@ func _update_value_label() -> void:
 	# Prepare label text based on the solve stage and the map solver result coord
 	var label_text: String = ""
 	if _map_solver_result_solve_stage == MapSolverResult.SolveStage.CALCULATED_WEIGHTS:
-		label_text = str(_map_solver_result_coord.calculated_weight)
+		label_text = String.num(_map_solver_result_coord.calculated_weight, 2)
 	elif _map_solver_result_solve_stage == MapSolverResult.SolveStage.FOUND_SOLUTION:
-		label_text = str(roundi(_map_solver_result_coord.probability * 100)) + "%"
+		label_text = String.num(_map_solver_result_coord.probability * 100, 0) + "%"
 	
 	# Update value label text color
 	var label_text_color := _map_solver_result_coord.text_color

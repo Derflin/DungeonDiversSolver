@@ -168,43 +168,49 @@ func assign_color_code(text_color_gradient: Gradient, weight_count_type: SecretP
 	if not use_weights and not use_probabilities:
 		return
 	
-	# Filter out processing if weight count type is none
-	if weight_count_type == SecretPlacementConfig.CountType.NONE:
-		return
-	
 	# Filter out processing if there aren't any results to color code
-	if result_coords.size() <= 0:
+	if result_coords.is_empty():
 		return
 	
-	# Calculate min and max values based on the function state flags
-	var min_value: float
-	var max_value: float
+	# Filter out processing if weight count type is none
+	if use_weights and weight_count_type == SecretPlacementConfig.CountType.NONE:
+		return
+	
+	# Mark a single result to always be considered the best if there aren't any others
+	if result_coords.size() == 1:
+		result_coords[0].text_color = text_color_gradient.sample(1.0)
+		return
+	
+	# Calculate min and max weights based on the function state flags
+	var min_weight: float = 0.0
+	var max_weight: float = 0.0
+	var weights_equal: bool = false
 	if use_weights:
 		var all_weights := get_all_result_coords_weights()
-		min_value = all_weights.min()
-		max_value = all_weights.max()
-	elif use_probabilities:
-		min_value = 0.0
-		max_value = 1.0
+		min_weight = all_weights.min()
+		max_weight = all_weights.max()
+		weights_equal = is_equal_approx(min_weight, max_weight)
 	
 	# Assign colors to results
 	for result_coord in result_coords:
+		var color_percentage: float = 1.0
+		
+		# Calculate color percentage for the gradient
 		if use_weights:
-			# Calculate main color percantage
-			var base_value := result_coord.calculated_weight
-			var main_color_percentage: float = (base_value - min_value) / (max_value - min_value)
-			
-			# Assign text color based on the provided text color gradient
-			if weight_count_type == SecretPlacementConfig.CountType.MIN:
-				result_coord.text_color = text_color_gradient.sample(1.0 - main_color_percentage)
-			elif weight_count_type == SecretPlacementConfig.CountType.MAX:
-				result_coord.text_color = text_color_gradient.sample(main_color_percentage)
+			if not weights_equal:
+				color_percentage = inverse_lerp(min_weight, max_weight, result_coord.calculated_weight)
+				
+				# Apply calculated color percentages based on provided the placement config
+				if weight_count_type == SecretPlacementConfig.CountType.MIN:
+					color_percentage = 1.0 - color_percentage
+				elif weight_count_type == SecretPlacementConfig.CountType.MAX:
+					color_percentage = color_percentage
 		else:
-			# Calculate main color percentage
-			var main_color_percentage := result_coord.probability
-			
-			# Assign text color based on the provided text color gradient
-			result_coord.text_color = text_color_gradient.sample(main_color_percentage)
+			color_percentage = result_coord.probability
+		
+		# Clamp color percentage and sample the gradient
+		color_percentage = clampf(color_percentage, 0.0, 1.0)
+		result_coord.text_color = text_color_gradient.sample(color_percentage)
 
 
 #region Save Data Serialization

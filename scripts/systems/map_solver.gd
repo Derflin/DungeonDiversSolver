@@ -618,7 +618,8 @@ func _calculate_weights_placement_type_loop(placement_type: SecretPlacementType,
 			if neighbour_group_id in neighbours_groups_coords:
 				neighbours_groups_coords[neighbour_group_id].append(neighbour_coords)
 			else:
-				neighbours_groups_coords[neighbour_group_id] = [neighbour_coords]
+				var group_coords: Array[Vector2i] = [neighbour_coords]
+				neighbours_groups_coords[neighbour_group_id] = group_coords
 	
 	# Calculate weights for each neighbours room groups that have at least 2 coords assigned to them (excluding group id -1)
 	for group_id in neighbours_groups_coords:
@@ -629,17 +630,20 @@ func _calculate_weights_placement_type_loop(placement_type: SecretPlacementType,
 		if group_coords.size() < 2:
 			continue
 		
-		# Get direction from current room to first neighbour room in the group
-		var first_neighbour_coords = group_coords[0]
-		var last_dir: Direction = Direction.NONE
-		var neighbour_offset = cur_coords - first_neighbour_coords
-		for offset_dir in DIRECTION_TO_COORDS_OFFSET:
-			if DIRECTION_TO_COORDS_OFFSET[offset_dir] == neighbour_offset:
-				last_dir = offset_dir
-				break
+		# Get direction from current room to all neighbour room in the group
+		var neighbouring_coords_last_dir: Dictionary[Vector2i, Direction]
+		for cur_neighbour_coords in group_coords:
+			var neighbour_offset = cur_neighbour_coords - cur_coords
+			for offset_dir in DIRECTION_TO_COORDS_OFFSET:
+				if DIRECTION_TO_COORDS_OFFSET[offset_dir] == neighbour_offset:
+					neighbouring_coords_last_dir[cur_neighbour_coords] = offset_dir
+					break
 		
-		# Find all paths lenghts from the first neighbour coords to the result current coords and save them as calculated weights
-		_find_all_room_paths_lengths(first_neighbour_coords, cur_coords, 1, {}, calculated_weights, last_dir)
+		# Calculate max path lengths from each neighbour coords to the current coords
+		for cur_neighbour_coords in neighbouring_coords_last_dir.keys():
+			var cur_last_dir := neighbouring_coords_last_dir[cur_neighbour_coords]
+			# Find all paths lenghts from the current neighbour coords to the result current coords and save them as calculated weights
+			_find_all_room_paths_lengths(cur_neighbour_coords, cur_coords, 1, {}, calculated_weights, cur_last_dir)
 	
 	# Aggregate calculated weights according to the placement type config
 	return _placement_type_aggregate_calculated_weights(placement_type, calculated_weights)

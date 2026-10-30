@@ -319,18 +319,33 @@ func _filter_results_placement_type_placement_restrictions(result: MapSolverResu
 
 
 func _filter_results_placement_type_placement_restrictions_intersection(prepared_placement_type_data: Dictionary[String, Variant], cur_coords: Vector2i) -> bool:
-	var cur_coords_valid: bool = false
-	
 	# Check if the current room coordinates align with X and Y axis for any set of points between the first and second intersect groups
 	for intersect_1_coords in prepared_placement_type_data["intersect_group_coords_1"]:
 		for intersect_2_coords in prepared_placement_type_data["intersect_group_coords_2"]:
-			if (cur_coords.x == intersect_1_coords.x and cur_coords.y == intersect_2_coords.y) or (cur_coords.y == intersect_1_coords.y and cur_coords.x == intersect_2_coords.x):
-				cur_coords_valid = true
-				break
-		if cur_coords_valid:
-			break
+			# Calculate the intersection rectangle boundaries
+			var min_x: int = mini(intersect_1_coords.x, intersect_2_coords.x)
+			var max_x: int = maxi(intersect_1_coords.x, intersect_2_coords.x)
+			var min_y: int = mini(intersect_1_coords.y, intersect_2_coords.y)
+			var max_y: int = maxi(intersect_1_coords.y, intersect_2_coords.y)
+			
+			# Check if coords are on one of the vertical edges
+			var on_vertical_edge: bool = (
+				(cur_coords.x == min_x or cur_coords.x == max_x)
+				and cur_coords.y >= min_y
+				and cur_coords.y <= max_y
+			)
+			
+			# Check if coords are on one of the horizontal edges
+			var on_horizontal_edge: bool = (
+				(cur_coords.y == min_y or cur_coords.y == max_y)
+				and cur_coords.x >= min_x
+				and cur_coords.x <= max_x
+			)
+			
+			if on_vertical_edge or on_horizontal_edge:
+				return true
 	
-	return cur_coords_valid
+	return false
 
 
 func _filter_results_placement_type_placement_restrictions_loop(prepared_placement_type_data: Dictionary[String, Variant], cur_coords: Vector2i) -> bool:

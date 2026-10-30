@@ -357,10 +357,10 @@ func _filter_results_placement_type_placement_restrictions_loop(prepared_placeme
 				neighbours_groups_count[neighbour_group_id] += 1
 			else:
 				neighbours_groups_count[neighbour_group_id] = 1
-		
+	
 	# Check if any of the neighbours group count is highier than 1, ignoring group id -1
 	for group_id in neighbours_groups_count:
-		if group_id != -1 and neighbours_groups_count[group_id] > 2:
+		if group_id != -1 and neighbours_groups_count[group_id] >= 2:
 			cur_coords_valid = true
 			break
 	

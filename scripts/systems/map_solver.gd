@@ -595,9 +595,18 @@ func _calculate_weights_placement_type_distance(placement_type: SecretPlacementT
 	# Prepare array for calculated weights
 	var calculated_weights: Array[float] = []
 	
-	# Calculate absolute distance from each related room types coords to the current room coords
-	for related_room_type_coords in related_room_types_coords:
-		calculated_weights.append(cur_coords.distance_to(related_room_type_coords))
+	#NOTE: Against what the game description may sound like, it appears that this formula is incorrect, since it uses room centers, while the game calculates the distances using the room farthest corners.
+	## Calculate absolute distance from each related room types coords to the current room coords
+	#for related_room_type_coords in related_room_types_coords:
+	#	calculated_weights.append(cur_coords.distance_to(related_room_type_coords))
+	
+	# Calculate the grid distance from each related room type to the current room coordinates using the room center + 1 to account for the calculations taking into account farthest corners of the room rather than their centers.
+	for related_room_type_coords: Vector2i in related_room_types_coords:
+		var delta: Vector2i = cur_coords - related_room_type_coords
+		var distance_x: float = float(absi(delta.x) + 1)
+		var distance_y: float = float(absi(delta.y) + 1)
+		var distance: float = sqrt(distance_x * distance_x + distance_y * distance_y)
+		calculated_weights.append(distance)
 	
 	# Aggregate calculated weights according to the placement type config
 	return _placement_type_aggregate_calculated_weights(placement_type, calculated_weights)

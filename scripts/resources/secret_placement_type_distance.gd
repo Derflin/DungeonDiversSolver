@@ -6,4 +6,4 @@ extends SecretPlacementType
 
 
 func _init() -> void:
-	count_type = CountType.SUM
+	count_type = CountType.MAX

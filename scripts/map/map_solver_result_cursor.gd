@@ -50,6 +50,9 @@ func _ready() -> void:
 	# Initialize the animation player for corners sprite
 	_initialize_corners_animation_player()
 	
+	# Sets up handler function to listen to resized signal from the value label node in order to automatically recenter it's position.
+	value_label.resized.connect(_on_value_label_resized)
+	
 	# Update value label if it was initialized before ready function
 	if _map_solver_result_coord != null:
 		_update_value_label()
@@ -129,7 +132,7 @@ func update_data(map_solver_result_coord: MapSolverResultCoord, result_solve_sta
 
 
 ## Updates value label text and visibilty based on the map solver result coord and solve stage member parameters.
-func _update_value_label() -> void:	
+func _update_value_label() -> void:
 	# Prepare label text based on the solve stage and the map solver result coord
 	var label_text: String = ""
 	if _map_solver_result_solve_stage == MapSolverResult.SolveStage.CALCULATED_WEIGHTS:
@@ -182,7 +185,7 @@ func _fit_value_label_text(value_text: String) -> void:
 	
 	# Set visual label size and position based on calculated text size and value label visual offset parameter
 	value_label.size = text_size
-	value_label.position = -text_size / 2.0 + value_label_visual_offset
+	_on_value_label_resized()
 	
 	# Calculate scale factor for value label root node to fully fit the new text
 	var available_size := value_label_area_size - Vector2.ONE * value_label_padding * 2.0
@@ -194,3 +197,8 @@ func _fit_value_label_text(value_text: String) -> void:
 	
 	# Scale down the value label root node
 	value_label_root.scale = Vector2.ONE * scale_factor
+
+
+## Keeps the value label centered whenever its dimensions change.
+func _on_value_label_resized() -> void:
+	value_label.position = -value_label.size / 2.0 + value_label_visual_offset

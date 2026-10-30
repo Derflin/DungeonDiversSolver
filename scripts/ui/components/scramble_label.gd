@@ -87,7 +87,7 @@ func change_text(new_text: String, animate: bool = true) -> void:
 	
 	# If animation is disabled, then simply set the desired state
 	if not animate or not scramble_enabled or scramble_duration <= 0.0:
-		text = new_text
+		_set_displayed_text(new_text)
 		return
 	
 	# Save the old text and calculate max lengths based on it and the new text
@@ -153,10 +153,7 @@ func change_text(new_text: String, animate: bool = true) -> void:
 				modulate.a = 1.0
 		
 		# Assign prepared display text to the label text parameter
-		text = displayed_text
-		
-		# Cause size reset to make sure that the label is properly adjusted to the new text size
-		#reset_size()
+		_set_displayed_text(displayed_text)
 		
 		# Wait for the next update interval
 		await get_tree().create_timer(scramble_update_interval).timeout
@@ -164,28 +161,24 @@ func change_text(new_text: String, animate: bool = true) -> void:
 	
 	# If the current animation wasn't cancelled, then assign final text as the new text that was passed and reset opacity to base value
 	if current_animation_id == _animation_id:
-		text = new_text
+		_set_displayed_text(new_text)
 		if scramble_opacity_enabled:
 			modulate.a = 1.0
-		
-		# Cause size reset to make sure that the label is properly adjusted to the new text size
-		#reset_size()
 
 
 ## Changes internal animation id, causing existing animation to stop.
 func cancel_animation() -> void:
 	_animation_id += 1
-	text = _target_text
+	_set_displayed_text(_target_text)
 	_reset_scramble_visual_state()
 
 
 ## Immediately sets new text and cancels all existing scramble animations for it.
 func set_text_immediate(new_text: String) -> void:
 	_animation_id += 1
-	text = new_text
+	_set_displayed_text(new_text)
 	_target_text = new_text
 	_reset_scramble_visual_state()
-	#reset_size()
 
 
 ## Returns a random character from the [member scramble_characters] parameter if it's not empty, otherwise it returns empty space char.
@@ -206,5 +199,12 @@ func _get_character_or_empty(value: String, index: int) -> String:
 	return value.substr(index, 1)
 
 
+## Updates the displayed text and resets the label dimensions using the reset_size function.
+func _set_displayed_text(new_text: String) -> void:
+	text = new_text
+	reset_size()
+
+
+## Reset the scramble label visual state by setting it's opacity state to fully visible.
 func _reset_scramble_visual_state() -> void:
 	modulate.a = 1.0

@@ -245,9 +245,11 @@ func _update_drawer_toggle_button() -> void:
 	if _drawer_open:
 		drawer_toggle_button.text = "▶"
 		drawer_toggle_button.icon = drawer_toggle_collapse_icon
+		drawer_toggle_button.button_pressed = true
 	else:
 		drawer_toggle_button.text = "◀"
 		drawer_toggle_button.icon = drawer_toggle_expand_icon
+		drawer_toggle_button.button_pressed = false
 
 
 func _on_control_resized() -> void:

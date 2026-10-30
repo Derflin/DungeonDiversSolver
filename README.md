@@ -38,20 +38,19 @@ Currently working on:
 - [ ] Implement MapSolver feature along with displaying it's results on map.
 	- [ ] Make sure that the map solver results from the last stage don't conflict with each other.
 	- [ ] Fix issue with invalid room placements if they are only located next to a secret room and no other room is connected to them (weight 0).
-- [ ] Add animation for room cell show/hide states.
 - [ ] Check if it would be a good idea to move some MapSolver functions logic to specific SecretPlacementConfig/SecretPlacementType/SecretPlacementType* to make it less messy and more organized.
+<br>
+- [ ] Add features section to this readme, that would include description of each available feature and guide how to use them.
+- [ ] Add info about secret room type placement restrictions upon clicking or hovering them.
+- [ ] Create a custom app icon to replace the existing one (for example some small miniature with example room layout on some parchment and pencil/pen/quill).
 
-Things currently planned for future versions:
+Things that could be improved in the future versions:
 
 - [ ] Refactor existing code (add comments, hide internal functions/variables, check indentation)
-- [ ] Add features section to this readme, that would include description of each available feature and guide how to use them
 - [ ] Implement way to load in map state from the game screenshot.
-- [ ] Add info about secret room type placement restrictions upon clicking or hovering them.
-<br>
-- [ ] Implement audio system for game/map interactions.
+- [ ] Implement audio system for game/map interactions (for example placing a room or destroying it, clicking map/hud elements).
 - [ ] Implement map validation based on some basic rules.
-- [ ] Implement animations for placing rooms on map.
-- [ ] Implement animations for showing map solver results.
+- [ ] Implement animations for placing/deleting rooms on map (especially upon loading/importing game state from save).
 
 ---
 

@@ -82,11 +82,15 @@ func _populate_menu_dropdown(menu_dropdown_instance: MenuDropdown) -> void:
 	menu_dropdown_instance.clear_options()
 	
 	# Populate menu dropdown options with data about secret room types
-	var secret_room_kinds := GameData.room_secret_types.get_all_kinds()
-	for secret_room_kind in secret_room_kinds:
-		var secret_room_type := GameData.room_secret_types.get_type(secret_room_kind)
+	var secret_room_type_kinds_ordered = RoomSecretType.ROOM_SECRET_TYPE_CREATE_ORDER
+	for secret_room_type_kind in secret_room_type_kinds_ordered:
+		# Check if secret room type exists in the current game data
+		if not GameData.room_secret_types.has_type(secret_room_type_kind):
+			continue
 		
-		menu_dropdown_instance.add_option(secret_room_kind as int, secret_room_type.get_display_name(), secret_room_type.get_static_texture())
+		var secret_room_type := GameData.room_secret_types.get_type(secret_room_type_kind)
+		
+		menu_dropdown_instance.add_option(secret_room_type_kind as int, secret_room_type.get_display_name(), secret_room_type.get_static_texture())
 
 
 func _on_menu_dropdown_button_toggled(toggle_on: bool, menu_dropdown_instance: MenuDropdown, menu_dropdown_state: GameState.MapSolverState) -> void:

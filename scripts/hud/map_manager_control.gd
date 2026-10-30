@@ -6,6 +6,10 @@ signal map_manager_reset_map_state_requested()
 signal map_manager_reset_map_settings_requested()
 
 
+const SAVE_SCREENSHOT_TRANSITION_GROUP: StringName = &"save_screenshot_transition_wait"
+const MAX_TRANSITION_WAIT_MS: int = 1500
+
+
 @export var save_manager_control: SaveManagerControl
 
 @export_group("Menu Layout", "menu_")
@@ -153,8 +157,54 @@ func _on_load_button_pressed() -> void:
 
 ## Returns a game screenshot based on the current viewport state.
 func _capture_game_screenshot() -> Image:
+	# Wait for all the game screenshot related transitions to end before starting to prepare a screenshot.
+	await _wait_for_save_screenshot_transitions()
+	
 	# Await for when the current frame will be finished rendering.
 	await RenderingServer.frame_post_draw
 	
 	# Return current viewport screenshot as game screenshot.
 	return get_viewport().get_texture().get_image()
+
+
+#region Save Screenshot Transition Wait Group
+
+## Checks and returns a bool value indicating if there are currently any active tween transitions that would delay the creation of save screenshot.
+func has_pending_save_screenshot_transition() -> bool:
+	return false
+
+
+## Check related nodes in the SAVE_SCREENSHOT_TRANSITION_GROUP group and waits until all their pending save screenshot has passed.
+## If the waiting time would exceed the static value defined in MAX_TRANSITION_WAIT_MS static variable, it will automatically stop waiting.
+func _wait_for_save_screenshot_transitions() -> void:
+	# Get current time.
+	var start_time := Time.get_ticks_msec()
+	
+	# Wait until all related transitions affecting save screenshot would pass or if the MAX_TRANSITION_WAIT_MS would pass in the meantime.
+	while true:
+		var has_pending_transition := false
+		
+		# Check if any of the nodes assigned to the SAVE_SCREENSHOT_TRANSITION_GROUP has some pending transitions.
+		for node in get_tree().get_nodes_in_group(SAVE_SCREENSHOT_TRANSITION_GROUP):
+			# Filter out processing if the node doesn't have appropriate function for checking pending transitions and push warnign for it.
+			if not node.has_method("has_pending_save_screenshot_transition"):
+				push_warning("Missing transition check method on: " + node.name)
+				continue
+			
+			# Check pending transitions for the node.
+			if node.call("has_pending_save_screenshot_transition"):
+				has_pending_transition = true
+				break
+		
+		# Return from the current function if all the relevant transitions have finished.
+		if not has_pending_transition:
+			return
+		
+		# Break current loop if MAX_TRANSITION_WAIT_MS time has already passed from the start of the function.
+		if Time.get_ticks_msec() - start_time >= MAX_TRANSITION_WAIT_MS:
+			return
+		
+		# Check pending transitions again on the next frame.
+		await get_tree().process_frame
+
+#endregion

@@ -325,6 +325,13 @@ func _on_close_animation_finished() -> void:
 		_return_submenu_from_overlay_container_to_dropdown()
 
 
+func has_active_animation() -> bool:
+	if _animation != null and _animation.is_valid():
+		return true
+	
+	return false
+
+
 func _kill_animation() -> void:
 	if _animation != null and _animation.is_valid():
 		_animation.kill()

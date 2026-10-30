@@ -34,14 +34,14 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="MapSolverControl" parent="HudLayer/HudRoot" unique_id=195301154 instance=ExtResource("3_k2fmo")]
+[node name="MapSolverControl" parent="HudLayer/HudRoot" unique_id=195301154 groups=["save_screenshot_transition_wait"] instance=ExtResource("3_k2fmo")]
 layout_mode = 1
 
-[node name="MapParametersControl" parent="HudLayer/HudRoot" unique_id=1239913164 instance=ExtResource("2_iuonh")]
+[node name="MapParametersControl" parent="HudLayer/HudRoot" unique_id=1239913164 groups=["save_screenshot_transition_wait"] instance=ExtResource("2_iuonh")]
 z_index = 5
 layout_mode = 1
 
-[node name="MapManagerControl" parent="HudLayer/HudRoot" unique_id=871488007 node_paths=PackedStringArray("save_manager_control") instance=ExtResource("5_ow5a4")]
+[node name="MapManagerControl" parent="HudLayer/HudRoot" unique_id=871488007 node_paths=PackedStringArray("save_manager_control") groups=["save_screenshot_transition_wait"] instance=ExtResource("5_ow5a4")]
 layout_mode = 1
 save_manager_control = NodePath("../SaveManagerControl")
 

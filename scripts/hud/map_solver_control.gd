@@ -218,3 +218,18 @@ func _on_game_state_map_solver_state_changed() -> void:
 func _on_cancel_button_pressed() -> void:
 	# Emit signal that map solver state was triggered to reset
 	GameState.map_solver_state_change_triggered.emit(GameState.MapSolverState.NONE, RoomSecretType.Kind.NONE)
+
+
+#region Save Screenshot Transition Wait Group
+
+## Checks and returns a bool value indicating if there are currently any active tween transitions that would delay the creation of save screenshot.
+func has_pending_save_screenshot_transition() -> bool:
+	var has_active_animation_in_menu_dropdowns: bool = false
+	for menu_dropdown: MenuDropdown in _menu_dropdowns.keys():
+		if menu_dropdown.has_active_animation():
+			has_active_animation_in_menu_dropdowns = true
+			break
+			
+	return has_active_animation_in_menu_dropdowns
+
+#endregion

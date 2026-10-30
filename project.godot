@@ -41,6 +41,7 @@ enabled=PackedStringArray("res://addons/RadialMenu/plugin.cfg", "res://addons/ea
 
 blocks_radial_menu_input=""
 allow_map_camera_input=""
+save_screenshot_transition_wait=""
 
 [gui]
 

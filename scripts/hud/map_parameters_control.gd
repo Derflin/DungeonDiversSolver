@@ -405,3 +405,12 @@ func close_drawer() -> void:
 
 func _on_other_menu_submenu_opened() -> void:
 	close_drawer()
+
+
+#region Save Screenshot Transition Wait Group
+
+## Checks and returns a bool value indicating if there are currently any active tween transitions that would delay the creation of save screenshot.
+func has_pending_save_screenshot_transition() -> bool:
+	return _drawer_tween != null and _drawer_tween.is_valid()
+
+#endregion

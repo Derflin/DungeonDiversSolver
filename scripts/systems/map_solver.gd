@@ -204,7 +204,7 @@ func _check_if_room_coords_inside_grid(room_coords: Vector2i) -> bool:
 	return false
 
 
-func _get_neighbours_count(room_coords: Vector2i) -> int:
+func _get_neighbours_count(room_coords: Vector2i, include_secret_rooms: bool = false) -> int:
 	var result = 0
 	
 	for current_dir: Direction in Direction.values():
@@ -214,7 +214,15 @@ func _get_neighbours_count(room_coords: Vector2i) -> int:
 		
 		# Check if neighbour does exist in a given direction and count it in if it does
 		var neighbour_coords = room_coords + DIRECTION_TO_COORDS_OFFSET[current_dir]
-		if _map_state.has_room_coords(neighbour_coords):
+		if not _map_state.has_room_coords(neighbour_coords):
+			continue
+		
+		# Check if neighbour is a secret room
+		var neighbour_room_instance := _map_state.get_room_instance(neighbour_coords)
+		var neighbour_is_secret_room := neighbour_room_instance.has_secret_type()
+		
+		# Count the neighbour if it's not a secret room or if it's a secret room and the include secret rooms flag is set
+		if not neighbour_is_secret_room or (neighbour_is_secret_room and include_secret_rooms):
 			result += 1
 	
 	return result
@@ -285,11 +293,6 @@ func _check_if_room_coords_placement_abide_existing_rooms_placement_restrictions
 		# Check if placing the room in the provided room_coords would break the distance restriction with the currently checked room.
 		if distance < placement_config.room_distance:
 			return false
-		
-		# Check if placing the room in the provided room_coords would break the neighbours max count of the currently checked room.
-		if distance == 1:
-			if _get_neighbours_count(existing_room_coords) + 1 > placement_config.room_neighbours_max:
-				return false
 	
 	return true
 

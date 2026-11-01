@@ -684,9 +684,9 @@ func _calculate_weights_placement_type_distance(placement_type: SecretPlacementT
 
 
 func _calculate_weights_placement_type_intersection() -> float:
-	# Return 0, since the intersection doesn't need any weights calculated
+	# Return 1, since the intersection doesn't need any weights calculated
 	# Only marked and defined, so that it would not be assigned as omitted or unintentional in the future
-	return 0
+	return 1
 
 
 func _calculate_weights_placement_type_loop(placement_type: SecretPlacementType, cur_coords: Vector2i, room_connections_groups: Dictionary[Vector2i, int]) -> float:

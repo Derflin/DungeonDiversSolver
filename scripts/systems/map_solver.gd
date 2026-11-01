@@ -631,6 +631,11 @@ func _calculate_weights_placement_type_corridor(placement_type: SecretPlacementT
 			if not _map_state.has_room_coords(neighbour_coords):
 				continue
 			
+			# Filter out the coords if neighbour is a secret room and they aren't allowed in the placement type
+			var room_instance_data := _map_state.get_room_instance(neighbour_coords)
+			if not placement_type.allow_secret_rooms_in_corridor and room_instance_data.has_secret_type():
+				continue
+			
 			# Calculate corridor length
 			var cur_dir_weight := _calculate_weights_placement_type_corridor(placement_type, neighbour_coords, current_dir, length + 1)
 			if cur_dir_weight > 0:
@@ -644,6 +649,10 @@ func _calculate_weights_placement_type_corridor(placement_type: SecretPlacementT
 		
 		# Check if the barricades aren't set in the direction where the last room was located, if yes, then return length - 1 (excluding current room)
 		if room_instance_data.has_barricade(DIRECTION_TO_BARRICADE_CONNECTED_ROOM_DIRECTION_FLAGS[last_dir]):
+			return length - 1
+		
+		# Check if the room instance data is for the secret room and if they are not allowed in placement type, if yes, then return length - 1 (excluding current room)
+		if not placement_type.allow_secret_rooms_in_corridor and room_instance_data.has_secret_type():
 			return length - 1
 		
 		# Check if the current room has a barricade in the same direction made as the last room, if yes then return length (including current room)

@@ -289,7 +289,7 @@ func _check_if_room_coords_placement_abide_neighbours_room_placement_restriction
 		# Check if placing the room in the provided room_coords would break the distance restriction of the neighbour.
 		var offset_room_coords_neighbour_coords: Vector2i = abs(room_coords - neighbour_coords)
 		var distance_room_coords_neighbour_coords: int = offset_room_coords_neighbour_coords.x + offset_room_coords_neighbour_coords.y
-		if distance_room_coords_neighbour_coords > neighbour_placement_config.room_distance:
+		if distance_room_coords_neighbour_coords < neighbour_placement_config.room_distance:
 			return false
 		
 		# Check if placing the room in the provided room_coords would break the neighbours max count of the neighbour.

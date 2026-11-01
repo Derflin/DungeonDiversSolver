@@ -140,7 +140,7 @@ func _find_valid_placements(result: MapSolverResult, placement_config: SecretPla
 				continue
 			
 			# Filter out room coords that have neighbours that wouldn't allow the placement of a room next to them because it would break their room placement restrictions.
-			if not _check_if_room_coords_placement_abide_neighbours_room_placement_restrictions(room_coords):
+			if not _check_if_room_coords_placement_abide_existing_rooms_placement_restrictions(room_coords):
 				continue
 			
 			# Filter out room coords that have neighbours that wouldn't allow the placement of a secret room next to them.
@@ -262,39 +262,34 @@ func _check_if_room_coords_abide_neighbours_restrictions(room_coords: Vector2i, 
 	return true
 
 
-## Checks if placing the secret room on the provided [param room_coords] would abide with it's neighbours room placement restrictions.
+## Checks if placing the secret room on the provided [param room_coords] would abide with existing rooms placement restrictions.
 ## Returns a bool value indicating the result of the check.
-func _check_if_room_coords_placement_abide_neighbours_room_placement_restrictions(room_coords: Vector2i) -> bool:
-	# Check each direction for neighbours
-	for current_dir: Direction in Direction.values():
-		# For each direction apart from the default NONE direction
-		if current_dir == Direction.NONE:
-			continue
+func _check_if_room_coords_placement_abide_existing_rooms_placement_restrictions(room_coords: Vector2i) -> bool:
+	# Check all existing room coordinates.
+	for existing_room_coords: Vector2i in _map_state_all_room_coords:
+		var room_instance := _map_state.get_room_instance(existing_room_coords)
 		
-		# Filter out the coords if neighbour doesn't exist for it
-		var neighbour_coords := room_coords + DIRECTION_TO_COORDS_OFFSET[current_dir]
-		var room_instance := _map_state.get_room_instance(neighbour_coords)
-		if room_instance == null:
-			continue
-		
-		# Filter out the neighbour if it isn't a secret room, since only them have custom placement configs that affect this
+		# Filter out the room if it isn't a secret room, since only them have custom placement configs that affect this.
 		if not room_instance.has_secret_type():
 			continue
 		
-		# Get neighbour placement config
-		var neighbour_secret_type_kind := room_instance.get_secret_type_kind()
-		var neighbour_secret_type := GameData.room_secret_types.get_type(neighbour_secret_type_kind)
-		var neighbour_placement_config := neighbour_secret_type.placement_config
+		# Get placement config.
+		var secret_type_kind := room_instance.get_secret_type_kind()
+		var secret_type := GameData.room_secret_types.get_type(secret_type_kind)
+		var placement_config := secret_type.placement_config
 		
-		# Check if placing the room in the provided room_coords would break the distance restriction of the neighbour.
-		var offset_room_coords_neighbour_coords: Vector2i = abs(room_coords - neighbour_coords)
-		var distance_room_coords_neighbour_coords: int = offset_room_coords_neighbour_coords.x + offset_room_coords_neighbour_coords.y
-		if distance_room_coords_neighbour_coords < neighbour_placement_config.room_distance:
+		# Calculate distance between the rooms.
+		var coords_offset: Vector2i = abs(room_coords - existing_room_coords)
+		var distance: int = coords_offset.x + coords_offset.y
+		
+		# Check if placing the room in the provided room_coords would break the distance restriction with the currently checked room.
+		if distance < placement_config.room_distance:
 			return false
 		
-		# Check if placing the room in the provided room_coords would break the neighbours max count of the neighbour.
-		if _get_neighbours_count(neighbour_coords) + 1 > neighbour_placement_config.room_neighbours_max:
-			return false
+		# Check if placing the room in the provided room_coords would break the neighbours max count of the currently checked room.
+		if distance == 1:
+			if _get_neighbours_count(existing_room_coords) + 1 > placement_config.room_neighbours_max:
+				return false
 	
 	return true
 

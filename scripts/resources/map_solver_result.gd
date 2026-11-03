@@ -77,7 +77,7 @@ func assign_weight_to_result_coords(coords: Vector2i, weight: float) -> void:
 			break
 
 
-func intialize_result_coords_probabilities() -> void:
+func initialize_result_coords_probabilities() -> void:
 	for result in result_coords:
 		result.probability = 0.0
 
@@ -98,11 +98,61 @@ func assign_probability_to_result_coords(coords: Vector2i, probability: float) -
 			break
 
 
+## Prepares and returns the map solver placement weight groups list for the current;y stored result coords.
+## Uses the provided [param weight_count_type] to determine the sort type that will be applied to the result coords and in which order they will be grouped together.
+func get_placement_weight_groups(weight_count_type: SecretPlacementConfig.CountType) -> Array[MapSolverPlacementWeightGroup]:
+	var groups: Array[MapSolverPlacementWeightGroup] = []
+	
+	# Return empty groups if the provided weight count type is none.
+	if weight_count_type == SecretPlacementConfig.CountType.NONE:
+		return groups
+	
+	# Sort the existing result coords according to the provided weight count type.
+	var sorted_coords: Array[MapSolverResultCoord] = result_coords.duplicate()
+	if weight_count_type == SecretPlacementConfig.CountType.MAX:
+		sorted_coords.sort_custom(func(a: MapSolverResultCoord, b: MapSolverResultCoord) -> bool: return a.calculated_weight > b.calculated_weight)
+	elif weight_count_type == SecretPlacementConfig.CountType.MIN:
+		sorted_coords.sort_custom(func(a: MapSolverResultCoord, b: MapSolverResultCoord) -> bool: return a.calculated_weight < b.calculated_weight)
+	else:
+		return groups
+	
+	# Prepare placement weight groups based on the sorted result coords and their calculated weights.
+	for candidate: MapSolverResultCoord in sorted_coords:
+		if groups.is_empty() or not is_equal_approx(candidate.calculated_weight, groups[-1].weight):
+			groups.append(MapSolverPlacementWeightGroup.new(candidate.calculated_weight))
+		groups[-1].coords.append(candidate.coords)
+	
+	return groups
+
+
+## Calculates and assigns the probabilites for the result coords set inside the map solver result.
+## Uses the provided [param scenarios] list to go through analyzed scenarios and aggregate calculated probabilites from them.
+func calculate_probability_result_coords_from_scenarios(scenarios: Array[MapSolverPlacementScenario]) -> void:
+	# Initialize result coords probability to default value.
+	initialize_result_coords_probabilities()
+	
+	# Aggregate calculated probabilites assigned to the provided scenarios for each of the result coords.
+	var probability_by_coords: Dictionary[Vector2i, float] = {}
+	for scenario: MapSolverPlacementScenario in scenarios:
+		for coords: Vector2i in scenario.selected_coords:
+			probability_by_coords[coords] = probability_by_coords.get(coords, 0.0) + scenario.probability
+	
+	# Assign and save the aggregated probabilities inside the result coords.
+	for result_coord: MapSolverResultCoord in result_coords:
+		result_coord.probability = clampf(probability_by_coords.get(result_coord.coords, 0.0), 0.0, 1.0)
+	
+	# Remove any result coords that either have invalid probabilities or equal to 0.
+	for index: int in range(result_coords.size() - 1, -1, -1):
+		if result_coords[index].probability <= 0.0:
+			result_coords.remove_at(index)
+	
+
+
 func calculate_probability_result_coords(expected_room_count: int, weight_count_type: SecretPlacementConfig.CountType) -> void:	
 	var remaining_room_count := expected_room_count
 	
 	# Initialize result coords probability to default value
-	intialize_result_coords_probabilities()
+	initialize_result_coords_probabilities()
 	
 	# Sort result coords according to the calculated weights and the weight count type from placement config
 	if weight_count_type == SecretPlacementConfig.CountType.MIN:
@@ -146,7 +196,7 @@ func calculate_probability_result_coords(expected_room_count: int, weight_count_
 			
 			# Adjust calculated probability for the current weight and the remaining room count based on the count of result coords with the same weight as the current one
 			if count_same_weight > remaining_room_count:
-				cur_weight_calculated_probability /= count_same_weight
+				cur_weight_calculated_probability = float(remaining_room_count) / float(count_same_weight)
 				remaining_room_count = count_same_weight
 		
 		# Assign calculated probability for the current weight and adjust the remaining room count

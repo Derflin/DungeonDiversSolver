@@ -38,12 +38,15 @@ const DIRECTION_TO_BARRICADE_CONNECTED_ROOM_DIRECTION_FLAGS: Dictionary[Directio
 	Direction.RIGHT: RoomInstanceData.BarricadeDirectionFlags.LEFT,
 }
 
+const MAX_PLACEMENT_SCENARIOS: int = 25000
+
 
 var text_color_code_gradient: Gradient = Gradient.new()
 
 
 var _map_state: MapState
 var _map_state_all_room_coords: Array[Vector2i]
+var _placement_selection_overflow: bool = false
 
 
 func _init() -> void:
@@ -74,6 +77,9 @@ func find_secret_room_locations(
 	var secret_room_count_current: int = GameState.map_secrets_count_current.get(secret_room_kind, 0)
 	var secret_room_count_max: int = GameSettings.map_secrets_count_max.get(secret_room_kind, 0)
 	var secret_room_generate_count := secret_room_count_max - secret_room_count_current
+	if secret_room_count_max <= 0:
+		result.append_status_message("There aren't any secret room to be placed")
+		return result
 	if secret_room_count_max - secret_room_count_current <= 0:
 		result.append_status_message("All secret rooms already placed")
 		return result
@@ -102,13 +108,18 @@ func find_secret_room_locations(
 		result.append_status_message("Calculated weights for %d valid placements" % [result.get_result_coords().size()])
 		return result
 	
-	# Find and mark final solutions
-	_find_solutions(result, secret_room_placement_config, secret_room_generate_count)
+	# Find and mark final solutions if possible, otherwise return calculated weights
+	if not _find_solutions(result, secret_room_placement_config, secret_room_generate_count):
+		result.assign_color_code(text_color_code_gradient, secret_room_placement_config.weight_count_type, true, false)
+		return result
 	
 	# Color code the solution results and save text colors for each found placement
 	result.assign_color_code(text_color_code_gradient, secret_room_placement_config.weight_count_type, false, true)
 	
-	result.append_status_message("Found %d valid and most probable placements" % [result.get_result_coords().size()])
+	if not result.result_coords.is_empty():
+		result.append_status_message("Found %d valid and possible placements" % [result.get_result_coords().size()])
+	else:
+		result.append_status_message("No more currently valid placements detected")
 	return result
 
 
@@ -902,9 +913,159 @@ func _placement_type_aggregate_calculated_weights(placement_type: SecretPlacemen
 	return output_weight
 
 
-func _find_solutions(result: MapSolverResult, placement_config: SecretPlacementConfig, secret_room_generate_count: int) -> void:
-	# Initialize stage state
+func _find_solutions(result: MapSolverResult, placement_config: SecretPlacementConfig, secret_room_generate_count: int) -> bool:
+	# Set status message and filter out processing if the placement config weight count type is set to none.
+	if placement_config.weight_count_type == SecretPlacementConfig.CountType.NONE:
+		result.append_status_message("Cannot predict placement for a secret room type without any weight preference set")
+		return false
+	
+	# Set status message and filter out processing if the aren't any rooms left to predict.
+	if secret_room_generate_count <= 0:
+		result.append_status_message("No rooms remain to be predicted")
+		return false
+	
+	# Prepare placement conflicts lists for each placement coord and group the placement coords based on the calculated weights.
+	var conflicts: MapSolverPlacementConflicts = _prepare_placement_conflicts(result, placement_config)
+	var weight_groups: Array[MapSolverPlacementWeightGroup] = result.get_placement_weight_groups(placement_config.weight_count_type)
+	
+	# Look through each weight group and prepare alternative placement scenarios in case of conflicts creating multiple possible selections groups. 
+	var scenarios: Array[MapSolverPlacementScenario] = [MapSolverPlacementScenario.new()]
+	for weight_group: MapSolverPlacementWeightGroup in weight_groups:
+		var next_scenarios: Array[MapSolverPlacementScenario] = []
+		for scenario: MapSolverPlacementScenario in scenarios:
+			# Prepare variables for the current scenario.
+			var remaining_count: int = secret_room_generate_count - scenario.selected_coords.size()
+			
+			# Append current scenario at the end of next scenarios list in order to keep track of it and later on aggregate results from it.
+			if remaining_count <= 0:
+				next_scenarios.append(scenario)
+				continue
+			
+			# Find possible selections groups from the current weight group list.
+			var selections: Array[MapSolverPlacementSelection] = _find_maximal_group_selections(weight_group, scenario.selected_coords, remaining_count, conflicts)
+			
+			# Check if the overflow flag hasn't been set or the overflow point hasn't been reached.
+			if _placement_selection_overflow or selections.is_empty() or next_scenarios.size() + selections.size() > MAX_PLACEMENT_SCENARIOS:
+				result.append_status_message("Placement predictions exceeded scenario limit, weights are still available")
+				return false
+			
+			# Prepare new scenarios based on the results from the current scenario using the current weight group list candidates.
+			var branch_probability: float = scenario.probability / float(selections.size())
+			for selection: MapSolverPlacementSelection in selections:
+				var combined: Array[Vector2i] = scenario.selected_coords.duplicate()
+				combined.append_array(selection.coords)
+				next_scenarios.append(MapSolverPlacementScenario.new(combined, branch_probability))
+		
+		# Assign prepared next scenarios list as the current scenarios list.
+		scenarios = next_scenarios
+	
+	# Calculate probabilities from the created selection scenarios.
+	result.calculate_probability_result_coords_from_scenarios(scenarios)
+	
+	# Mark stage state.
 	result.stage = MapSolverResult.SolveStage.FOUND_SOLUTION
 	
-	# Calculate probabilities
-	result.calculate_probability_result_coords(secret_room_generate_count, placement_config.weight_count_type)
+	return true
+
+
+## Prepares and returns a dictionary containing a list of coords for placements that conflicts with some other coords for placement.
+## Uses the provided [param candidates] param to access placement candidates coords and provided [param placement_config] to check and determine if the placement restrictions are abided between placement candidates. 
+func _prepare_placement_conflicts(result: MapSolverResult, placement_config: SecretPlacementConfig) -> MapSolverPlacementConflicts:
+	var conflicts: MapSolverPlacementConflicts = MapSolverPlacementConflicts.new()
+	var candidate_coords: Array[Vector2i] = result.get_result_coords()
+	
+	# Initialize conflict lookup for every candidate coords.
+	for coords: Vector2i in candidate_coords:
+		conflicts.register_coord(coords)
+	
+	# Compare each unique pair of candidates.
+	for i: int in range(candidate_coords.size()):
+		for j: int in range(i + 1, candidate_coords.size()):
+			var a: Vector2i = candidate_coords[i]
+			var b: Vector2i = candidate_coords[j]
+			
+			var offset: Vector2i = a - b
+			var distance: int = absi(offset.x) + absi(offset.y)
+			
+			# Check placement restrictions.
+			var incompatible: bool = false
+			# Check minimum distance restrictions.
+			incompatible = distance < placement_config.room_distance
+			# Check secret-neighbour restriction.
+			if distance == 1 and not placement_config.neighbour_allow_secret:
+				incompatible = true
+			
+			# Store both directions of the conflict.
+			if incompatible:
+				conflicts.add_conflict(a, b)
+	
+	return conflicts
+
+
+## Find the best maximum selection group of coords from the provided [param weight_group] that is currently being processed while taking into account how many of them needs to be selected based on the provided [param remaining_count].
+## Provided [param already_selected] list is used to check which other coords have already been selected and compare them with the provided [param conflicts] to ensure that conflicting coords won't be selected.
+func _find_maximal_group_selections(weight_group: MapSolverPlacementWeightGroup, already_selected: Array[Vector2i], remaining_count: int, conflicts: MapSolverPlacementConflicts) -> Array[MapSolverPlacementSelection]:
+	# Reset the overflow flag.
+	_placement_selection_overflow = false
+	
+	# Checks which of the placement candidates don't have any conflicts with the already selected coords and are available to select.
+	var available: Array[Vector2i] = []
+	for coords: Vector2i in weight_group.coords:
+		if not conflicts.conflicts_with_any(coords, already_selected):
+			available.append(coords)
+	
+	# Determine the best maximum selection group from the filtered list of available coords.
+	var selections: Array[MapSolverPlacementSelection] = []
+	var empty_selection: Array[Vector2i] = []
+	_collect_maximal_group_selections(available, 0, empty_selection, remaining_count, conflicts, selections)
+	
+	return selections
+
+
+## Searches recursively for all possible maximum group selections from the provided [param available] list of coords that would satisfy the provided [param remaining_count] of candidates to be selected.
+## Provided [param index] and [param selected_from_group] are the parameters to control the recursive call by tracking currently processed candidate and which candidates have been already selected in the current recursion step.
+## Provided [param conflicts] are used to check if the next candidate won't have any conflicts with the already selected candidates.
+## Provided [param output] is used to store all the found possible maximum group selections and is used to store and return them after function finishes.
+func _collect_maximal_group_selections(available: Array[Vector2i], index: int, selected_from_group: Array[Vector2i], remaining_count: int, conflicts: MapSolverPlacementConflicts, output: Array[MapSolverPlacementSelection]) -> void:
+	# Check if the overflow flag hasn't been set and filter out processing if it has been.
+	if _placement_selection_overflow:
+		return
+	
+	# Stops further recursive calls if the current index reaches the end of the available list or if the already selected coords list is equal or bigger then the count of remaining coords that need to be selected.
+	if index == available.size() or selected_from_group.size() >= remaining_count:
+		# Assign current group selection as an possible output if the group selection is maximal.
+		if _is_group_selection_maximal(selected_from_group, available, remaining_count, conflicts):
+			# Check if the overflow point hasn't been reached.
+			if output.size() >= MAX_PLACEMENT_SCENARIOS:
+				_placement_selection_overflow = true
+				return
+			
+			# Append current group selection as an possible output.
+			output.append(MapSolverPlacementSelection.new(selected_from_group))
+		return
+	
+	# Prepare a new candidate group extended with the next candidate coords and recursively checks for a new combination with it if the next coords don't cause conflicts with already selected candidates.
+	var candidate_coords: Vector2i = available[index]
+	if not conflicts.conflicts_with_any(candidate_coords, selected_from_group):
+		var with_candidate: Array[Vector2i] = selected_from_group.duplicate()
+		with_candidate.append(candidate_coords)
+		_collect_maximal_group_selections(available, index + 1, with_candidate, remaining_count, conflicts, output)
+	
+	# Prepare a new candidate group skipping the next candidate and recursively checks for a new combination without it.
+	_collect_maximal_group_selections(available, index + 1, selected_from_group, remaining_count, conflicts, output)
+
+
+## Checks if the provided [param selected_from_group] is an maximal group selection and is an valid candidate group.
+## Uses provided [param available] to check what were available candidates, [param remaining_count] to check how many of them were supposed to be selected and [param conflicts] to check their conflicts between each other.
+func _is_group_selection_maximal(selected_from_group: Array[Vector2i], available: Array[Vector2i], remaining_count: int, conflicts: MapSolverPlacementConflicts) -> bool:
+	# Returns true if the selected candidates group size is bigger or equal to the remaining count of candidates that were supposed to be selected.
+	if selected_from_group.size() >= remaining_count:
+		return true
+	
+	# Returns false if any of available candidates weren't selected and there weren't any conflicts with them and the already selected candidates.
+	for coords: Vector2i in available:
+		if coords not in selected_from_group and not conflicts.conflicts_with_any(coords, selected_from_group):
+			return false
+	
+	# Otherwise return true.
+	return true

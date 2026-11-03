@@ -56,7 +56,7 @@ func capture_game_state() -> Dictionary:
 
 
 func restore_game_state(game_state: Dictionary) -> void:
-	# Intialize save restore process for each save provider.
+	# Initialize save restore process for each save provider.
 	for save_key: StringName in _save_providers:
 		var provider: Object = _save_providers[save_key]
 		if provider.has_method("begin_save_restore"):

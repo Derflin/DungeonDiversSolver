@@ -27,9 +27,19 @@ func prepare_details(room_name: String, weight: float, priority_group: int) -> v
 	_priority_text = str(priority_group) if priority_group > 0 else "-"
 	
 	# Initializes empty state for the labels for the provided details in parameters.
-	room_name_label.set_text_immediate("")
-	weight_value_label.set_text_immediate("")
-	priority_value_label.set_text_immediate("")
+	var temp_room_name_text = ""
+	for i in range(_room_name_text.length()):
+		temp_room_name_text += " "
+	var temp_weight_text = ""
+	for i in range(_weight_text.length()):
+		temp_weight_text += " "
+	var temp_priority_text = ""
+	for i in range(_priority_text.length()):
+		temp_priority_text += " "
+		
+	room_name_label.set_text_immediate(temp_room_name_text)
+	weight_value_label.set_text_immediate(temp_weight_text)
+	priority_value_label.set_text_immediate(temp_priority_text)
 
 
 # Sets the dynamic values labels to populate them using the data saved in internal fields to trigger the animation change for them.

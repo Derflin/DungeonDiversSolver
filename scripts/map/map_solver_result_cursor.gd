@@ -57,7 +57,6 @@ var _map_solver_result_solve_stage: MapSolverResult.SolveStage
 var _hover_details_tween: Tween
 var _hover_details_active: bool = false
 var _hover_details_final_position: Vector2 = Vector2.ZERO
-var _hover_details_direction: Vector2 = Vector2.DOWN
 var _hover_room_name: String = "Secret Room"
 
 

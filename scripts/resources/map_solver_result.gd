@@ -213,6 +213,32 @@ func calculate_probability_result_coords(expected_room_count: int, weight_count_
 		result_coords.remove_at(cur_index)
 
 
+## Assigns priority groups to the remaining results based on their calculcated weights and the provided [param weight_count_type] to group them.
+## Priorities are assigned for each weight group's members incrementally.
+func assign_priority_groups(weight_count_type: SecretPlacementConfig.CountType) -> void:
+	# Initialize initial value of the priority groups for the result coords.
+	for result_coord: MapSolverResultCoord in result_coords:
+		result_coord.priority_group = 0
+	
+	# Group the placement coords based on the calculated weights.
+	var groups: Array[MapSolverPlacementWeightGroup] = get_placement_weight_groups(weight_count_type)
+	
+	# Filter out processing if the groups are empty.
+	if groups.is_empty():
+		return
+	
+	# Prepare a dictionary mapping coords to specific result coords.
+	var by_coords: Dictionary[Vector2i, MapSolverResultCoord] = {}
+	for result_coord: MapSolverResultCoord in result_coords:
+		by_coords[result_coord.coords] = result_coord
+	
+	# Assign priority groups to each of the weight groups members.
+	for index: int in range(groups.size()):
+		for coords: Vector2i in groups[index].coords:
+			if by_coords.has(coords):
+				by_coords[coords].priority_group = index + 1
+
+
 func assign_color_code(text_color_gradient: Gradient, weight_count_type: SecretPlacementConfig.CountType, use_weights: bool = false, use_probabilities: bool = false) -> void:
 	# Filter out processing if all function state flags are disabled
 	if not use_weights and not use_probabilities:

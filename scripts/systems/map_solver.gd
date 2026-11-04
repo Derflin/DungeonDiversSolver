@@ -116,6 +116,9 @@ func find_secret_room_locations(
 	# Color code the solution results and save text colors for each found placement
 	result.assign_color_code(text_color_code_gradient, secret_room_placement_config.weight_count_type, false, true)
 	
+	# Assign priority groups to the results.
+	result.assign_priority_groups(secret_room_placement_config.weight_count_type)
+	
 	if not result.result_coords.is_empty():
 		result.append_status_message("Found %d valid and possible placements" % [result.get_result_coords().size()])
 	else:

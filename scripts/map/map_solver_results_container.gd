@@ -56,7 +56,7 @@ func _create_result_cursor(map_solver_result_coord: MapSolverResultCoord, cursor
 	_update_result_cursor_position(result_cursor_instance, cursor_position)
 	
 	# Initialize data inside result cursor instance with the map solver result coord
-	result_cursor_instance.update_data(map_solver_result_coord, result_solve_stage)
+	result_cursor_instance.update_data(map_solver_result_coord, result_solve_stage, _get_map_solver_secret_room_name())
 	
 	# Update result cursor instance name
 	result_cursor_instance.name = "%s %.0v" % [result_cursor_instance.get_script().get_global_name(), map_solver_result_coord.coords]
@@ -100,7 +100,7 @@ func _update_result_cursor(room_coords: Vector2i, map_solver_result_coord: MapSo
 	
 	# Update data inside result cursor instance with the map solver result coord
 	var result_cursor = result_cursors[room_coords]
-	result_cursor.update_data(map_solver_result_coord, result_solve_stage)
+	result_cursor.update_data(map_solver_result_coord, result_solve_stage, _get_map_solver_secret_room_name())
 
 
 ## Checks if the result cursor exists for the provided [param room_coords] coordinates.
@@ -111,3 +111,13 @@ func has_result_cursor_coords(room_coords: Vector2i) -> bool:
 ## Updates [param room_cell_instance] position based on the room coordinates saved in it's room_coords parameter.
 func _update_result_cursor_position(result_cursor_instance: MapSolverResultCursor, cursor_position: Vector2) -> void:
 	result_cursor_instance.position = cursor_position
+
+
+## Returns secret room name string for the secret room type for which the map solver currently is set to display the results.
+func _get_map_solver_secret_room_name() -> String:
+	var secret_room_kind: RoomSecretType.Kind = GameState.get_map_solver_secret_kind()
+	if GameData.room_secret_types.has_type(secret_room_kind):
+		var secret_room_type: RoomSecretType = GameData.room_secret_types.get_type(secret_room_kind)
+		return secret_room_type.display_name
+	
+	return ""

@@ -48,19 +48,7 @@ size = Vector2(17, 17)
 
 [node name="MapSolverResultCursor" type="Node2D" unique_id=1241313848]
 script = ExtResource("1_0oae5")
-value_label_area_size = null
 value_label_base_font_size = 16
-value_label_padding = null
-value_label_visual_offset = null
-cursor_animation_enabled = null
-cursor_animation_show_duration = null
-cursor_animation_hide_duration = null
-hover_details_enabled = null
-hover_details_default_room_name = null
-hover_details_gap = null
-hover_details_viewport_margin = null
-hover_details_slide_distance = null
-hover_details_animation_duration = null
 
 [node name="Edges" type="Sprite2D" parent="." unique_id=2130384106]
 scale = Vector2(0.9, 0.9)

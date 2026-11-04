@@ -46,7 +46,6 @@ var cursor_animation_hide_duration: float = 0.2
 @export var hover_details_default_room_name: String = "Secret Room"
 @export var hover_details_gap: float = 5.0
 @export var hover_details_viewport_margin: float = 8.0
-@export var hover_details_slide_distance: float = 4.0
 @export var hover_details_animation_duration: float = 0.16
 @export var hover_details_visual_scale: float = 0.5
 
@@ -274,9 +273,7 @@ func _on_hover_area_mouse_entered() -> void:
 	# Calculate and set the hover details position.
 	var placement: Dictionary = _choose_hover_details_placement()
 	_hover_details_final_position = placement["position"]
-	_hover_details_direction = Vector2(placement["direction"]).normalized()
-	
-	hover_details.position = _hover_details_final_position - _hover_details_direction * hover_details_slide_distance
+	hover_details.position = _hover_details_final_position
 	
 	# Initialize hover details display parameters and open animation.
 	hover_details.modulate.a = 0.0
@@ -284,7 +281,6 @@ func _on_hover_area_mouse_entered() -> void:
 	hover_details.animate_text()
 	
 	_hover_details_tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	_hover_details_tween.tween_property(hover_details, "position", _hover_details_final_position, hover_details_animation_duration)
 	_hover_details_tween.tween_property(hover_details, "modulate:a", 1.0, hover_details_animation_duration)
 
 
@@ -313,9 +309,7 @@ func _hide_hover_details(immediate: bool = false) -> void:
 		return
 	
 	# Initialize hover details close animation.
-	var hover_details_target_position = _hover_details_final_position - _hover_details_direction * hover_details_slide_distance
 	_hover_details_tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	_hover_details_tween.tween_property(hover_details, "position", hover_details_target_position, hover_details_animation_duration)
 	_hover_details_tween.tween_property(hover_details, "modulate:a", 0.0, hover_details_animation_duration)
 	
 	# Queue hover details hide after the animation finishes.

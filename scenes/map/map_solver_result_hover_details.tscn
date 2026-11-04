@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://cegkdcmer3ueb" path="res://scripts/map/map_solver_result_hover_details.gd" id="1_va7rl"]
 [ext_resource type="Script" uid="uid://b8x8oocqx8an3" path="res://scripts/ui/components/scramble_label.gd" id="1_yafr3"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_yafr3"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_va7rl"]
 content_margin_left = 0.0
 content_margin_top = 0.0
 content_margin_right = 0.0
@@ -19,78 +19,67 @@ corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 corner_detail = 5
 
-[node name="MapSolverResultHoverDetails" type="Control" unique_id=1549105598]
+[node name="MapSolverResultHoverDetails" type="PanelContainer" unique_id=540041388]
 visible = false
 modulate = Color(1, 1, 1, 0)
 z_index = 100
-custom_minimum_size = Vector2(90, 64)
-layout_mode = 3
-anchors_preset = 0
-offset_right = 90.0
-offset_bottom = 64.0
+offset_right = 69.0
+offset_bottom = 61.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_va7rl")
 script = ExtResource("1_va7rl")
 
-[node name="PanelContainer" type="PanelContainer" parent="." unique_id=558235132]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_yafr3")
-
-[node name="MarginContainer" type="MarginContainer" parent="PanelContainer" unique_id=1300604902]
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=1300604902]
 layout_mode = 2
 theme_override_constants/margin_left = 8
 theme_override_constants/margin_top = 6
 theme_override_constants/margin_right = 8
 theme_override_constants/margin_bottom = 6
 
-[node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer/MarginContainer" unique_id=1626900375]
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=1626900375]
 layout_mode = 2
 theme_override_constants/separation = 2
 
-[node name="RoomNameLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=1251672814]
+[node name="RoomNameLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=1251672814]
 layout_mode = 2
 horizontal_alignment = 1
 vertical_alignment = 1
 script = ExtResource("1_yafr3")
 metadata/_custom_type_script = "uid://b8x8oocqx8an3"
 
-[node name="HSeparator" type="HSeparator" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=1638264623]
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer" unique_id=1638264623]
 layout_mode = 2
 
-[node name="WeightRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=1714678763]
+[node name="WeightRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1714678763]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="WeightTitle" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/WeightRow" unique_id=1847926041]
+[node name="WeightTitle" type="Label" parent="MarginContainer/VBoxContainer/WeightRow" unique_id=1847926041]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Weight"
 vertical_alignment = 1
 
-[node name="WeightValue" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/WeightRow" unique_id=842231004]
+[node name="WeightValue" type="Label" parent="MarginContainer/VBoxContainer/WeightRow" unique_id=842231004]
 layout_mode = 2
 horizontal_alignment = 2
 vertical_alignment = 1
 script = ExtResource("1_yafr3")
 metadata/_custom_type_script = "uid://b8x8oocqx8an3"
 
-[node name="PriorityRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=737296491]
+[node name="PriorityRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=737296491]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="PriorityTitle" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/PriorityRow" unique_id=1980160611]
+[node name="PriorityTitle" type="Label" parent="MarginContainer/VBoxContainer/PriorityRow" unique_id=1980160611]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Priority"
 vertical_alignment = 1
 
-[node name="PriorityValue" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/PriorityRow" unique_id=769970940]
+[node name="PriorityValue" type="Label" parent="MarginContainer/VBoxContainer/PriorityRow" unique_id=769970940]
 layout_mode = 2
 horizontal_alignment = 2
 vertical_alignment = 1

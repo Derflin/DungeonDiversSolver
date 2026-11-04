@@ -269,6 +269,9 @@ func _on_hover_area_mouse_entered() -> void:
 	# Initialize hover details data.
 	hover_details.prepare_details(_hover_room_name, _map_solver_result_coord.calculated_weight, _map_solver_result_coord.priority_group)
 	
+	# Align hover details size before calculating its position.
+	_align_hover_details_size_to_pixel_grid()
+	
 	# Calculate and set the hover details position.
 	var placement: Dictionary = _choose_hover_details_placement()
 	_hover_details_final_position = placement["position"]
@@ -379,6 +382,25 @@ func _local_rect_to_viewport(local_rect: Rect2) -> Rect2:
 	var max_y: float = maxf(maxf(p0.y, p1.y), maxf(p2.y, p3.y))
 	
 	return Rect2(Vector2(min_x, min_y), Vector2(max_x - min_x, max_y - min_y))
+
+
+## Aligns hover details size to mutliples of 4 to make it compatible with scaling it's contents.
+## Rounds the current minimum size of the hover details to ensure that it's divisible by the multiplied step value and applies it.
+func _align_hover_details_size_to_pixel_grid() -> void:
+	# Clear the previously reserved minimum size for the hover details.
+	hover_details.custom_minimum_size = Vector2.ZERO
+	
+	# Get the size required by the hover details contents.
+	hover_details.reset_size()
+	var required_size: Vector2 = hover_details.size
+	
+	# Apply mutlitples of 4 as the size possible values.
+	const SIZE_STEP: float = 4.0
+	var aligned_size: Vector2 = Vector2(ceilf(required_size.x / SIZE_STEP) * SIZE_STEP, ceilf(required_size.y / SIZE_STEP) * SIZE_STEP)
+	
+	# Apply the rounded size and update the layout.
+	hover_details.custom_minimum_size = aligned_size
+	hover_details.reset_size()
 
 
 ## Chooses and returns a dictionary containing the selected direction and position for it to use for the hover details scene instance placement.

@@ -50,6 +50,8 @@ var cursor_animation_hide_duration: float = 0.2
 @export var hover_details_visual_scale: float = 0.5
 @export_group("Hover Connector", "hover_details_connector_")
 @export var hover_details_connector_enabled: bool = true
+@export var hover_details_connector_start_overlap: float = 0.0
+@export var hover_details_connector_end_overlap: float = 1.0
 
 
 var _cursor_animation: Tween
@@ -423,6 +425,13 @@ func _update_hover_connector() -> void:
 	# Find points where the line meets the rectangle borders.
 	var start_point: Vector2 = _get_rect_border_point(cursor_rect, tooltip_center)
 	var end_point: Vector2 = _get_rect_border_point(tooltip_rect, cursor_center)
+	
+	# Extend the connector start and end points slightly by the set start and end overlap parameters values.
+	var connector_direction: Vector2 = end_point - start_point
+	if hover_details_connector_start_overlap != 0.0 and not connector_direction.is_zero_approx():
+		start_point += -1 * connector_direction.normalized() * hover_details_connector_start_overlap
+	if hover_details_connector_end_overlap != 0.0 and not connector_direction.is_zero_approx():
+		end_point += connector_direction.normalized() * hover_details_connector_end_overlap
 	
 	# Update hover connector points.
 	hover_connector.points = PackedVector2Array([start_point, end_point])

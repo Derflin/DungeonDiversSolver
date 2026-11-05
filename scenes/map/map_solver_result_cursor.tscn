@@ -85,6 +85,6 @@ shape = SubResource("RectangleShape2D_ygwui")
 visible = false
 z_index = 99
 width = 1.0
-default_color = Color(0.8, 0.8, 0.8, 1)
+default_color = Color(0.8352941, 0.72156864, 0.6509804, 1)
 
 [node name="HoverDetails" parent="." unique_id=1549105598 instance=ExtResource("5_7l876")]

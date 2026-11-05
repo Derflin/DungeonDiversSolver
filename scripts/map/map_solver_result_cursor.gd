@@ -93,10 +93,20 @@ func _ready() -> void:
 	# Update value label if it was initialized before ready function
 	if _map_solver_result_coord != null:
 		_update_value_label()
+
+
+## Continuously checks whether hover details should be displayed and handles changes to their visibility state. 
+func _process(_delta: float) -> void:
+	# Check if hover details are valid to be shown.
+	var hover_valid: bool = _is_hover_details_mouse_valid()
 	
-	# Add triggers for hover area.
-	hover_area.mouse_entered.connect(_on_hover_area_mouse_entered)
-	hover_area.mouse_exited.connect(_on_hover_area_mouse_exited)
+	# Show hover details if they are valid to be shown and the hover details aren't already active.
+	if hover_valid and not _hover_details_active:
+		_show_hover_details()
+	
+	# Hide hover details if they are not valid to be shown and the hover details are already active.
+	elif not hover_valid and _hover_details_active:
+		_hide_hover_details()
 
 
 ## Shows cursor either immediately if the [member cursor_animation_enabled] is disabled or initializes the animation for it.
@@ -106,10 +116,6 @@ func show_cursor() -> void:
 	
 	# Show cursor
 	show()
-	
-	# Set hover area to detect input events.
-	if is_node_ready():
-		hover_area.input_pickable = true
 	
 	# If animation is disabled, then simply set the desired state
 	if not cursor_animation_enabled:
@@ -132,7 +138,6 @@ func hide_cursor() -> void:
 	
 	# Hide hover details.
 	_hide_hover_details(true)
-	hover_area.input_pickable = false
 	
 	# Stop existing animation
 	_kill_cursor_animation()
@@ -255,8 +260,8 @@ func _on_value_label_resized() -> void:
 	value_label.position = -value_label.size / 2.0 + value_label_visual_offset
 
 
-## Handles the hover area mouse entered signal by initializing and showing the hover details scene instance.
-func _on_hover_area_mouse_entered() -> void:
+## Shows the hover details scene instance.
+func _show_hover_details() -> void:
 	# Filter out processing if the hover details aren't enabled or the scene isn't visible or there aren't any result coords assigned.
 	if not hover_details_enabled or not visible or _map_solver_result_coord == null:
 		return
@@ -265,8 +270,8 @@ func _on_hover_area_mouse_entered() -> void:
 	if _map_solver_result_solve_stage != MapSolverResult.SolveStage.FOUND_SOLUTION:
 		return
 	
-	# Filter out processing if the mouse is currently over the other hud element that is blocking the interaction.
-	if _mouse_is_over_blocking_hud():
+	# Filter out processing if the mouse isn't currently over the hover details or it's over some blocking HUD elements.
+	if not _is_hover_details_mouse_valid():
 		return
 	
 	# Set flag that hover details are active.
@@ -307,12 +312,6 @@ func _on_hover_area_mouse_entered() -> void:
 	
 	if hover_connector.visible:
 		_hover_details_tween.tween_property(hover_connector, "modulate:a", 1.0, hover_details_animation_duration)
-	
-
-
-## Handles the hover area mouse exited signal by hiding the hover details scene instance.
-func _on_hover_area_mouse_exited() -> void:
-	_hide_hover_details()
 
 
 ## Hides the hover details scene instance.
@@ -374,6 +373,32 @@ func _mouse_is_over_blocking_hud() -> bool:
 			return true
 		node = node.get_parent()
 	return false
+
+
+## Checks and returns a bool value indicating whether the mouse is currently over the result cursor and isn't interacting with a blocking HUD element.
+## Returns false if the result cursor isn't visible or the hover details aren't supposed to be enabled or the hover area input detection is disabled.
+func _is_hover_details_mouse_valid() -> bool:
+	# Check whether the cursor can currently display hover details.
+	if not is_visible_in_tree() or not hover_details_enabled:
+		return false
+	
+	# Check if the map solver result coords aren't empty.
+	if _map_solver_result_coord == null:
+		return false
+	
+	# Check if the current map solver stage is set to finding solutions.
+	if _map_solver_result_solve_stage != MapSolverResult.SolveStage.FOUND_SOLUTION:
+		return false
+	
+	# Check whether the mouse is physically inside the hover rectangle.
+	if not _get_hover_cursor_rect().has_point(get_local_mouse_position()):
+		return false
+	
+	# Check whether a blocking HUD element is under the mouse.
+	if _mouse_is_over_blocking_hud():
+		return false
+	
+	return true
 
 
 ## Returns a rectangle representing the hover area.

@@ -44,7 +44,7 @@ _data = {
 }
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ygwui"]
-size = Vector2(17, 17)
+size = Vector2(15, 15)
 
 [node name="MapSolverResultCursor" type="Node2D" unique_id=1241313848]
 script = ExtResource("1_0oae5")
@@ -72,6 +72,11 @@ script = ExtResource("2_85jj2")
 metadata/_custom_type_script = "uid://b8x8oocqx8an3"
 
 [node name="HoverArea" type="Area2D" parent="." unique_id=659989009]
+collision_layer = 0
+collision_mask = 0
+input_pickable = false
+monitoring = false
+monitorable = false
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="HoverArea" unique_id=1830734291]
 shape = SubResource("RectangleShape2D_ygwui")

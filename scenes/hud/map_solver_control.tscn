@@ -120,6 +120,7 @@ size_flags_vertical = 0
 offset_transform_enabled = true
 offset_transform_position = Vector2(0, -16)
 offset_transform_visual_only = false
+mouse_filter = 2
 
 [node name="MenuPanel" type="PanelContainer" parent="MenuAnchor/MenuRoot/MenuContents" unique_id=1689104075 groups=["blocks_radial_menu_input"]]
 layout_mode = 2

@@ -48,6 +48,8 @@ var cursor_animation_hide_duration: float = 0.2
 @export var hover_details_viewport_margin: float = 8.0
 @export var hover_details_animation_duration: float = 0.16
 @export var hover_details_visual_scale: float = 0.5
+@export_group("Hover Connector", "hover_details_connector_")
+@export var hover_details_connector_enabled: bool = true
 
 
 var _cursor_animation: Tween
@@ -67,13 +69,18 @@ var _hover_room_name: String = "Secret Room"
 @onready var hover_area: Area2D = $HoverArea
 @onready var hover_collision_shape: CollisionShape2D = $HoverArea/CollisionShape2D
 @onready var hover_details: MapSolverResultHoverDetails = $HoverDetails
+@onready var hover_connector: Line2D = $HoverConnector
 
 
 func _ready() -> void:
 	# Initialize initial state
 	hide()
 	modulate.a = 0.0
+	
+	# Initialize hover details initial state.
 	hover_details.scale = Vector2.ONE * hover_details_visual_scale
+	hover_connector.hide()
+	hover_connector.modulate.a = 0.0
 	
 	# Initialize the animation player for corners sprite
 	_initialize_corners_animation_player()
@@ -277,6 +284,17 @@ func _on_hover_area_mouse_entered() -> void:
 	_hover_details_final_position = placement["position"]
 	hover_details.position = _hover_details_final_position
 	
+	# Prepare and display the connector if it's enabled.
+	if hover_details_connector_enabled:
+		_update_hover_connector()
+		if hover_connector.get_point_count() == 2:
+			hover_connector.modulate.a = 0.0
+			hover_connector.show()
+		else:
+			hover_connector.hide()
+	else:
+		hover_connector.hide()
+	
 	# Initialize hover details display parameters and open animation.
 	hover_details.modulate.a = 0.0
 	hover_details.show()
@@ -284,6 +302,10 @@ func _on_hover_area_mouse_entered() -> void:
 	
 	_hover_details_tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	_hover_details_tween.tween_property(hover_details, "modulate:a", 1.0, hover_details_animation_duration)
+	
+	if hover_connector.visible:
+		_hover_details_tween.tween_property(hover_connector, "modulate:a", 1.0, hover_details_animation_duration)
+	
 
 
 ## Handles the hover area mouse exited signal by hiding the hover details scene instance.
@@ -308,14 +330,31 @@ func _hide_hover_details(immediate: bool = false) -> void:
 	if immediate or not hover_details.visible:
 		hover_details.hide()
 		hover_details.modulate.a = 0.0
+		hover_connector.hide()
+		hover_connector.modulate.a = 0.0
 		return
 	
 	# Initialize hover details close animation.
 	_hover_details_tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	_hover_details_tween.tween_property(hover_details, "modulate:a", 0.0, hover_details_animation_duration)
 	
+	if hover_connector.visible:
+		_hover_details_tween.tween_property(hover_connector, "modulate:a", 0.0, hover_details_animation_duration)
+	
 	# Queue hover details hide after the animation finishes.
-	_hover_details_tween.finished.connect(func() -> void: if not _hover_details_active: hover_details.hide())
+	_hover_details_tween.finished.connect(_on_hover_details_hide_finished)
+
+
+## Handles hover details hide animation finished signal by setting it's hidden state.
+func _on_hover_details_hide_finished() -> void:
+	# Filter out processing if the hover details are supposed to be displayed currently.
+	if _hover_details_active:
+		return
+	
+	# Set hover details display parameters to the hidden state.
+	hover_details.hide()
+	hover_connector.hide()
+	hover_connector.modulate.a = 0.0
 
 
 ## Stops any existing animation set for the hover details.
@@ -344,6 +383,49 @@ func _get_hover_cursor_rect() -> Rect2:
 	
 	var center: Vector2 = hover_area.position + hover_collision_shape.position
 	return Rect2(center - rectangle.size * 0.5, rectangle.size)
+
+
+## Calculates and returns the closest border point located between the provided [param rect] center and the provided [param target] point. 
+func _get_rect_border_point(rect: Rect2, target: Vector2) -> Vector2:
+	# Calculate direction from rectangle center to the target.
+	var center: Vector2 = rect.get_center()
+	var direction: Vector2 = target - center
+	
+	# Return center if the target is set at the rectangle center.
+	if direction.is_zero_approx():
+		return center
+	
+	# Calculate scaling factor needed to reach the rectangle border.
+	var half_size: Vector2 = rect.size * 0.5
+	var factor: float = maxf(absf(direction.x) / maxf(half_size.x, 0.001), absf(direction.y) / maxf(half_size.y, 0.001))
+	
+	# Return intersection between the direction and rectangle border.
+	return center + direction / factor
+
+
+## Update hover connector points by finding the result cursor and hover details rects and finding the intersection points between a line from theirs centers and borders.
+func _update_hover_connector() -> void:
+	# Get result cursor rectangle.
+	var cursor_rect: Rect2 = _get_hover_cursor_rect()
+	
+	# Get hover details rectangle in result cursor local coordinates.
+	var tooltip_rect: Rect2 = Rect2(hover_details.position, hover_details.size * hover_details.scale)
+	
+	# Remove existing connector points and filter out processing if the both the cursor and hover details rectangles overlap.
+	if cursor_rect.intersects(tooltip_rect):
+		hover_connector.clear_points()
+		return
+	
+	# Calculate rectangles centers.
+	var cursor_center: Vector2 = cursor_rect.get_center()
+	var tooltip_center: Vector2 = tooltip_rect.get_center()
+	
+	# Find points where the line meets the rectangle borders.
+	var start_point: Vector2 = _get_rect_border_point(cursor_rect, tooltip_center)
+	var end_point: Vector2 = _get_rect_border_point(tooltip_rect, cursor_center)
+	
+	# Update hover connector points.
+	hover_connector.points = PackedVector2Array([start_point, end_point])
 
 
 ## Returns a hover details local position that should be set for it according to the provided parameters.

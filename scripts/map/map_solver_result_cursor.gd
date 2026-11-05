@@ -438,14 +438,15 @@ func _get_hover_details_local_position(cursor_rect: Rect2, tooltip_size: Vector2
 	var y: float = cursor_rect.position.y + (cursor_rect.size.y - tooltip_size.y) * 0.5
 	
 	# Apply direction position offset based on the provided parameters.
+	var scaled_hover_details_gap: float = hover_details_gap / 2 if direction.x != 0 and direction.y != 0 else hover_details_gap
 	if direction.x < 0:
-		x = cursor_rect.position.x - hover_details_gap - tooltip_size.x
+		x = cursor_rect.position.x - scaled_hover_details_gap - tooltip_size.x
 	elif direction.x > 0:
-		x = cursor_rect.end.x + hover_details_gap
+		x = cursor_rect.end.x + scaled_hover_details_gap
 	if direction.y < 0:
-		y = cursor_rect.position.y - hover_details_gap - tooltip_size.y
+		y = cursor_rect.position.y - scaled_hover_details_gap - tooltip_size.y
 	elif direction.y > 0:
-		y = cursor_rect.end.y + hover_details_gap
+		y = cursor_rect.end.y + scaled_hover_details_gap
 	
 	return Vector2(x, y)
 

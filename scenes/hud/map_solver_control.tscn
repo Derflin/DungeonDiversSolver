@@ -104,6 +104,7 @@ anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 grow_horizontal = 2
+mouse_filter = 2
 
 [node name="MenuRoot" type="Control" parent="MenuAnchor" unique_id=2025313541]
 layout_mode = 1
@@ -111,6 +112,7 @@ anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 grow_horizontal = 2
+mouse_filter = 2
 
 [node name="MenuContents" type="VBoxContainer" parent="MenuAnchor/MenuRoot" unique_id=252195540]
 layout_mode = 0
@@ -237,12 +239,15 @@ anchor_right = 0.5
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 0
+mouse_filter = 2
 
 [node name="StatusRoot" type="Control" parent="StatusAnchor" unique_id=1708188643]
 anchors_preset = 0
+mouse_filter = 2
 
 [node name="StatusContents" type="VBoxContainer" parent="StatusAnchor/StatusRoot" unique_id=128560050]
 layout_mode = 0
+mouse_filter = 2
 
 [node name="StatusPanel" type="PanelContainer" parent="StatusAnchor/StatusRoot/StatusContents" unique_id=1524124150]
 visible = false

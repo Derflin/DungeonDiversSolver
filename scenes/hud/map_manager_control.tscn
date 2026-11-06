@@ -86,16 +86,19 @@ anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
 grow_vertical = 0
+mouse_filter = 2
 
 [node name="MenuRoot" type="Control" parent="MenuAnchor" unique_id=2088808407]
 anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
+mouse_filter = 2
 
 [node name="MenuContents" type="VBoxContainer" parent="MenuAnchor/MenuRoot" unique_id=1727332750]
 layout_mode = 0
 offset_right = 40.0
 offset_bottom = 40.0
+mouse_filter = 2
 
 [node name="MenuPanel" type="PanelContainer" parent="MenuAnchor/MenuRoot/MenuContents" unique_id=1002298226 groups=["blocks_radial_menu_input"]]
 layout_mode = 2

@@ -39,9 +39,11 @@ anchor_right = 1.0
 anchor_bottom = 0.5
 grow_horizontal = 0
 grow_vertical = 2
+mouse_filter = 2
 
 [node name="DrawerRoot" type="Control" parent="DrawerAnchor" unique_id=805357010 groups=["blocks_radial_menu_input"]]
 anchors_preset = 0
+mouse_filter = 2
 
 [node name="DrawerPanel" type="PanelContainer" parent="DrawerAnchor/DrawerRoot" unique_id=890344115]
 layout_mode = 0

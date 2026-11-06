@@ -100,7 +100,7 @@ offset_right = 40.0
 offset_bottom = 40.0
 mouse_filter = 2
 
-[node name="MenuPanel" type="PanelContainer" parent="MenuAnchor/MenuRoot/MenuContents" unique_id=1002298226 groups=["blocks_radial_menu_input"]]
+[node name="MenuPanel" type="PanelContainer" parent="MenuAnchor/MenuRoot/MenuContents" unique_id=1002298226 groups=["blocks_radial_menu_input", "map_camera_view_obstacles"]]
 layout_mode = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel" unique_id=35061449]

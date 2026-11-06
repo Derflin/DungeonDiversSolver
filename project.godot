@@ -43,6 +43,7 @@ blocks_radial_menu_input=""
 allow_map_camera_input=""
 save_screenshot_transition_wait=""
 blocks_map_result_tooltips=""
+map_camera_view_obstacles=""
 
 [gui]
 

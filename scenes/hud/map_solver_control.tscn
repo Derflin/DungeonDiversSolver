@@ -124,7 +124,7 @@ offset_transform_position = Vector2(0, -16)
 offset_transform_visual_only = false
 mouse_filter = 2
 
-[node name="MenuPanel" type="PanelContainer" parent="MenuAnchor/MenuRoot/MenuContents" unique_id=1689104075 groups=["blocks_radial_menu_input"]]
+[node name="MenuPanel" type="PanelContainer" parent="MenuAnchor/MenuRoot/MenuContents" unique_id=1689104075 groups=["blocks_radial_menu_input", "map_camera_view_obstacles"]]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxTexture_cr2eo")
 

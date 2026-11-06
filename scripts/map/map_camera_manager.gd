@@ -2,10 +2,11 @@ extends Node2D
 
 
 const MAP_CAMERA_INPUT_ALLOW_GROUP: StringName = &"allow_map_camera_input"
+const MAP_CAMERA_VIEW_OBSTACLES_GROUP: StringName = &"map_camera_view_obstacles"
 
 
 @export_group("Initial View")
-@export_range(-100.0, 100.0, 1.0)
+@export_range(0.0, 100.0, 1.0)
 var fit_padding = 32.0
 @export_range(0.01, 10.0, 0.01)
 var minimum_zoom = 0.25
@@ -51,43 +52,178 @@ func fit_map_to_view(instant: bool = false) -> void:
 	_fit_map_to_view.call_deferred(instant)
 
 
+## Adjust camera position to be set and centered at the provided [param center_position] point.
 func center_camera_at_position(center_position: Vector2) -> void:
-	map_camera.set_camera_position(center_position)
+	# Get the viewport area not covered by HUD blocking controls.
+	var free_rect := _get_available_map_view_rect()
+	if not free_rect.has_area():
+		free_rect = get_viewport().get_visible_rect()
+	
+	# Get camera position centered around the center position adjusted to be centered around the free rect area.
+	var camera_position := _get_position_for_safe_center(center_position, free_rect, map_camera.get_camera_zoom().x)
+	
+	# Adjust the camera position to be centered on the calculated position.
+	map_camera.set_camera_position(camera_position)
 
 
+## Adjusts camera zoom and position in order to fit the entire grid rectangle and display it's center in the available view rect center.
+## Used the provided [param instant] flag to determine if changing the camera state should be instant or animated.
 func _fit_map_to_view(instant: bool = false) -> void:
+	# Get current map rect.
 	var map_rect = grid_rect
 	
+	# Filter out processing if the map rect size is less then 0 in any axis.
 	if map_rect.size.x <= 0.0 or map_rect.size.y <= 0.0:
 		push_warning("Cannot fit a map with an empty size.")
 		return
 	
-	var viewport_size = get_viewport().get_visible_rect().size
+	# Get the viewport area not covered by HUD blocking controls.
+	var free_rect := _get_available_map_view_rect()
+	if not free_rect.has_area():
+		push_warning("MapCameraManager: No unobstructed viewport area remains after accounting for HUD blocking controls.")
+		free_rect = get_viewport().get_visible_rect()
 	
-	var available_size = viewport_size - Vector2.ONE * fit_padding * 2.0
+	# Apply the fit padding to the available area.
+	var padding := maxf(fit_padding, 0.0)
+	var available_size := free_rect.size - Vector2.ONE * padding * 2.0
 	
-	available_size.x = maxf(available_size.x, 1.0)
-	available_size.y = maxf(available_size.y, 1.0)
-	
-	# Both dimensions must fit, so use the smaller scale.
-	var horizontal_zoom = available_size.x / map_rect.size.x
-	var vertical_zoom = available_size.y / map_rect.size.y
-	
-	var fitted_zoom = minf(
-		horizontal_zoom,
-		vertical_zoom,
-	)
-	
+	# Calculate the zoom required to fit both map dimensions.
+	var fitted_zoom := minf(available_size.x / map_rect.size.x, available_size.y / map_rect.size.y)
 	fitted_zoom = clampf(
 		fitted_zoom,
 		_minimum_zoom,
 		_maximum_zoom,
 	)
 	
+	# Preserve the calculated fitted zoom as the minimum zoom.
 	minimum_zoom = fitted_zoom
 	
-	map_camera.set_camera_position(map_rect.get_center(), instant)
+	# Calculate the adjusted camera position according to the available free area.
+	var centered_position := _get_position_for_safe_center(map_rect.get_center(), free_rect, fitted_zoom)
+	
+	# Update the camera zoom and position.
 	map_camera.set_camera_zoom(fitted_zoom, instant)
+	map_camera.set_camera_position(centered_position, instant)
+
+
+## Checks the nodes assigned inside the MAP_CAMERA_VIEW_OBSTACLES_GROUP group and reduces the viewport rects over their rects.
+## Returns the remaining rectangle as a space available where the map view might be placed without overlapping the view obstacles.
+func _get_available_map_view_rect() -> Rect2:
+	# Prepare variables for available map view obstacles and prepare a list of boundaries for them.
+	var viewport_rect := get_viewport().get_visible_rect()
+	var obstacles: Array[Rect2] = []
+	var x_boundaries: Array[float] = [viewport_rect.position.x, viewport_rect.end.x]
+	
+	# Collect all nodes elements assigned to the view obstacle group.
+	for node in get_tree().get_nodes_in_group(MAP_CAMERA_VIEW_OBSTACLES_GROUP):
+		# Filter out processing if the node isn't a control node.
+		if not node is Control:
+			continue
+		var hud_control := node as Control
+		
+		# Filter out processing if the node viewport is different then the current viewport.
+		if hud_control.get_viewport() != get_viewport():
+			continue
+		
+		# Filter out processing if the node is hidden.
+		if not hud_control.is_visible_in_tree():
+			continue
+		
+		# Filter out processing if the node size is lest or equal 0 in any axis.
+		if hud_control.size.x <= 0.0 or hud_control.size.y <= 0.0:
+			continue
+		
+		# Convert nodes bounds to vieport coordinates.
+		var transform_to_viewport := hud_control.get_global_transform_with_canvas()
+		var corners: Array[Vector2] = [
+			transform_to_viewport * Vector2.ZERO,
+			transform_to_viewport * Vector2(hud_control.size.x, 0.0),
+			transform_to_viewport * hud_control.size,
+			transform_to_viewport * Vector2(0.0, hud_control.size.y),
+		]
+		var top_left := corners[0]
+		var bottom_right := corners[0]
+		for corner in corners:
+			top_left = top_left.min(corner)
+			bottom_right = bottom_right.max(corner)
+		
+		var occupied_rect := Rect2(top_left, bottom_right - top_left)
+		
+		# Check how much of the occupied area is in viewport and filter out processing if the occupied rect is completely outside of it.
+		occupied_rect = occupied_rect.intersection(viewport_rect)
+		if not occupied_rect.has_area():
+			continue
+		
+		obstacles.append(occupied_rect)
+		x_boundaries.append(occupied_rect.position.x)
+		x_boundaries.append(occupied_rect.end.x)
+		
+	# Return an entire viewport rectangle if there aren't any view obstacles.
+	if obstacles.is_empty():
+		return viewport_rect
+	
+	# Calculate the remaining space after excluding the obstacles rects from the viewport rect.
+	x_boundaries.sort()
+	var best_rect := Rect2()
+	var preferred_center := viewport_rect.get_center()
+	for left_index in range(x_boundaries.size() - 1):
+		var left_x := x_boundaries[left_index]
+		for right_index in range(left_index + 1, x_boundaries.size()):
+			var right_x := x_boundaries[right_index]
+			
+			# Filter out processing the x coord pairs if they aren't valid.
+			if right_x <= left_x:
+				continue
+			
+			# Find obstacles intersecting the current horizontal span.
+			var blocked_vertical_bands: Array[Vector2] = []
+			for obstacle in obstacles:
+				if obstacle.position.x < right_x and obstacle.end.x > left_x:
+					blocked_vertical_bands.append(Vector2(obstacle.position.y, obstacle.end.y))
+			
+			blocked_vertical_bands.sort_custom(func(a: Vector2, b: Vector2) -> bool: return a.x < b.x)
+			
+			# Evaluate available vertical gaps.
+			var next_free_y := viewport_rect.position.y
+			for blocked_band in blocked_vertical_bands:
+				if blocked_band.x > next_free_y:
+					var upper_gap := Rect2(left_x, next_free_y, right_x - left_x, blocked_band.x - next_free_y)
+					best_rect = _choose_better_free_rect(best_rect, upper_gap, preferred_center)
+				
+				next_free_y = maxf(next_free_y, blocked_band.y)
+				
+				if next_free_y >= viewport_rect.end.y:
+					break
+			
+			# Check the remaining gap below the obstacles.
+			if next_free_y < viewport_rect.end.y:
+				var lower_gap := Rect2(left_x, next_free_y, right_x - left_x, viewport_rect.end.y - next_free_y)
+				best_rect = _choose_better_free_rect(best_rect, lower_gap, preferred_center)
+	
+	return best_rect
+
+
+## Compares which of the provided [param current] and [param candidate] rects is better in terms of space.
+## Returns a rect that either has bigger area or if it's equal then the one that is closer to the provided [param preferred_center] point.
+func _choose_better_free_rect(current: Rect2, candidate: Rect2, preferred_center: Vector2) -> Rect2:
+	# Return the candidate rect if it has a bigger area then the current rect.
+	if candidate.get_area() > current.get_area() and not is_equal_approx(candidate.get_area(), current.get_area()):
+		return candidate
+	
+	# Return the candidate rect if it has approximetely the same area as current rect and it's closer to the preferred center.
+	if is_equal_approx(candidate.get_area(), current.get_area()):
+		if candidate.get_center().distance_squared_to(preferred_center) < current.get_center().distance_squared_to(preferred_center):
+			return candidate
+	
+	# Otherwise return current
+	return current
+
+
+## Adjusts and returns the provided [param world_position] point by adding to it an offset between viewport visible rect center and provided [param safe_rect] rect center.
+## Additionaly adjusts the calculated offset by dividing with the provided [param camera_zoom].
+func _get_position_for_safe_center(world_position: Vector2, safe_rect: Rect2, camera_zoom: float) -> Vector2:
+	var viewport_center := get_viewport().get_visible_rect().get_center()
+	return world_position + (viewport_center - safe_rect.get_center()) / camera_zoom
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -135,9 +271,11 @@ func _check_if_input_events_allowed_to_pass() -> bool:
 
 
 func _handle_zoom_input(event: InputEvent, multiplier: float) -> void:
-	var focus_position = (
-		get_viewport().get_visible_rect().size / 2.0
-	)
+	var focus_position := get_viewport().get_visible_rect().get_center()
+	
+	var usable_rect := _get_available_map_view_rect()
+	if usable_rect.has_area():
+		focus_position = usable_rect.get_center()
 	
 	if zoom_toward_mouse and event is InputEventMouse:
 		focus_position = event.position
@@ -171,43 +309,51 @@ func _zoom_at_screen_position(requested_zoom: float, screen_position: Vector2) -
 	
 	
 func _clamp_camera_to_minimum_visibility() -> void:
+	# Get current map rect.
 	var map_rect = grid_rect
 	
-	if map_rect.size.x <= 0:
+	# Filter out processing if the map rect size is less then 0 in any axis.
+	if map_rect.size.x <= 0.0 or map_rect.size.y <= 0.0:
 		return
-		
-	if map_rect.size.y <= 0:
-		return
-		
-	var viewport_size = get_viewport().get_visible_rect().size
 	
-	var map_camera_zoom = map_camera.get_camera_zoom()
-	var visible_world_size = Vector2(
-		viewport_size.x / map_camera_zoom.x,
-		viewport_size.y / map_camera_zoom.y,
-	)
+	# Calculate the currently available viewport rectangle.
+	var usable_rect := _get_available_map_view_rect()
+	if not usable_rect.has_area():
+		usable_rect = get_viewport().get_visible_rect()
 	
-	var new_position = map_camera.get_camera_position()
+	# Get current camera zoom.
+	var camera_zoom: Vector2 = map_camera.get_camera_zoom()
 	
-	new_position.x = _clamp_axis_for_overlap(
-		new_position.x,
+	# Convert the available rectangle dimensions to world units.
+	var visible_world_size := usable_rect.size / camera_zoom
+	
+	# Determine whether the available's area center appears in world space relative to the camera.
+	var viewport_center := get_viewport().get_visible_rect().get_center()
+	var safe_center_offset := (usable_rect.get_center() - viewport_center) / camera_zoom
+	var safe_center_world: Vector2 = map_camera.get_camera_position() + safe_center_offset
+	
+	# Apply the existing overlap restriction horizontally.
+	safe_center_world.x = _clamp_axis_for_overlap(
+		safe_center_world.x,
 		map_rect.position.x,
 		map_rect.end.x,
 		visible_world_size.x,
-		minimum_visible_fraction_per_axis,
+		minimum_visible_fraction_per_axis
 	)
 	
-	new_position.y = _clamp_axis_for_overlap(
-		new_position.y,
+	# Apply the existing overlap restriction vertically.
+	safe_center_world.y = _clamp_axis_for_overlap(
+		safe_center_world.y,
 		map_rect.position.y,
 		map_rect.end.y,
 		visible_world_size.y,
 		minimum_visible_fraction_per_axis
 	)
 	
-	map_camera.set_camera_position(new_position)
-	
-	
+	# Convert the corrected available area center back into an actual camera position.
+	map_camera.set_camera_position(safe_center_world - safe_center_offset)
+
+
 func _clamp_axis_for_overlap(requested_position: float, map_minimum: float, map_maximum: float, visible_length: float, required_fraction: float) -> float:
 	var map_length = map_maximum - map_minimum
 	

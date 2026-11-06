@@ -106,7 +106,7 @@ offset_right = 8.0
 offset_bottom = 8.0
 script = ExtResource("5_y71gk")
 
-[node name="DrawerStrip" type="PanelContainer" parent="DrawerAnchor/DrawerRoot" unique_id=293474430]
+[node name="DrawerStrip" type="PanelContainer" parent="DrawerAnchor/DrawerRoot" unique_id=293474430 groups=["map_camera_view_obstacles"]]
 layout_mode = 0
 offset_right = 23.0
 offset_bottom = 23.0

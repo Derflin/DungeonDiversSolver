@@ -7,7 +7,7 @@ var _weight_text: String = ""
 var _priority_text: String = ""
 
 
-@onready var room_name_label: ScrambleLabel = $MarginContainer/VBoxContainer/RoomNameLabel
+@onready var room_name_label: ScrambleLabel = $MarginContainer/VBoxContainer/RoomNameMargin/RoomNameLabel
 @onready var weight_value_label: ScrambleLabel = $MarginContainer/VBoxContainer/WeightRow/WeightValue
 @onready var priority_value_label: ScrambleLabel = $MarginContainer/VBoxContainer/PriorityRow/PriorityValue
 

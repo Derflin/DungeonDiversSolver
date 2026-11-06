@@ -20,6 +20,28 @@ corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 corner_detail = 5
 
+[sub_resource type="LabelSettings" id="LabelSettings_dai8t"]
+font_color = Color(1, 0.80784315, 0.4509804, 1)
+
+[sub_resource type="StyleBoxLine" id="StyleBoxLine_va7rl"]
+content_margin_left = 4.0
+content_margin_top = 0.0
+content_margin_right = 4.0
+content_margin_bottom = 0.0
+color = Color(0.6313726, 0.5411765, 0.42745098, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_va7rl"]
+font_color = Color(0.78431374, 0.7607843, 0.7294118, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_42nng"]
+font_color = Color(0.972549, 0.98039216, 1, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_3pxbw"]
+font_color = Color(0.78431374, 0.7607843, 0.7294118, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_jlkj4"]
+font_color = Color(0.972549, 0.98039216, 1, 1)
+
 [node name="MapSolverResultHoverDetails" type="PanelContainer" unique_id=540041388]
 visible = false
 modulate = Color(1, 1, 1, 0)
@@ -34,17 +56,23 @@ script = ExtResource("1_va7rl")
 
 [node name="MarginContainer" type="MarginContainer" parent="." unique_id=1300604902]
 layout_mode = 2
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 6
+theme_override_constants/margin_left = 9
+theme_override_constants/margin_top = 7
+theme_override_constants/margin_right = 9
+theme_override_constants/margin_bottom = 7
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=1626900375]
 layout_mode = 2
-theme_override_constants/separation = 2
+theme_override_constants/separation = 3
 
-[node name="RoomNameLabel" type="Label" parent="MarginContainer/VBoxContainer" unique_id=1251672814]
+[node name="RoomNameMargin" type="MarginContainer" parent="MarginContainer/VBoxContainer" unique_id=779970721]
 layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_right = 6
+
+[node name="RoomNameLabel" type="Label" parent="MarginContainer/VBoxContainer/RoomNameMargin" unique_id=1251672814]
+layout_mode = 2
+label_settings = SubResource("LabelSettings_dai8t")
 horizontal_alignment = 1
 vertical_alignment = 1
 script = ExtResource("1_yafr3")
@@ -52,6 +80,7 @@ metadata/_custom_type_script = "uid://b8x8oocqx8an3"
 
 [node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer" unique_id=1638264623]
 layout_mode = 2
+theme_override_styles/separator = SubResource("StyleBoxLine_va7rl")
 
 [node name="WeightRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1714678763]
 layout_mode = 2
@@ -61,10 +90,12 @@ size_flags_vertical = 3
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Weight"
+label_settings = SubResource("LabelSettings_va7rl")
 vertical_alignment = 1
 
 [node name="WeightValue" type="Label" parent="MarginContainer/VBoxContainer/WeightRow" unique_id=842231004]
 layout_mode = 2
+label_settings = SubResource("LabelSettings_42nng")
 horizontal_alignment = 2
 vertical_alignment = 1
 script = ExtResource("1_yafr3")
@@ -78,10 +109,12 @@ size_flags_vertical = 3
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Priority"
+label_settings = SubResource("LabelSettings_3pxbw")
 vertical_alignment = 1
 
 [node name="PriorityValue" type="Label" parent="MarginContainer/VBoxContainer/PriorityRow" unique_id=769970940]
 layout_mode = 2
+label_settings = SubResource("LabelSettings_jlkj4")
 horizontal_alignment = 2
 vertical_alignment = 1
 script = ExtResource("1_yafr3")

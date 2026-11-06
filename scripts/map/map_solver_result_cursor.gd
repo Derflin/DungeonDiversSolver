@@ -9,6 +9,8 @@ signal cursor_hidden(result_cursor: MapSolverResultCursor)
 
 const CORNERS_ANIMATION_NAME := &"default"
 
+const BLOCKS_MAP_RESULT_TOOLTIPS_GROUP_NAME := &"blocks_map_result_tooltips"
+
 const HOVER_DIRECTIONS: Array[Vector2i] = [
 	Vector2i(0, 1), # Default: Down
 	Vector2i(0, -1),
@@ -46,6 +48,8 @@ var cursor_animation_hide_duration: float = 0.2
 @export var hover_details_default_room_name: String = "Secret Room"
 @export var hover_details_gap: float = 5.0
 @export var hover_details_viewport_margin: float = 8.0
+@export_range(0.0, 16.0, 0.5)
+var hover_details_hud_margin: float = 2.0
 @export var hover_details_animation_duration: float = 0.16
 @export var hover_details_visual_scale: float = 0.5
 @export_group("Hover Connector", "hover_details_connector_")
@@ -369,7 +373,7 @@ func _kill_hover_details_tween() -> void:
 func _mouse_is_over_blocking_hud() -> bool:
 	var node: Node = get_viewport().gui_get_hovered_control()
 	while node != null:
-		if node.is_in_group("blocks_map_result_tooltips"):
+		if node.is_in_group(BLOCKS_MAP_RESULT_TOOLTIPS_GROUP_NAME):
 			return true
 		node = node.get_parent()
 	return false
@@ -485,9 +489,9 @@ func _get_hover_details_local_position(cursor_rect: Rect2, tooltip_size: Vector2
 	return Vector2(x, y)
 
 
-## Transforms the provided [param local_rect] rectangle to the viewport global transform.
-func _local_rect_to_viewport(local_rect: Rect2) -> Rect2:
-	var t: Transform2D = get_global_transform_with_canvas()
+## Transforms the provided [param local_rect] rectangle to the provided [param item] canvas viewport global transform.
+func _canvas_rect_to_viewport(item: CanvasItem, local_rect: Rect2) -> Rect2:
+	var t: Transform2D = item.get_global_transform_with_canvas()
 	var p0: Vector2 = t * local_rect.position
 	var p1: Vector2 = t * Vector2(local_rect.end.x, local_rect.position.y)
 	var p2: Vector2 = t * local_rect.end
@@ -499,6 +503,167 @@ func _local_rect_to_viewport(local_rect: Rect2) -> Rect2:
 	var max_y: float = maxf(maxf(p0.y, p1.y), maxf(p2.y, p3.y))
 	
 	return Rect2(Vector2(min_x, min_y), Vector2(max_x - min_x, max_y - min_y))
+
+
+## Transforms the provided [param local_rect] rectangle to the viewport global transform.
+func _local_rect_to_viewport(local_rect: Rect2) -> Rect2:
+	return _canvas_rect_to_viewport(self, local_rect)
+
+
+## Gets all the rects for the blocking hud nodes that might block the hover details display.
+## Checks all the nodes assigned to the BLOCKS_MAP_RESULT_TOOLTIPS_GROUP_NAME group, removes any that are duplicated or for the hidden canvas layers.
+## Remaining nodes are then processed to look through their children and get any mouse blocking interfaces and return their blocking rects.
+func _get_blocking_hud_rects() -> Array[Rect2]:
+	var hud_rects: Array[Rect2] = []
+	
+	# Check every node assigned to the blocking group to check for their blocking rects.
+	for root: Node in get_tree().get_nodes_in_group(BLOCKS_MAP_RESULT_TOOLTIPS_GROUP_NAME):
+		# Ignore node elements belonging to another viewport.
+		if root.get_viewport() != get_viewport():
+			continue
+		
+		# Skip nested group members and hidden canvas layers.
+		var ancestor: Node = root.get_parent()
+		var skip_root: bool = false
+		while ancestor != null:
+			# Skip processing the ancestor if it's also in the same group.
+			if ancestor.is_in_group(BLOCKS_MAP_RESULT_TOOLTIPS_GROUP_NAME):
+				skip_root = true
+				break
+			
+			# Skip processing the ancestor if it's a hidden canvas layer.
+			if ancestor is CanvasLayer and not (ancestor as CanvasLayer).visible:
+				skip_root = true
+				break
+			
+			# Get next parent node.
+			ancestor = ancestor.get_parent()
+		
+		# Skip processing the root if it was filtered at any point.
+		if skip_root:
+			continue
+		
+		# Get the blocking hud rects for the root node and append them to the hud rects result.
+		_append_blocking_hud_rects(root, hud_rects)
+	
+	return hud_rects
+
+
+## Checks the provided [param node] to check if it's a control node stopping mouse inputs and if yes, then it appends it's area rect to the provided [param hud_rects] list.
+## Otherwise it runs the function recursively through it's every child node to search for blocking huds rects.
+func _append_blocking_hud_rects(node: Node, hud_rects: Array[Rect2]) -> void:
+	# Ignore other viewports and hidden canvas layers.
+	if node.get_viewport() != get_viewport():
+		return
+	
+	if node is CanvasLayer and not (node as CanvasLayer).visible:
+		return
+	
+	# Ignore invisible branches.
+	if node is CanvasItem:
+		var item: CanvasItem = node as CanvasItem
+		if not item.is_visible_in_tree():
+			return
+	
+	# Save node bounds rect and stop traversing this particular branch if the control node blocks mouse input.
+	if node is Control:
+		var control: Control = node as Control
+
+		if control.mouse_filter == Control.MOUSE_FILTER_STOP:
+			var screen_rect: Rect2 = _canvas_rect_to_viewport(control, Rect2(Vector2.ZERO, control.size))
+			if screen_rect.has_area():
+				hud_rects.append(screen_rect.grow(hover_details_hud_margin))
+				return
+	
+	# Continue searching for the blocking hud rects through every child branch.
+	for child: Node in node.get_children():
+		_append_blocking_hud_rects(child, hud_rects)
+
+
+## Returns overlap area calculated from overlapping provided [param tooltip_rect] rectangle with provided [param hud_rects] list of rectangles.
+func _get_hud_overlap_area(tooltip_rect: Rect2, hud_rects: Array[Rect2]) -> float:
+	var clipped_rects: Array[Rect2] = []
+	var x_edges: Array[float] = []
+	
+	# Calculates intersections of the hud rects with the tooltip rect.
+	for hud_rect: Rect2 in hud_rects:
+		var overlap: Rect2 = tooltip_rect.intersection(hud_rect)
+		if overlap.has_area():
+			clipped_rects.append(overlap)
+			x_edges.append(overlap.position.x)
+			x_edges.append(overlap.end.x)
+	
+	# Return 0 if nothing overlaps the tooltip.
+	if clipped_rects.is_empty():
+		return 0.0
+	
+	# Divide the combined area into vertical strips.
+	x_edges.sort()
+	var total_area: float = 0.0
+	for i: int in range(x_edges.size() - 1):
+		var x_left: float = x_edges[i]
+		var x_right: float = x_edges[i + 1]
+		
+		# Skip processing if the x coords pairs aren't compatible.
+		if x_right <= x_left:
+			continue
+		
+		# Collect Y intervals intersecting this strip.
+		var y_intervals: Array[Vector2] = []
+		for rect: Rect2 in clipped_rects:
+			if rect.position.x < x_right and rect.end.x > x_left:
+				y_intervals.append(Vector2(rect.position.y, rect.end.y))
+		
+		y_intervals.sort_custom(func(a: Vector2, b: Vector2) -> bool: return a.x < b.x)
+		
+		if y_intervals.is_empty():
+			continue
+		
+		# Merge overlapping Y intervals and accumulate area.
+		var y_start: float = y_intervals[0].x
+		var y_end: float = y_intervals[0].y
+		for j: int in range(1, y_intervals.size()):
+			var interval: Vector2 = y_intervals[j]
+			if interval.x > y_end:
+				total_area += (x_right - x_left) * (y_end - y_start)
+				y_start = interval.x
+				y_end = interval.y
+			else:
+				y_end = maxf(y_end, interval.y)
+		
+		total_area += (x_right - x_left) * (y_end - y_start)
+	
+	return total_area
+
+
+## Adjust provided [param local_position] to match the viewport by calculating the shift between the provided [param screen_rect] and [param viewport_rect] rectangles and adjusting it.
+func _adjust_hover_position_to_viewport(local_position: Vector2, screen_rect: Rect2, viewport_rect: Rect2) -> Vector2:
+	var screen_shift: Vector2 = Vector2.ZERO
+	
+	# Adjust horizontal position.
+	if screen_rect.size.x > viewport_rect.size.x:
+		screen_shift.x = viewport_rect.get_center().x - screen_rect.get_center().x
+	elif screen_rect.position.x < viewport_rect.position.x:
+		screen_shift.x = viewport_rect.position.x - screen_rect.position.x
+	elif screen_rect.end.x > viewport_rect.end.x:
+		screen_shift.x = viewport_rect.end.x - screen_rect.end.x
+	
+	# Adjust vertical position.
+	if screen_rect.size.y > viewport_rect.size.y:
+		screen_shift.y = viewport_rect.get_center().y - screen_rect.get_center().y
+	elif screen_rect.position.y < viewport_rect.position.y:
+		screen_shift.y = viewport_rect.position.y - screen_rect.position.y
+	elif screen_rect.end.y > viewport_rect.end.y:
+		screen_shift.y = viewport_rect.end.y - screen_rect.end.y
+	
+	# Return local position if screen shift is none.
+	if screen_shift.is_zero_approx():
+		return local_position
+	
+	# Convert the viewport-space adjustment back to local coordinates.
+	var t: Transform2D = get_global_transform_with_canvas()
+	
+	return t.affine_inverse() * (t * local_position + screen_shift)
 
 
 ## Aligns hover details size to mutliples of 4 to make it compatible with scaling it's contents.
@@ -528,6 +693,9 @@ func _choose_hover_details_placement() -> Dictionary:
 	var cursor_screen_rect: Rect2 = _local_rect_to_viewport(cursor_rect)
 	var tooltip_visual_size: Vector2 = hover_details.size * hover_details.scale
 	
+	# Collect visible blocking hud rectangles.
+	var hud_rects: Array[Rect2] = _get_blocking_hud_rects()
+	
 	# Prepare a list with directions offsets to be processed.
 	var directions: Array[Vector2i] = HOVER_DIRECTIONS.duplicate()
 	
@@ -548,36 +716,49 @@ func _choose_hover_details_placement() -> Dictionary:
 		directions.push_front(inward)
 	
 	# Select best direction to use to fit the hover details.
+	var best_fits: bool = false
 	var best_fraction: float = -1.0
+	var best_hud_overlap: float = INF
 	var best_position: Vector2 = Vector2.ZERO
 	var best_direction: Vector2i = Vector2i.ZERO
 	for direction: Vector2i in directions:
-		# Calculate visible fraction of the hover details in a given direction.
+		# Calculate original candidate position.
 		var local_position: Vector2 = _get_hover_details_local_position(cursor_rect, tooltip_visual_size, direction)
 		var screen_rect: Rect2 = _local_rect_to_viewport(Rect2(local_position, tooltip_visual_size))
-		var screen_area: float = maxf(screen_rect.get_area(), 0.001)
-		var visible_fraction: float = screen_rect.intersection(viewport_rect).get_area() / screen_area
 		
-		# Save the current direction as best option if the calculated visible fraction is highier then the previous one.
-		if visible_fraction > best_fraction + 0.0001:
+		# Check whether the entire tooltip fits inside the viewport.
+		var fits: bool = viewport_rect.encloses(screen_rect)
+		
+		# Calculate viewport visibility before any correction.
+		var visible_fraction: float = screen_rect.intersection(viewport_rect).get_area() / maxf(screen_rect.get_area(), 0.001)
+		
+		# Calculate the final position used for evaluating hud overlap.
+		var evaluated_position: Vector2 = local_position
+		if not fits:
+			evaluated_position = _adjust_hover_position_to_viewport(local_position, screen_rect, viewport_rect)
+		
+		# Measure hud overlap at the corrected position.
+		var evaluated_rect: Rect2 = _local_rect_to_viewport(Rect2(evaluated_position, tooltip_visual_size))
+		var hud_overlap: float = _get_hud_overlap_area(evaluated_rect, hud_rects)
+
+		# Determine whether this candidate is better than the previously selected one.
+		var choose: bool = false
+		if fits and not best_fits:
+			choose = true
+		elif fits == best_fits:
+			if not fits and visible_fraction > best_fraction + 0.0001:
+				choose = true
+				
+			elif fits or absf(visible_fraction - best_fraction) <= 0.0001:
+				if hud_overlap < best_hud_overlap - 0.01:
+					choose = true
+		
+		# Save the selected candidate.
+		if choose:
+			best_fits = fits
 			best_fraction = visible_fraction
-			best_position = local_position
+			best_hud_overlap = hud_overlap
+			best_position = evaluated_position
 			best_direction = direction
-	
-	# If there wouldn't be a single direction that would fit the hover detaills, move the best one into a viewport so that it would be visible.
-	var chosen_screen_rect: Rect2 = _local_rect_to_viewport(Rect2(best_position, tooltip_visual_size))
-	var screen_shift: Vector2 = Vector2.ZERO
-	if chosen_screen_rect.position.x < viewport_rect.position.x:
-		screen_shift.x = viewport_rect.position.x - chosen_screen_rect.position.x
-	elif chosen_screen_rect.end.x > viewport_rect.end.x:
-		screen_shift.x = viewport_rect.end.x - chosen_screen_rect.end.x
-	if chosen_screen_rect.position.y < viewport_rect.position.y:
-		screen_shift.y = viewport_rect.position.y - chosen_screen_rect.position.y
-	elif chosen_screen_rect.end.y > viewport_rect.end.y:
-		screen_shift.y = viewport_rect.end.y - chosen_screen_rect.end.y
-	
-	if screen_shift != Vector2.ZERO:
-		var t: Transform2D = get_global_transform_with_canvas()
-		best_position = t.affine_inverse() * (t * best_position + screen_shift)
 	
 	return {"position": best_position, "direction": best_direction}

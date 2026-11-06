@@ -573,7 +573,6 @@ func _append_blocking_hud_rects(node: Node, hud_rects: Array[Rect2]) -> void:
 			var screen_rect: Rect2 = _canvas_rect_to_viewport(control, Rect2(Vector2.ZERO, control.size))
 			if screen_rect.has_area():
 				hud_rects.append(screen_rect.grow(hover_details_hud_margin))
-				return
 	
 	# Continue searching for the blocking hud rects through every child branch.
 	for child: Node in node.get_children():

@@ -17,6 +17,8 @@ var scramble_update_interval: float = 0.03
 @export var scramble_preserve_spaces: bool = true
 ## Causes scramble animation to not scramble through unchanged characters if they keep the same index and character.
 @export var scramble_unchanged_chars: bool = false
+## Causes scramble label to auto reset it's size when setting a new text.
+@export var scramble_auto_reset_size: bool = true
 
 @export_subgroup("Character Start Times", "scramble_characters_start_time_")
 ## Start time of scramble animation in animation progress percentage. 
@@ -202,7 +204,8 @@ func _get_character_or_empty(value: String, index: int) -> String:
 ## Updates the displayed text and resets the label dimensions using the reset_size function.
 func _set_displayed_text(new_text: String) -> void:
 	text = new_text
-	reset_size()
+	if scramble_auto_reset_size:
+		reset_size()
 
 
 ## Reset the scramble label visual state by setting it's opacity state to fully visible.

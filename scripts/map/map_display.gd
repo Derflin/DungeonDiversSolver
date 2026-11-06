@@ -41,6 +41,7 @@ func update_map_camera_manager_display(instant_fit_map_to_view: bool = false) ->
 	# Update map camera manager handled grid rect based on the grid space map rect
 	map_camera_manager.set_grid_rect(grid_space.get_map_rect())
 	# Update camera parameters/settings to fit map to view
+	await get_tree().process_frame
 	map_camera_manager.fit_map_to_view(instant_fit_map_to_view)
 
 

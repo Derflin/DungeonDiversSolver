@@ -287,8 +287,10 @@ func _handle_zoom_input(event: InputEvent, multiplier: float) -> void:
 
 
 func _zoom_at_screen_position(requested_zoom: float, screen_position: Vector2) -> void:
+	# Retrieve the current requested zoom.
 	var old_zoom = map_camera.get_camera_zoom().x
 	
+	# Calculate the new zoom within the existing limits.
 	var new_zoom = clampf(
 		requested_zoom,
 		minimum_zoom,
@@ -297,14 +299,17 @@ func _zoom_at_screen_position(requested_zoom: float, screen_position: Vector2) -
 	
 	if is_equal_approx(old_zoom, new_zoom):
 		return
-		
+	
+	# Find the world space point that should remain stationary.
 	var zoom_target = _get_constrained_zoom_target(screen_position)
 	
-	var target_offset_from_camera = zoom_target - map_camera.get_camera_position()
+	# Find where that point currently appears on screen.
+	var anchor_screen: Vector2 = get_global_transform_with_canvas() * zoom_target
 	
-	map_camera.set_camera_position(zoom_target - target_offset_from_camera * old_zoom / new_zoom)
-	map_camera.set_camera_zoom(new_zoom)
+	# Request anchored zooming from map camera.
+	map_camera.set_camera_zoom_anchored(new_zoom, zoom_target, anchor_screen)
 	
+	# Preserve the map visibility restrictions.
 	_clamp_camera_to_minimum_visibility()
 	
 	
@@ -351,7 +356,9 @@ func _clamp_camera_to_minimum_visibility() -> void:
 	)
 	
 	# Convert the corrected available area center back into an actual camera position.
-	map_camera.set_camera_position(safe_center_world - safe_center_offset)
+	var clamped_position := safe_center_world - safe_center_offset
+	if map_camera.get_camera_position().distance_squared_to(clamped_position) > 0.000001:
+		map_camera.set_camera_position(clamped_position)
 
 
 func _clamp_axis_for_overlap(requested_position: float, map_minimum: float, map_maximum: float, visible_length: float, required_fraction: float) -> float:

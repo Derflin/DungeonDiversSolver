@@ -21,6 +21,9 @@ func update_map_solver_results(map_solver_result: MapSolverResult, results_coord
 	if map_solver_result != null:
 		map_solver_result_coords = map_solver_result.result_coords
 	
+	# Determine whether all calculated weights are zero.
+	var show_zero_weight_check: bool = map_solver_result != null and result_solve_stage == MapSolverResult.SolveStage.CALCULATED_WEIGHTS and map_solver_result.has_only_zero_weights()
+	
 	# Create new and update existing result cursors for the map solver result
 	var processed_room_coords: Array[Vector2i] = []
 	for result_coord: MapSolverResultCoord in map_solver_result_coords:
@@ -31,9 +34,9 @@ func update_map_solver_results(map_solver_result: MapSolverResult, results_coord
 		
 		# Create a new result cursor if it doesn't already exist for the room coords, otherwise update existing one
 		if not has_result_cursor_coords(cur_room_coords):
-			_create_result_cursor(result_coord, results_coords_to_map_position[cur_room_coords], result_solve_stage)
+			_create_result_cursor(result_coord, results_coords_to_map_position[cur_room_coords], result_solve_stage, show_zero_weight_check)
 		else:
-			_update_result_cursor(cur_room_coords, result_coord, result_solve_stage)
+			_update_result_cursor(cur_room_coords, result_coord, result_solve_stage, show_zero_weight_check)
 	
 	# Look through existing result cursors and mark any that weren't processed during creating and updating result cursors based on the map solver result
 	var room_coords_to_delete: Array[Vector2i] = []
@@ -48,7 +51,7 @@ func update_map_solver_results(map_solver_result: MapSolverResult, results_coord
 
 
 ## Creates result cursor instance for the provided [param map_solver_result_coord] and places it in the [param cursor_position].
-func _create_result_cursor(map_solver_result_coord: MapSolverResultCoord, cursor_position: Vector2, result_solve_stage: MapSolverResult.SolveStage) -> void:
+func _create_result_cursor(map_solver_result_coord: MapSolverResultCoord, cursor_position: Vector2, result_solve_stage: MapSolverResult.SolveStage, show_zero_weight_check: bool) -> void:
 	# Create result cursor instance
 	var result_cursor_instance = _result_cursor_scene.instantiate()
 	
@@ -56,7 +59,7 @@ func _create_result_cursor(map_solver_result_coord: MapSolverResultCoord, cursor
 	_update_result_cursor_position(result_cursor_instance, cursor_position)
 	
 	# Initialize data inside result cursor instance with the map solver result coord
-	result_cursor_instance.update_data(map_solver_result_coord, result_solve_stage, _get_map_solver_secret_room_name())
+	result_cursor_instance.update_data(map_solver_result_coord, result_solve_stage, _get_map_solver_secret_room_name(), show_zero_weight_check)
 	
 	# Update result cursor instance name
 	result_cursor_instance.name = "%s %.0v" % [result_cursor_instance.get_script().get_global_name(), map_solver_result_coord.coords]
@@ -93,14 +96,14 @@ func _on_result_cursor_hidden(result_cursor: MapSolverResultCursor) -> void:
 
 
 ## Updates result cursor instance for the provided [param room_coords] coordinates and updates it's map solver result coord.
-func _update_result_cursor(room_coords: Vector2i, map_solver_result_coord: MapSolverResultCoord, result_solve_stage: MapSolverResult.SolveStage) -> void:
+func _update_result_cursor(room_coords: Vector2i, map_solver_result_coord: MapSolverResultCoord, result_solve_stage: MapSolverResult.SolveStage, show_zero_weight_check: bool) -> void:
 	# Filter out processing if the room_coords not found inside the instantiated result cursors
 	if not has_result_cursor_coords(room_coords):
 		return
 	
 	# Update data inside result cursor instance with the map solver result coord
 	var result_cursor = result_cursors[room_coords]
-	result_cursor.update_data(map_solver_result_coord, result_solve_stage, _get_map_solver_secret_room_name())
+	result_cursor.update_data(map_solver_result_coord, result_solve_stage, _get_map_solver_secret_room_name(), show_zero_weight_check)
 
 
 ## Checks if the result cursor exists for the provided [param room_coords] coordinates.

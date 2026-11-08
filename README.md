@@ -98,6 +98,14 @@ Fantasy-themed UI border assets used for parts of the project's user interface.
 - Source: [Fantasy UI Borders](https://kenney.nl/assets/fantasy-ui-borders)
 - License: [Creative Commons CC0](https://creativecommons.org/publicdomain/zero/1.0/)
 
+#### Game Icons
+
+Game Icons assets used for parts of the project's user interface.
+
+- Author: [Kenney](https://kenney.nl/)
+- Source: [Game Icons](https://kenney.nl/assets/game-icons)
+- License: [Creative Commons CC0](https://creativecommons.org/publicdomain/zero/1.0/)
+
 ### Fonts
 
 #### Monogram

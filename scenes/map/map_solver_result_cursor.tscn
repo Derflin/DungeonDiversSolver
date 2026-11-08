@@ -5,6 +5,7 @@
 [ext_resource type="Texture2D" uid="uid://bsc75niimbt61" path="res://assets/icons/cursor/RoomSolvedCursor-Edges.png" id="2_rxhxr"]
 [ext_resource type="Texture2D" uid="uid://1jpsxhf8b8nc" path="res://assets/icons/cursor/RoomSolvedCursor-Corners.png" id="3_7l876"]
 [ext_resource type="PackedScene" uid="uid://dtnhj178gkkg3" path="res://scenes/map/map_solver_result_hover_details.tscn" id="5_7l876"]
+[ext_resource type="Texture2D" uid="uid://b3fyoxdqh1yfj" path="res://assets/icons/map_solver/third_party/kenney/game_icons/checkmark.png" id="5_pple3"]
 
 [sub_resource type="Animation" id="Animation_rxhxr"]
 length = 0.001
@@ -48,23 +49,7 @@ size = Vector2(15, 15)
 
 [node name="MapSolverResultCursor" type="Node2D" unique_id=1241313848]
 script = ExtResource("1_0oae5")
-value_label_area_size = null
 value_label_base_font_size = 16
-value_label_padding = null
-value_label_visual_offset = null
-cursor_animation_enabled = null
-cursor_animation_show_duration = null
-cursor_animation_hide_duration = null
-hover_details_enabled = null
-hover_details_default_room_name = null
-hover_details_gap = null
-hover_details_viewport_margin = null
-hover_details_hud_margin = null
-hover_details_animation_duration = null
-hover_details_visual_scale = null
-hover_details_connector_enabled = null
-hover_details_connector_start_overlap = null
-hover_details_connector_end_overlap = null
 
 [node name="Edges" type="Sprite2D" parent="." unique_id=2130384106]
 scale = Vector2(0.9, 0.9)
@@ -86,6 +71,13 @@ horizontal_alignment = 1
 vertical_alignment = 1
 script = ExtResource("2_85jj2")
 metadata/_custom_type_script = "uid://b8x8oocqx8an3"
+
+[node name="ValueCheckMark" type="Sprite2D" parent="." unique_id=1906741406]
+modulate = Color(0.47843137, 0.9098039, 0.47843137, 1)
+self_modulate = Color(0.47843137, 0.9098039, 0.47843137, 1)
+texture_filter = 1
+scale = Vector2(0.2, 0.2)
+texture = ExtResource("5_pple3")
 
 [node name="HoverArea" type="Area2D" parent="." unique_id=659989009]
 collision_layer = 0

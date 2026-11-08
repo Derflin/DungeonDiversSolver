@@ -70,6 +70,21 @@ func get_all_result_coords_weights() -> Array[float]:
 	return result
 
 
+## Checks if all existing result coords have zero weights assigned to them and returns a bool value indicating that check result.
+func has_only_zero_weights() -> bool:
+	# Returns true if there aren't any result coords assigned to the result.
+	if result_coords.is_empty():
+		return true
+	
+	# Check if all existing result coords have zero weights assigned to them and returns false otherwise.
+	for result_coord: MapSolverResultCoord in result_coords:
+		if not is_zero_approx(result_coord.calculated_weight):
+			return false
+	
+	# Otherwise return true.
+	return true
+
+
 func assign_weight_to_result_coords(coords: Vector2i, weight: float) -> void:
 	for result in result_coords:
 		if result.coords == coords:

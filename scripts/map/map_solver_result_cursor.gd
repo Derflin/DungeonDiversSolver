@@ -62,6 +62,8 @@ var _cursor_animation: Tween
 var _map_solver_result_coord: MapSolverResultCoord = null
 var _map_solver_result_solve_stage: MapSolverResult.SolveStage
 
+var _show_zero_weight_check: bool = false
+
 var _hover_details_tween: Tween
 var _hover_details_active: bool = false
 var _hover_details_final_position: Vector2 = Vector2.ZERO
@@ -72,6 +74,7 @@ var _hover_room_name: String = "Secret Room"
 @onready var value_label: ScrambleLabel = $ValueLabelRoot/ValueLabel
 @onready var corners_sprite: Sprite2D = $Corners
 @onready var corners_animation_player: AnimationPlayer = $Corners/AnimationPlayer
+@onready var value_check_mark: Sprite2D = $ValueCheckMark
 @onready var hover_area: Area2D = $HoverArea
 @onready var hover_collision_shape: CollisionShape2D = $HoverArea/CollisionShape2D
 @onready var hover_details: MapSolverResultHoverDetails = $HoverDetails
@@ -82,6 +85,9 @@ func _ready() -> void:
 	# Initialize initial state
 	hide()
 	modulate.a = 0.0
+	
+	# Initialize value check mark state.
+	value_check_mark.hide()
 	
 	# Initialize hover details initial state.
 	hover_details.scale = Vector2.ONE * hover_details_visual_scale
@@ -179,11 +185,14 @@ func _kill_cursor_animation() -> void:
 
 
 ## Initialize result cursor with the map solver result coord that it's based on.
-func update_data(map_solver_result_coord: MapSolverResultCoord, result_solve_stage: MapSolverResult.SolveStage, secret_room_display_name: String = "") -> void:
+func update_data(map_solver_result_coord: MapSolverResultCoord, result_solve_stage: MapSolverResult.SolveStage, secret_room_display_name: String = "", show_zero_weight_check: bool = false) -> void:
 	# Update map solver result coord data
 	_map_solver_result_coord = map_solver_result_coord
 	_map_solver_result_solve_stage = result_solve_stage
 	_hover_room_name = secret_room_display_name if not secret_room_display_name.is_empty() else hover_details_default_room_name
+	
+	# Update check mark display state.
+	_show_zero_weight_check = show_zero_weight_check
 	
 	# Update value label and ensure that hover details are hidden if the node is ready
 	if is_node_ready():
@@ -193,6 +202,17 @@ func update_data(map_solver_result_coord: MapSolverResultCoord, result_solve_sta
 
 ## Updates value label text and visibilty based on the map solver result coord and solve stage member parameters.
 func _update_value_label() -> void:
+	# Check whether the green checkmark should be displayed.
+	var show_check: bool = _map_solver_result_solve_stage == MapSolverResult.SolveStage.CALCULATED_WEIGHTS and _show_zero_weight_check
+	
+	# Update check mark visibility.
+	value_check_mark.visible = show_check
+	
+	# Hide value label if check mark should be displayed.
+	if show_check:
+		value_label.hide()
+		return
+	
 	# Prepare label text based on the solve stage and the map solver result coord
 	var label_text: String = ""
 	if _map_solver_result_solve_stage == MapSolverResult.SolveStage.CALCULATED_WEIGHTS:

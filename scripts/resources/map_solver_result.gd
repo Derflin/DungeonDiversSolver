@@ -81,7 +81,7 @@ func assign_weight_to_result_coords(coords: Vector2i, weight: float) -> void:
 ## If the existing coord in the result wouldn't exist in the provided dictionary, then it would be assigned a weight of value 0. 
 func assign_weights_to_result_coords(weights_by_coords: Dictionary[Vector2i, float]) -> void:
 	for result_coord: MapSolverResultCoord in result_coords:
-		result_coord.calculate_weight = weights_by_coords.get(result_coord.coords, 0.0)
+		result_coord.calculated_weight = weights_by_coords.get(result_coord.coords, 0.0)
 
 
 func initialize_result_coords_probabilities() -> void:

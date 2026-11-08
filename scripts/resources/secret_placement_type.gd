@@ -13,3 +13,7 @@ enum CountType {
 
 
 @export var count_type: CountType = CountType.NONE
+
+
+func contributes_to_weight() -> bool:
+	return count_type != CountType.NONE

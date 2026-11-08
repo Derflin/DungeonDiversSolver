@@ -562,26 +562,63 @@ func _assign_neighbour_group_room_connection(coords_to_group_id: Dictionary[Vect
 
 
 func _calculate_weights(result: MapSolverResult, placement_config: SecretPlacementConfig) -> void:
-	# Initialize stage state
+	# Initialize stage state.
 	result.stage = MapSolverResult.SolveStage.CALCULATED_WEIGHTS
 	
-	# Initialize result coords weights
+	# Initialize result coords weights.
 	result.initialize_result_coords_weights()
 	
-	# Calculate coords weights based on the placement config placement types
-	for placement_type in placement_config.placement_types:
-		_calculate_weight_placement_type(result, placement_type)
+	# Calculate coords weights based on the placement config placement types.
+	var combined_weights: Dictionary[Vector2i, float] = {}
+	for placement_type: SecretPlacementType in placement_config.placement_types:
+		# Filter out processing if the placement type is none.
+		if placement_type == null:
+			continue
+		
+		# Filter out processing if the placement type doesn't contribute to the calculated weight calculation.
+		if not placement_type.contributes_to_weight():
+			continue
+		
+		# Calculate the weight for the placement type.
+		var type_weights: Dictionary[Vector2i, float] = _calculate_weight_placement_type(result, placement_type)
+		
+		# Aggregate each calculated weight inside the combined weights dictionary.
+		for coords: Vector2i in type_weights:
+			var type_weight: float = type_weights[coords]
+			
+			# Initialize the weight inside the combined weights if it wasn't assigned previously.
+			if not combined_weights.has(coords):
+				combined_weights[coords] = type_weight
+				continue
+			
+			# Aggregate calculated weight with the previous ones according to the placement configuration weight aggregation.
+			var previous_weight: float = combined_weights[coords]
+			match placement_config.placement_types_weight_aggregation:
+				SecretPlacementConfig.PlacementTypesAggregation.LAST:
+					combined_weights[coords] = type_weight
+				SecretPlacementConfig.PlacementTypesAggregation.SUM:
+					combined_weights[coords] = previous_weight + type_weight
+				SecretPlacementConfig.PlacementTypesAggregation.SUB:
+					combined_weights[coords] = previous_weight - type_weight
+				SecretPlacementConfig.PlacementTypesAggregation.MIN:
+					combined_weights[coords] = minf(previous_weight, type_weight)
+				SecretPlacementConfig.PlacementTypesAggregation.MAX:
+					combined_weights[coords] = maxf(previous_weight, type_weight)
+	
+	# Assign calculated weights to the result.
+	result.assign_weights_to_result_coords(combined_weights)
 
 
-func _calculate_weight_placement_type(result: MapSolverResult, placement_type: SecretPlacementType) -> void:
+func _calculate_weight_placement_type(result: MapSolverResult, placement_type: SecretPlacementType) -> Dictionary[Vector2i, float]:
 	var result_coords_all := result.get_result_coords()
+	var type_weights: Dictionary[Vector2i, float] = {}
 	
 	# Calculate coords weights based on the placement type
 	if placement_type is SecretPlacementTypeCorridor:
 		# Calculate weights for each coords saved in the result
 		for cur_coords in result_coords_all:
 			var cur_coords_weight := _calculate_weights_placement_type_corridor(placement_type, cur_coords)
-			result.assign_weight_to_result_coords(cur_coords, cur_coords_weight)
+			type_weights[cur_coords] = cur_coords_weight
 		
 	elif placement_type is SecretPlacementTypeDistance:
 		# Find all the related room types
@@ -595,13 +632,13 @@ func _calculate_weight_placement_type(result: MapSolverResult, placement_type: S
 		# Calculate weights for each coords saved in the result
 		for cur_coords in result_coords_all:
 			var cur_coords_weight := _calculate_weights_placement_type_distance(placement_type, related_room_types_coords, cur_coords)
-			result.assign_weight_to_result_coords(cur_coords, cur_coords_weight)
+			type_weights[cur_coords] = cur_coords_weight
 		
 	elif placement_type is SecretPlacementTypeIntersection:
 		# Calculate weights for each coords saved in the result
 		for cur_coords in result_coords_all:
 			var cur_coords_weight := _calculate_weights_placement_type_intersection()
-			result.assign_weight_to_result_coords(cur_coords, cur_coords_weight)
+			type_weights[cur_coords] = cur_coords_weight
 		
 	elif placement_type is SecretPlacementTypeLoop:
 		# Prepare a dict with coords as key and values represeting each separated room group
@@ -610,13 +647,13 @@ func _calculate_weight_placement_type(result: MapSolverResult, placement_type: S
 		# Calculate weights for each coords saved in the result
 		for cur_coords in result_coords_all:
 			var cur_coords_weight := _calculate_weights_placement_type_loop(placement_type, cur_coords, room_connections_groups)
-			result.assign_weight_to_result_coords(cur_coords, cur_coords_weight)
+			type_weights[cur_coords] = cur_coords_weight
 		
 	elif placement_type is SecretPlacementTypeNeighbour:
 		# Calculate weights for each coords saved in the result
 		for cur_coords in result_coords_all:
 			var cur_coords_weight := _calculate_weights_placement_type_neighbour(placement_type, cur_coords)
-			result.assign_weight_to_result_coords(cur_coords, cur_coords_weight)
+			type_weights[cur_coords] = cur_coords_weight
 		
 	elif placement_type is SecretPlacementTypePath:
 		# Find all the start room types
@@ -629,7 +666,9 @@ func _calculate_weight_placement_type(result: MapSolverResult, placement_type: S
 		# Calculate weights for each coords saved in the result
 		for cur_coords in result_coords_all:
 			var cur_coords_weight := _calculate_weights_placement_type_path(placement_type, cur_coords, start_room_types_coords)
-			result.assign_weight_to_result_coords(cur_coords, cur_coords_weight)
+			type_weights[cur_coords] = cur_coords_weight
+	
+	return type_weights
 
 
 func _calculate_weights_placement_type_corridor(placement_type: SecretPlacementType, cur_room_coords: Vector2i, last_dir: Direction = Direction.NONE, length: int = 0) -> float:
@@ -710,9 +749,9 @@ func _calculate_weights_placement_type_distance(placement_type: SecretPlacementT
 
 
 func _calculate_weights_placement_type_intersection() -> float:
-	# Return 1, since the intersection doesn't need any weights calculated
+	# Return 0, since the intersection doesn't need any weights calculated
 	# Only marked and defined, so that it would not be assigned as omitted or unintentional in the future
-	return 1
+	return 0.0
 
 
 func _calculate_weights_placement_type_loop(placement_type: SecretPlacementType, cur_coords: Vector2i, room_connections_groups: Dictionary[Vector2i, int]) -> float:

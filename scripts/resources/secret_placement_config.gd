@@ -8,6 +8,14 @@ enum CountType {
 	MAX = 20,
 }
 
+enum PlacementTypesAggregation {
+	LAST = 1,
+	SUM = 10,
+	SUB = 20,
+	MIN = 30,
+	MAX = 40,
+}
+
 
 @export_group("Room Placement", "room_")
 ## Distance from other non-secret rooms including current position
@@ -23,8 +31,9 @@ enum CountType {
 @export var neighbour_allow_secret: bool = true
 @export var neighbour_require_secret: bool = false
 
-@export_group("Placement Types")
+@export_group("Placement Types", "placement_")
 @export var placement_types: Array[SecretPlacementType] = []
+@export var placement_types_weight_aggregation: PlacementTypesAggregation = PlacementTypesAggregation.SUM
 
 @export_group("Weight Calculation", "weight_")
 @export var weight_count_type: CountType = CountType.NONE

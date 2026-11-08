@@ -2,6 +2,16 @@ class_name ScrambleLabel
 extends Label
 
 
+## Emited when a scramble animation starts.
+## Provides the currently displayed text, target text and duration.
+signal scramble_started(old_text: String, new_text: String, duration: float)
+
+## Emitted when a scramble animation completes successfully.
+## This signal is not emitted when an animation is cancelled.
+## Provides the currently displayed text.
+signal scramble_finished(final_text: String)
+
+
 @export_group("Scramble", "scramble_")
 ## Enables/disables the scramble animation for the label.
 @export var scramble_enabled: bool = true
@@ -72,7 +82,7 @@ func _ready() -> void:
 
 
 ## Assign new text to a label text along with providing scramble animation handling based on the set parameters.
-func change_text(new_text: String, animate: bool = true, force_restart:bool = false) -> void:
+func change_text(new_text: String, animate: bool = true, force_restart: bool = false) -> void:
 	# Filter out processing if the new text is the same as the one already set
 	if new_text == _target_text and not force_restart:
 		return
@@ -108,6 +118,9 @@ func change_text(new_text: String, animate: bool = true, force_restart:bool = fa
 			scramble_start_times[i] = randf_range(scramble_characters_start_time_existing_space_min, scramble_characters_start_time_existing_space_max)
 		
 		resolve_times[i] = randf_range(scramble_characters_resolve_time_min, scramble_characters_resolve_time_max)
+	
+	# Emit scramble started signal.
+	scramble_started.emit(old_text, new_text, scramble_duration)
 	
 	# Start processing loop for animating the character scramble
 	var elapsed := 0.0
@@ -166,6 +179,9 @@ func change_text(new_text: String, animate: bool = true, force_restart:bool = fa
 		_set_displayed_text(new_text)
 		if scramble_opacity_enabled:
 			modulate.a = 1.0
+		
+		# Emit scramble ended signal.
+		scramble_finished.emit(new_text)
 
 
 ## Changes internal animation id, causing existing animation to stop.

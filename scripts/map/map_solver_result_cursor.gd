@@ -66,7 +66,12 @@ var hover_details_hud_margin: float = 2.0
 
 
 var _cursor_animation: Tween
+
 var _value_display_tween: Tween
+var _value_label_scale_tween: Tween
+var _value_label_adjust_size_during_scramble: bool = true
+var _value_label_scramble_started_in_call: bool = false
+
 var _map_solver_result_coord: MapSolverResultCoord = null
 var _map_solver_result_solve_stage: MapSolverResult.SolveStage
 
@@ -112,6 +117,10 @@ func _ready() -> void:
 	
 	# Sets up handler function to listen to resized signal from the value label node in order to automatically recenter it's position.
 	value_label.resized.connect(_on_value_label_resized)
+	
+	# Sets up handler function to listen to scramble started and finished signals from the value label node to handle text scale animation transition.
+	value_label.scramble_started.connect(_on_value_label_scramble_started)
+	value_label.scramble_finished.connect(_on_value_label_scramble_finished)
 	
 	# Update value label if it was initialized before ready function
 	if _map_solver_result_coord != null:
@@ -308,13 +317,29 @@ func _apply_value_display(show_check: bool, label_text: String, label_color: Col
 	
 	# Display the checkmark instead of the value label.
 	if show_check:
+		# Stop any existing value label node scale animation.
+		_kill_value_label_scale_tween()
+		
+		# Cancel value label scramble animation and restore the label's final text.
 		value_label.cancel_animation()
+		
+		# Restore the correct scale for the retained text.
+		_fit_value_label_text(value_label.text)
+		
+		# Display the check mark.
 		value_check_mark.show()
 		return
 	
 	# Clear the label when there is no text to display.
 	if label_text.is_empty():
+		# Stop any existing value label node scale animation.
+		_kill_value_label_scale_tween()
+		
+		# Clear the displayed text.
 		value_label.set_text_immediate("")
+		
+		# Reset scale for the next first appearence of the value label.
+		value_label_root.scale = Vector2.ONE
 		return
 	
 	# Update label color.
@@ -341,10 +366,50 @@ func _initialize_corners_animation_player() -> void:
 
 ## Set value label text to provided [param value_text] value and adjusts the value label root scale to try and fit the text inside the value label restricted size.
 func set_value_label_text(value_text: String, adjust_label_size: bool = true, force_scramble: bool = false) -> void:
+	# Store whether fitting is enabled for this text change.
+	_value_label_adjust_size_during_scramble = adjust_label_size
+	
+	# Reset the flag indicating if the value label node has started scramble.
+	_value_label_scramble_started_in_call = false
+	
+	# Ensure that value label uses the base font size.
+	value_label.add_theme_font_size_override("font_size", value_label_base_font_size)
+	
+	# Set the provided value text string in value label node.
 	value_label.change_text(value_text, true, force_scramble)
 	
-	if adjust_label_size:
-		_fit_value_label_text(value_text)
+	# Fit value label text scale if it's set immediately, otherwise this will be taken care by handling the value label signal.
+	if adjust_label_size and not _value_label_scramble_started_in_call:
+		var scale_tween_active: bool = _value_label_scale_tween != null and _value_label_scale_tween.is_valid() and _value_label_scale_tween.is_running()
+		if not scale_tween_active:
+			_fit_value_label_text(value_text)
+
+
+## Calculates and returns a scale that would need to be applied to the value label in order to fit the provided [param value_text] string.
+func _calculate_value_label_scale(value_text: String) -> float:
+	# Return default scale if the value text is empty.
+	if value_text.is_empty():
+		return 1.0
+	
+	# Get value label theme font.
+	var font := value_label.get_theme_font("font")
+	
+	# Calculate text size.
+	var text_width := font.get_string_size(value_text, HORIZONTAL_ALIGNMENT_LEFT, -1, value_label_base_font_size).x
+	var text_height := font.get_height(value_label_base_font_size)
+	var text_size := Vector2(text_width, text_height)
+	
+	# Return default scale if the value text size would be none.
+	if text_size.x <= 0.0 or text_size.y <= 0.0:
+		return 1.0
+	
+	# Calculate the available display area.
+	var available_size := value_label_area_size - Vector2.ONE * float(value_label_padding) * 2.0
+	available_size.x = maxf(available_size.x, 1.0)
+	available_size.y = maxf(available_size.y, 1.0)
+	
+	# Calculate and return the scale required to fit the text.
+	return minf(available_size.x / text_size.x, minf(available_size.y / text_size.y, 1.0))
 
 
 ## Sets value label size and position and then scales down it's root node to fit into target restricted area.
@@ -366,16 +431,57 @@ func _fit_value_label_text(value_text: String) -> void:
 	value_label.size = text_size
 	_on_value_label_resized()
 	
-	# Calculate scale factor for value label root node to fully fit the new text
-	var available_size := value_label_area_size - Vector2.ONE * value_label_padding * 2.0
-	var scale_factor: float = min(
-		available_size.x / text_size.x,
-		available_size.y / text_size.y,
-		1.0
-	)
-	
 	# Scale down the value label root node
-	value_label_root.scale = Vector2.ONE * scale_factor
+	value_label_root.scale = Vector2.ONE * _calculate_value_label_scale(value_text)
+
+
+## Handles emitted scramble started signal from value label node to handle the local scale adjustment for the value label root node.
+func _on_value_label_scramble_started(old_text: String, new_text: String, duration: float) -> void:
+	# Set flag that value label scramble started.
+	_value_label_scramble_started_in_call = true
+	
+	# Filter out processing if the flag for value label size adjusting during scramble is not set.
+	if not _value_label_adjust_size_during_scramble:
+		return
+	
+	# Stop any existing value label scale transition.
+	_kill_value_label_scale_tween()
+	
+	# Calculate the scale required by the new text.
+	var target_scale: float = _calculate_value_label_scale(new_text)
+	
+	# Set the scale immediately if this is first appearence of the scrambled text and it didn't had any text assigned before.
+	if old_text.is_empty():
+		value_label_root.scale = Vector2.ONE * target_scale
+		return
+	
+	# Filter out processing if the scale doesn't need to change.
+	if is_equal_approx(value_label_root.scale.x, target_scale):
+		return
+	
+	# Start a continuous transition from the current scale.
+	_value_label_scale_tween = create_tween()
+	_value_label_scale_tween.tween_property(value_label_root, "scale", Vector2.ONE * target_scale, duration).set_trans(Tween.TRANS_LINEAR)
+
+
+## Handles emitted scramble finished signal from value label node to handle finishing the remaining scale adjustment transition for the value label root node.
+func _on_value_label_scramble_finished(final_text: String) -> void:
+	# Filter out processing if the flag for value label size adjusting during scramble is not set.
+	if not _value_label_adjust_size_during_scramble:
+		return
+	
+	# Stop any existing value label scale transition.
+	_kill_value_label_scale_tween()
+	
+	# Ensure the final text text has its exact required size and scale set up correctly.
+	_fit_value_label_text(final_text)
+
+
+## Stops any existing animation set for the value label related to the scale transitions.
+func _kill_value_label_scale_tween() -> void:
+	if _value_label_scale_tween != null and _value_label_scale_tween.is_valid():
+		_value_label_scale_tween.kill()
+	_value_label_scale_tween = null
 
 
 ## Keeps the value label centered whenever its dimensions change.
@@ -400,7 +506,7 @@ func _show_hover_details() -> void:
 	# Set flag that hover details are active.
 	_hover_details_active = true
 	
-	# Stop any existing animtion related to hover details.
+	# Stop any existing animation related to hover details.
 	_kill_hover_details_tween()
 	
 	# Initialize hover details data.

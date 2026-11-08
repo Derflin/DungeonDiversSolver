@@ -33,6 +33,13 @@ const HOVER_DIRECTIONS: Array[Vector2i] = [
 ## Visual offset used for value label applied to it's position parameter after fitting value label text in it.
 @export var value_label_visual_offset := Vector2(0.0, -1.0)
 
+@export_group("Value Label Transition", "value_label_transition_")
+## Enables the fade transition when switching the cursor's displayed value label.
+@export var value_label_transition_enabled: bool = true
+## Total duration of fading out old content and fading in new content.
+@export_range(0.0, 1.0, 0.01)
+var value_label_transition_duration: float = 0.2
+
 @export_group("Cursor Animation", "cursor_animation_")
 ## Enables the cursor animation for handling it's show/hide states.
 @export var cursor_animation_enabled: bool = true
@@ -59,6 +66,7 @@ var hover_details_hud_margin: float = 2.0
 
 
 var _cursor_animation: Tween
+var _value_display_tween: Tween
 var _map_solver_result_coord: MapSolverResultCoord = null
 var _map_solver_result_solve_stage: MapSolverResult.SolveStage
 
@@ -70,11 +78,12 @@ var _hover_details_final_position: Vector2 = Vector2.ZERO
 var _hover_room_name: String = "Secret Room"
 
 
-@onready var value_label_root: Node2D = $ValueLabelRoot
-@onready var value_label: ScrambleLabel = $ValueLabelRoot/ValueLabel
+@onready var value_display_root: Node2D = $ValueDisplayRoot
+@onready var value_label_root: Node2D = $ValueDisplayRoot/ValueLabelRoot
+@onready var value_label: ScrambleLabel = $ValueDisplayRoot/ValueLabelRoot/ValueLabel
+@onready var value_check_mark: Sprite2D = $ValueDisplayRoot/ValueCheckMark
 @onready var corners_sprite: Sprite2D = $Corners
 @onready var corners_animation_player: AnimationPlayer = $Corners/AnimationPlayer
-@onready var value_check_mark: Sprite2D = $ValueCheckMark
 @onready var hover_area: Area2D = $HoverArea
 @onready var hover_collision_shape: CollisionShape2D = $HoverArea/CollisionShape2D
 @onready var hover_details: MapSolverResultHoverDetails = $HoverDetails
@@ -86,8 +95,12 @@ func _ready() -> void:
 	hide()
 	modulate.a = 0.0
 	
-	# Initialize value check mark state.
+	# Initialize value display state.
+	value_display_root.modulate.a = 1.0
+	value_label_root.hide()
+	value_label_root.modulate.a = 1.0
 	value_check_mark.hide()
+	value_check_mark.modulate.a = 1.0
 	
 	# Initialize hover details initial state.
 	hover_details.scale = Vector2.ONE * hover_details_visual_scale
@@ -102,7 +115,7 @@ func _ready() -> void:
 	
 	# Update value label if it was initialized before ready function
 	if _map_solver_result_coord != null:
-		_update_value_label()
+		_update_value_display()
 
 
 ## Continuously checks whether hover details should be displayed and handles changes to their visibility state. 
@@ -186,7 +199,12 @@ func _kill_cursor_animation() -> void:
 
 ## Initialize result cursor with the map solver result coord that it's based on.
 func update_data(map_solver_result_coord: MapSolverResultCoord, result_solve_stage: MapSolverResult.SolveStage, secret_room_display_name: String = "", show_zero_weight_check: bool = false) -> void:
-	# Update map solver result coord data
+	# Store previous display state before updating the result.
+	var had_previous_result: bool = _map_solver_result_coord != null
+	var previous_stage: MapSolverResult.SolveStage = _map_solver_result_solve_stage
+	var previous_check: bool = _show_zero_weight_check
+	
+	# Update map solver result coord data.
 	_map_solver_result_coord = map_solver_result_coord
 	_map_solver_result_solve_stage = result_solve_stage
 	_hover_room_name = secret_room_display_name if not secret_room_display_name.is_empty() else hover_details_default_room_name
@@ -194,39 +212,120 @@ func update_data(map_solver_result_coord: MapSolverResultCoord, result_solve_sta
 	# Update check mark display state.
 	_show_zero_weight_check = show_zero_weight_check
 	
-	# Update value label and ensure that hover details are hidden if the node is ready
+	# Update value label and ensure that hover details are hidden if the node is ready.
 	if is_node_ready():
-		_update_value_label()
+		# Animate only when the stage or displayed indicator changed.
+		var animate_transition: bool = had_previous_result and (previous_stage != _map_solver_result_solve_stage or previous_check != _show_zero_weight_check)
+		
+		_update_value_display(animate_transition)
 		_hide_hover_details(true)
 
 
-## Updates value label text and visibilty based on the map solver result coord and solve stage member parameters.
-func _update_value_label() -> void:
+## Updates value display and visibilty based on the map solver result coord and solve stage member parameters.
+## Handles the intialization of transition animation for the changes that would be applied to the value display.
+## Provided [param animate_transition] flag defines if the changes should be applied through aniamtion or immediately.
+func _update_value_display(animate_transition: bool = false) -> void:
 	# Check whether the green checkmark should be displayed.
 	var show_check: bool = _map_solver_result_solve_stage == MapSolverResult.SolveStage.CALCULATED_WEIGHTS and _show_zero_weight_check
 	
-	# Update check mark visibility.
-	value_check_mark.visible = show_check
-	
-	# Hide value label if check mark should be displayed.
-	if show_check:
-		value_label.hide()
-		return
-	
-	# Prepare label text based on the solve stage and the map solver result coord
+	# Prepare label text based on the solve stage and the map solver result coord.
 	var label_text: String = ""
 	if _map_solver_result_solve_stage == MapSolverResult.SolveStage.CALCULATED_WEIGHTS:
-		label_text = String.num(_map_solver_result_coord.calculated_weight, 2).trim_suffix(".0")
+		if not show_check:
+			label_text = String.num(_map_solver_result_coord.calculated_weight, 2).trim_suffix(".0")
 	elif _map_solver_result_solve_stage == MapSolverResult.SolveStage.FOUND_SOLUTION:
 		label_text = String.num(_map_solver_result_coord.probability * 100, 0) + "%"
 	
-	# Update value label text color
-	var label_text_color := _map_solver_result_coord.text_color
-	value_label.add_theme_color_override("font_color", label_text_color)
+	# Prepare value label text color.
+	var label_text_color := _map_solver_result_coord.text_color if _map_solver_result_coord != null else Color.WHITE
 	
-	# Update value label visibility and text
-	value_label.visible = label_text.length() > 0
-	set_value_label_text(label_text, value_label.visible)
+	# Detect whether the old and new states containt visible content.
+	var has_old_content: bool = value_label_root.visible or value_check_mark.visible
+	var has_new_content: bool = show_check or not label_text.is_empty()
+	
+	# Stop any existing display transition.
+	_kill_value_display_tween()
+	
+	# Apply the result immediately if the transition is disabled or the cursor isn't currently visible.
+	if not animate_transition or not value_label_transition_enabled or value_label_transition_duration <= 0.0 or not is_visible_in_tree():
+		_apply_value_display(show_check, label_text, label_text_color)
+		value_display_root.modulate.a = 1.0
+		return
+	
+	# Create a sequential fade-out / fade-in transition.
+	var half_duration: float = value_label_transition_duration * 0.5
+	
+	# Animate fade in if nothing was displayed previously.
+	if not has_old_content:
+		_apply_value_display(show_check, label_text, label_text_color)
+		
+		if has_new_content:
+			value_display_root.modulate.a = 0.0
+			
+			_value_display_tween = create_tween()
+			_value_display_tween.tween_property(value_display_root, "modulate:a", 1.0, half_duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		else:
+			value_display_root.modulate.a = 1.0
+		
+		return
+	
+	# Prepare a sequential fade-out / fade-in animation.
+	_value_display_tween = create_tween()
+	
+	# Fade out the old content while it is still visible.
+	_value_display_tween.tween_property(value_display_root, "modulate:a", 0.0, half_duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	
+	# Replace the content only after it has become transparent.
+	_value_display_tween.tween_callback(func() -> void: _apply_value_display(show_check, label_text, label_text_color))
+	
+	# Fade in the new content.
+	if has_new_content:
+		_value_display_tween.tween_property(value_display_root, "modulate:a", 1.0, half_duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	else:
+		# Reset opacity for the next update while no content is visible.
+		_value_display_tween.tween_callback(func() -> void: value_display_root.modulate.a = 1.0)
+
+
+## Stops any existing animation set for the value display.
+func _kill_value_display_tween():
+	if _value_display_tween != null and _value_display_tween.is_valid():
+		_value_display_tween.kill()
+	_value_display_tween = null
+
+
+## Applies provided value display parameters to the value displays and sets which of them should be displayed currently.
+func _apply_value_display(show_check: bool, label_text: String, label_color: Color) -> void:
+	# Check whether we were previously displaying the checkmark.
+	var was_showing_check: bool = value_check_mark.visible
+	
+	# Hide both display nodes before updating their contents.
+	value_label_root.hide()
+	value_check_mark.hide()
+	
+	# Reset display opacity.
+	value_label_root.modulate.a = 1.0
+	value_check_mark.modulate.a = 1.0
+	
+	# Display the checkmark instead of the value label.
+	if show_check:
+		value_label.cancel_animation()
+		value_check_mark.show()
+		return
+	
+	# Clear the label when there is no text to display.
+	if label_text.is_empty():
+		value_label.set_text_immediate("")
+		return
+	
+	# Update label color.
+	value_label.add_theme_color_override("font_color", label_color)
+	
+	# Display the value label root.
+	value_label.show()
+	value_label_root.show()
+	
+	# Update label text.
+	set_value_label_text(label_text, true, was_showing_check)
 
 
 ## Initializes corners sprite animation player with correct animation and it's state.
@@ -241,8 +340,8 @@ func _initialize_corners_animation_player() -> void:
 
 
 ## Set value label text to provided [param value_text] value and adjusts the value label root scale to try and fit the text inside the value label restricted size.
-func set_value_label_text(value_text: String, adjust_label_size: bool = true) -> void:
-	value_label.change_text(value_text)
+func set_value_label_text(value_text: String, adjust_label_size: bool = true, force_scramble: bool = false) -> void:
+	value_label.change_text(value_text, true, force_scramble)
 	
 	if adjust_label_size:
 		_fit_value_label_text(value_text)

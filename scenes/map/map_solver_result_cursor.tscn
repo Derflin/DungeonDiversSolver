@@ -62,9 +62,11 @@ texture = ExtResource("3_7l876")
 libraries/ = SubResource("AnimationLibrary_pple3")
 autoplay = &"default"
 
-[node name="ValueLabelRoot" type="Node2D" parent="." unique_id=995490793]
+[node name="ValueDisplayRoot" type="Node2D" parent="." unique_id=807547765]
 
-[node name="ValueLabel" type="Label" parent="ValueLabelRoot" unique_id=787108461]
+[node name="ValueLabelRoot" type="Node2D" parent="ValueDisplayRoot" unique_id=995490793]
+
+[node name="ValueLabel" type="Label" parent="ValueDisplayRoot/ValueLabelRoot" unique_id=787108461]
 offset_right = 1.0
 offset_bottom = 13.0
 horizontal_alignment = 1
@@ -72,7 +74,7 @@ vertical_alignment = 1
 script = ExtResource("2_85jj2")
 metadata/_custom_type_script = "uid://b8x8oocqx8an3"
 
-[node name="ValueCheckMark" type="Sprite2D" parent="." unique_id=1906741406]
+[node name="ValueCheckMark" type="Sprite2D" parent="ValueDisplayRoot" unique_id=1906741406]
 modulate = Color(0.47843137, 0.9098039, 0.47843137, 1)
 self_modulate = Color(0.47843137, 0.9098039, 0.47843137, 1)
 texture_filter = 1

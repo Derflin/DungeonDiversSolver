@@ -72,9 +72,9 @@ func _ready() -> void:
 
 
 ## Assign new text to a label text along with providing scramble animation handling based on the set parameters.
-func change_text(new_text: String, animate: bool = true) -> void:
+func change_text(new_text: String, animate: bool = true, force_restart:bool = false) -> void:
 	# Filter out processing if the new text is the same as the one already set
-	if new_text == _target_text:
+	if new_text == _target_text and not force_restart:
 		return
 	
 	# Update target text state
@@ -127,7 +127,7 @@ func change_text(new_text: String, animate: bool = true) -> void:
 			var new_character := _get_character_or_empty(new_text, i)
 			
 			# If scramble unchanged chars is disabled and both the characters are the same, then simply don't animate scramble for them
-			if not scramble_unchanged_chars and old_character == new_character:
+			if not scramble_unchanged_chars and not force_restart and old_character == new_character:
 				displayed_text += new_character
 				continue
 			

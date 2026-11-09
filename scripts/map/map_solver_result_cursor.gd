@@ -373,6 +373,9 @@ func _apply_value_display(show_check: bool, label_text: String, label_color: Col
 		value_label_root.scale = Vector2.ONE
 		return
 	
+	# Check whether the currently assigned label color differs from the new color.
+	var label_color_changed: bool = not value_label.get_theme_color("font_color").is_equal_approx(label_color)
+	
 	# Update label color.
 	value_label.add_theme_color_override("font_color", label_color)
 	
@@ -381,7 +384,7 @@ func _apply_value_display(show_check: bool, label_text: String, label_color: Col
 	value_label_root.show()
 	
 	# Update label text.
-	set_value_label_text(label_text, true, was_showing_check)
+	set_value_label_text(label_text, true, was_showing_check or label_color_changed)
 
 
 ## Initializes corners sprite animation player with correct animation and it's state.

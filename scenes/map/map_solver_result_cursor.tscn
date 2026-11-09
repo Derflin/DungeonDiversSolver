@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://1jpsxhf8b8nc" path="res://assets/icons/cursor/RoomSolvedCursor-Corners.png" id="3_7l876"]
 [ext_resource type="PackedScene" uid="uid://dtnhj178gkkg3" path="res://scenes/map/map_solver_result_hover_details.tscn" id="5_7l876"]
 [ext_resource type="Texture2D" uid="uid://b3fyoxdqh1yfj" path="res://assets/icons/map_solver/third_party/kenney/game_icons/checkmark.png" id="5_pple3"]
+[ext_resource type="PackedScene" uid="uid://dyjj2ffksbhs1" path="res://scenes/map/map_solver_result_placement_explanation.tscn" id="7_1nym0"]
 
 [sub_resource type="Animation" id="Animation_rxhxr"]
 length = 0.001
@@ -98,3 +99,7 @@ width = 1.0
 default_color = Color(0.8352941, 0.72156864, 0.6509804, 1)
 
 [node name="HoverDetails" parent="." unique_id=1549105598 instance=ExtResource("5_7l876")]
+
+[node name="PlacementExplanation" parent="." unique_id=599361693 instance=ExtResource("7_1nym0")]
+visible = false
+show_behind_parent = true

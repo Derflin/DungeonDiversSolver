@@ -64,6 +64,10 @@ var hover_details_hud_margin: float = 2.0
 @export var hover_details_connector_start_overlap: float = 0.0
 @export var hover_details_connector_end_overlap: float = 1.0
 
+@export_group("Placement Explanation", "placement_explanation_")
+@export var placement_explanation_enabled: bool = true
+@export var placement_explanation_animation_duration: float = 0.16
+
 
 var _cursor_animation: Tween
 
@@ -82,6 +86,9 @@ var _hover_details_active: bool = false
 var _hover_details_final_position: Vector2 = Vector2.ZERO
 var _hover_room_name: String = "Secret Room"
 
+var _placement_explanation_tween: Tween
+var _placement_explanation_active: bool = false
+
 
 @onready var value_display_root: Node2D = $ValueDisplayRoot
 @onready var value_label_root: Node2D = $ValueDisplayRoot/ValueLabelRoot
@@ -91,8 +98,9 @@ var _hover_room_name: String = "Secret Room"
 @onready var corners_animation_player: AnimationPlayer = $Corners/AnimationPlayer
 @onready var hover_area: Area2D = $HoverArea
 @onready var hover_collision_shape: CollisionShape2D = $HoverArea/CollisionShape2D
-@onready var hover_details: MapSolverResultHoverDetails = $HoverDetails
 @onready var hover_connector: Line2D = $HoverConnector
+@onready var hover_details: MapSolverResultHoverDetails = $HoverDetails
+@onready var placement_explanation: MapSolverResultPlacementExplanation = $PlacementExplanation
 
 
 func _ready() -> void:
@@ -112,6 +120,10 @@ func _ready() -> void:
 	hover_connector.hide()
 	hover_connector.modulate.a = 0.0
 	
+	# Initialize placement explanation initial state.
+	placement_explanation.hide()
+	placement_explanation.modulate.a = 0.0
+	
 	# Initialize the animation player for corners sprite
 	_initialize_corners_animation_player()
 	
@@ -127,18 +139,21 @@ func _ready() -> void:
 		_update_value_display()
 
 
-## Continuously checks whether hover details should be displayed and handles changes to their visibility state. 
+## Continuously checks whether hover details and placement explanation should be displayed and handles changes to their visibility state. 
 func _process(_delta: float) -> void:
-	# Check if hover details are valid to be shown.
-	var hover_valid: bool = _is_hover_details_mouse_valid()
-	
-	# Show hover details if they are valid to be shown and the hover details aren't already active.
+	# Check if hover details are valid to be shown and show/hide them accordingly based on it and their current active status.
+	var hover_valid: bool = _is_hover_details_display_valid()
 	if hover_valid and not _hover_details_active:
 		_show_hover_details()
-	
-	# Hide hover details if they are not valid to be shown and the hover details are already active.
 	elif not hover_valid and _hover_details_active:
 		_hide_hover_details()
+	
+	# Check if placement explanation is valid to be shown and show/hide it accordingly based on it and it's current active status.
+	var explanation_valid: bool = _is_placement_explanation_display_valid()
+	if explanation_valid and not _placement_explanation_active:
+		_show_placement_explanation()
+	elif not explanation_valid and _placement_explanation_active:
+		_hide_placement_explanation()
 
 
 ## Shows cursor either immediately if the [member cursor_animation_enabled] is disabled or initializes the animation for it.
@@ -207,7 +222,7 @@ func _kill_cursor_animation() -> void:
 
 
 ## Initialize result cursor with the map solver result coord that it's based on.
-func update_data(map_solver_result_coord: MapSolverResultCoord, result_solve_stage: MapSolverResult.SolveStage, secret_room_display_name: String = "", show_zero_weight_check: bool = false) -> void:
+func update_data(map_solver_result_coord: MapSolverResultCoord, result_solve_stage: MapSolverResult.SolveStage, grid_space_reference: GridSpace, secret_room_display_name: String = "", show_zero_weight_check: bool = false) -> void:
 	# Store previous display state before updating the result.
 	var had_previous_result: bool = _map_solver_result_coord != null
 	var previous_stage: MapSolverResult.SolveStage = _map_solver_result_solve_stage
@@ -226,8 +241,24 @@ func update_data(map_solver_result_coord: MapSolverResultCoord, result_solve_sta
 		# Animate only when the stage or displayed indicator changed.
 		var animate_transition: bool = had_previous_result and (previous_stage != _map_solver_result_solve_stage or previous_check != _show_zero_weight_check)
 		
+		# Update value display.
 		_update_value_display(animate_transition)
+		
+		# Make sure that hover details are hidden by default.
 		_hide_hover_details(true)
+		
+		# Make sure that placement explanation is hidden by default.
+		_hide_placement_explanation(true)
+		
+		# Initialize placement explanation scene display.
+		if grid_space_reference != null:
+			placement_explanation.configure(
+				_map_solver_result_coord.placement_explanations,
+				grid_space_reference,
+				value_label.get_theme_font("font"),
+			)
+		else:
+			placement_explanation.clear_data()
 
 
 ## Updates value display and visibilty based on the map solver result coord and solve stage member parameters.
@@ -491,16 +522,8 @@ func _on_value_label_resized() -> void:
 
 ## Shows the hover details scene instance.
 func _show_hover_details() -> void:
-	# Filter out processing if the hover details aren't enabled or the scene isn't visible or there aren't any result coords assigned.
-	if not hover_details_enabled or not visible or _map_solver_result_coord == null:
-		return
-	
-	# Filter out processing if the current map solver stage is different then founding solutions.
-	if _map_solver_result_solve_stage != MapSolverResult.SolveStage.FOUND_SOLUTION:
-		return
-	
-	# Filter out processing if the mouse isn't currently over the hover details or it's over some blocking HUD elements.
-	if not _is_hover_details_mouse_valid():
+	# Filter out processing if the hover details aren't valid to be shown.
+	if not _is_hover_details_display_valid():
 		return
 	
 	# Set flag that hover details are active.
@@ -594,6 +617,59 @@ func _kill_hover_details_tween() -> void:
 	_hover_details_tween = null
 
 
+## Shows the placement explanation scene instance.
+func _show_placement_explanation() -> void:
+	# Filter out processing if the placement explanation isn't valid to be shown.
+	if not _is_placement_explanation_display_valid():
+		return
+	
+	# Set flag that placement explanation is active.
+	_placement_explanation_active = true
+	
+	# Stop any existing animation related to placement explanation.
+	_kill_placement_explanation_tween()
+	
+	# Initialize placement explanation display parameters and open animation.
+	placement_explanation.show()
+	
+	_placement_explanation_tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_placement_explanation_tween.tween_property(placement_explanation, "modulate:a", 1.0, placement_explanation_animation_duration)
+
+
+## Hides the placement explanation scene instance.
+## Uses the provided [param immediate] flag to define whether the hide process should be instantenous or if the animation should be played for it.
+func _hide_placement_explanation(immediate: bool = false) -> void:
+	# Unset flag that placement explanation is active.
+	_placement_explanation_active = false
+	
+	# Filter out processing if node wasn't already initialized.
+	if not is_node_ready():
+		return
+	
+	# Stops any existing placement explanation animation.
+	_kill_placement_explanation_tween()
+	
+	# Initialize placement explanation display parameters if the immediate flag parameter was set or the placement explanation is currently not visible.
+	if immediate or not placement_explanation.visible:
+		placement_explanation.hide()
+		placement_explanation.modulate.a = 0.0
+		return
+	
+	# Initialize placement explanation close animation.
+	_placement_explanation_tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	_placement_explanation_tween.tween_property(placement_explanation, "modulate:a", 0.0, placement_explanation_animation_duration)
+	
+	# Queue placement explanation hide after the animation finishes.
+	_placement_explanation_tween.tween_callback(func() -> void: if not _placement_explanation_active: placement_explanation.hide())
+
+
+## Stops any existing animation set for the placement explanation.
+func _kill_placement_explanation_tween() -> void:
+	if _placement_explanation_tween != null and _placement_explanation_tween.is_valid():
+		_placement_explanation_tween.kill()
+	_placement_explanation_tween = null
+
+
 ## Checks if the mouse is currently over any hud element that might block local interaction with the hover details scene instance.
 func _mouse_is_over_blocking_hud() -> bool:
 	var node: Node = get_viewport().gui_get_hovered_control()
@@ -604,19 +680,11 @@ func _mouse_is_over_blocking_hud() -> bool:
 	return false
 
 
-## Checks and returns a bool value indicating whether the mouse is currently over the result cursor and isn't interacting with a blocking HUD element.
-## Returns false if the result cursor isn't visible or the hover details aren't supposed to be enabled or the hover area input detection is disabled.
-func _is_hover_details_mouse_valid() -> bool:
-	# Check whether the cursor can currently display hover details.
-	if not is_visible_in_tree() or not hover_details_enabled:
-		return false
-	
-	# Check if the map solver result coords aren't empty.
-	if _map_solver_result_coord == null:
-		return false
-	
-	# Check if the current map solver stage is set to finding solutions.
-	if _map_solver_result_solve_stage != MapSolverResult.SolveStage.FOUND_SOLUTION:
+## Checks and returns a bool value indicating whether the mouse is currently over the result cursor hover area and isn't interacting with a blocking HUD element.
+## Returns false if the result cursor isn't visible.
+func _is_result_cursor_hover_valid() -> bool:
+	# Check whether the result cursor is currently visible and if the map solver result coords aren't empty.
+	if not is_visible_in_tree() or _map_solver_result_coord == null:
 		return false
 	
 	# Check whether the mouse is physically inside the hover rectangle.
@@ -628,6 +696,29 @@ func _is_hover_details_mouse_valid() -> bool:
 		return false
 	
 	return true
+
+
+## Checks and returns bool value indicating whether the hover details display is valid.
+## This is checked based on if the hover details are enabled and if map solver result solve stage is appropriate to this and if the mouse is currently hovered over the result cursor hover area.
+func _is_hover_details_display_valid() -> bool:
+	return (
+		hover_details_enabled 
+		and _map_solver_result_solve_stage != MapSolverResult.SolveStage.FOUND_SOLUTION 
+		and _is_result_cursor_hover_valid()
+	)
+
+
+## Checks and returns bool value indicating whether the placement explanation display is valid.
+## This is checked based on if the placement explanation is enabled and if map solver result solve stage is appropriate to this and if the mouse is currently hovered over the result cursor hover area and if there is anything to be displayed.
+func _is_placement_explanation_display_valid() -> bool:
+	return (
+		placement_explanation_enabled
+		and (_map_solver_result_solve_stage == MapSolverResult.SolveStage.FOUND_VALID_PLACEMENTS 
+			or _map_solver_result_solve_stage == MapSolverResult.SolveStage.CALCULATED_WEIGHTS
+		)
+		and _is_result_cursor_hover_valid()
+		and placement_explanation.has_visuals()
+	)
 
 
 ## Returns a rectangle representing the hover area.

@@ -172,9 +172,10 @@ label_settings = SubResource("LabelSettings_lhxh2")
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="MapSolverResultsContainer" type="Node2D" parent="GridSpace" unique_id=181378989]
+[node name="MapSolverResultsContainer" type="Node2D" parent="GridSpace" unique_id=181378989 node_paths=PackedStringArray("grid_space_node_reference")]
 z_index = 10
 script = ExtResource("16_n70jr")
+grid_space_node_reference = NodePath("..")
 
 [node name="ActiveContainer" type="Node2D" parent="GridSpace/MapSolverResultsContainer" unique_id=1868611559]
 

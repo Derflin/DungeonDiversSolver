@@ -44,6 +44,13 @@ func unassign_coord_from_result(coords: Vector2i) -> void:
 			result_coords.erase(result)
 
 
+func add_placement_explanation(coords: Vector2i, explanation: MapSolverPlacementExplanation) -> void:
+	for result_coord: MapSolverResultCoord in result_coords:
+		if result_coord.coords == coords:
+			result_coord.add_placement_explanation(explanation)
+			return
+
+
 func initialize_result_coords_weights() -> void:
 	for result in result_coords:
 		result.calculated_weight = 0

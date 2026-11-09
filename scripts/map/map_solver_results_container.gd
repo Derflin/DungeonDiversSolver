@@ -5,6 +5,9 @@ extends Node2D
 const _result_cursor_scene: PackedScene = preload("res://scenes/map/map_solver_result_cursor.tscn")
 
 
+@export var grid_space_node_reference: GridSpace = null
+
+
 var result_cursors: Dictionary[Vector2i, MapSolverResultCursor] = {}
 var result_cursors_deleted: Array[MapSolverResultCursor] = []
 
@@ -59,7 +62,7 @@ func _create_result_cursor(map_solver_result_coord: MapSolverResultCoord, cursor
 	_update_result_cursor_position(result_cursor_instance, cursor_position)
 	
 	# Initialize data inside result cursor instance with the map solver result coord
-	result_cursor_instance.update_data(map_solver_result_coord, result_solve_stage, _get_map_solver_secret_room_name(), show_zero_weight_check)
+	result_cursor_instance.update_data(map_solver_result_coord, result_solve_stage, grid_space_node_reference, _get_map_solver_secret_room_name(), show_zero_weight_check)
 	
 	# Update result cursor instance name
 	result_cursor_instance.name = "%s %.0v" % [result_cursor_instance.get_script().get_global_name(), map_solver_result_coord.coords]
@@ -103,7 +106,7 @@ func _update_result_cursor(room_coords: Vector2i, map_solver_result_coord: MapSo
 	
 	# Update data inside result cursor instance with the map solver result coord
 	var result_cursor = result_cursors[room_coords]
-	result_cursor.update_data(map_solver_result_coord, result_solve_stage, _get_map_solver_secret_room_name(), show_zero_weight_check)
+	result_cursor.update_data(map_solver_result_coord, result_solve_stage, grid_space_node_reference, _get_map_solver_secret_room_name(), show_zero_weight_check)
 
 
 ## Checks if the result cursor exists for the provided [param room_coords] coordinates.

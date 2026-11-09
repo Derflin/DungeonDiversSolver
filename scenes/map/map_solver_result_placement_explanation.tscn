@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://dyjj2ffksbhs1"]
+
+[ext_resource type="Script" uid="uid://cqddxybs7s48s" path="res://scripts/map/map_solver_result_placement_explanation.gd" id="1_uhvef"]
+
+[node name="MapSolverResultPlacementExplanation" type="Node2D" unique_id=599361693]
+script = ExtResource("1_uhvef")

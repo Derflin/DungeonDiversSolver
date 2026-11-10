@@ -32,7 +32,7 @@ extends Node2D
 
 @export_group("Line Annotations", "line_annotation_")
 ## Visual size relative to the native font size.
-@export_range(0.5, 1.0, 0.05) var line_annotation_scale: float = 0.75
+@export_range(0.5, 1.0, 0.05) var line_annotation_scale: float = 0.55
 ## Padding around the downscaled line annotations.
 @export var line_annotation_padding: Vector2 = Vector2(1.0, 0.0)
 ## Earliest radius used for line label placement around the cursor.
@@ -306,9 +306,12 @@ func _try_draw_line_annotation(a: Vector2, b: Vector2, value: float, occupied: A
 	# Prepare candidate center as the annotation's reference point.
 	var candidate_center: Vector2 = _candidate_center_local()
 	
-	# Identify the endpoint closest to this candidate origin.
-	var near: Vector2 = a if a.distance_squared_to(candidate_center) <= b.distance_squared_to(candidate_center) else b
-	var far: Vector2 = a if near == a else b
+	# Determine which endpoint is closer to the candidate.
+	var a_is_nearer: bool = a.distance_squared_to(candidate_center) <= b.distance_squared_to(candidate_center)
+	
+	# Assign the closest and farthest endpoints.
+	var near: Vector2 = a if a_is_nearer else b
+	var far: Vector2 = b if a_is_nearer else a
 	var line_vector: Vector2 = far - near
 	var line_length: float = line_vector.length()
 	if is_zero_approx(line_length):

@@ -26,7 +26,7 @@ extends Node2D
 
 @export_group("Room Annotations", "room_annotation_")
 ## Leave room values at full scale for pixel-art readability.
-@export_range(0.5, 1.0, 0.05) var room_annotation_scale: float = 0.75
+@export_range(0.5, 1.0, 0.05) var room_annotation_scale: float = 0.65
 ## Tightly fitted padding, in local pixels.
 @export var room_annotation_padding: Vector2 = Vector2(1.0, 0.0)
 
@@ -149,13 +149,16 @@ func _draw_local_segment(start: Vector2, finish: Vector2, color: Color) -> void:
 
 
 ## Format a numerical float value for annotation to only display 2 decimal places and then removes any trailing zeros.
-func _format_annotation_value(value: float) -> String:
-	return String.num(value, 2).trim_suffix(".0")
+func _format_annotation_value(value: float, include_value_sign: bool = false) -> String:
+	var prefix_value_sign: String = ""
+	if include_value_sign and value >= 0.0:
+		prefix_value_sign += "+"
+	return prefix_value_sign + String.num(value, 2).trim_suffix(".0")
 
 
 ## Calculates the complete background rectangle bounds of an annotation.
-func _annotation_rect(center: Vector2, number: float, scale_factor: float, padding: Vector2) -> Rect2:
-	var label_text: String = _format_annotation_value(number)
+func _annotation_rect(center: Vector2, number: float, scale_factor: float, padding: Vector2, include_value_sign: bool = false) -> Rect2:
+	var label_text: String = _format_annotation_value(number, include_value_sign)
 	var text_width: float = _font.get_string_size(label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, annotation_font_size).x
 	var font_height: float = _font.get_ascent(annotation_font_size) + _font.get_descent(annotation_font_size)
 	var box_size: Vector2 = Vector2(text_width, font_height) * scale_factor
@@ -166,20 +169,21 @@ func _annotation_rect(center: Vector2, number: float, scale_factor: float, paddi
 ## Draws a numerical annotation at the provided local [param center] position using the provided [param number] as a text.
 ## The annotation is horizontally centered and uses a background rectangle to make it more noticable over other elements.
 ## Uses provided [param scale_factor] to scale the drawn string and then applies provided [param padding] to it for the background.
-func _draw_number(center: Vector2, number: float, scale_factor: float, padding: Vector2) -> void:
+## Uses provided [param include_value_sign] to define if the value plus/minus should also be assigned to the annotation text before the number.
+func _draw_number(center: Vector2, number: float, scale_factor: float, padding: Vector2, include_value_sign: bool = false) -> void:
 	# Filter out processing if no font reference was provided.
 	if _font == null:
 		return
 	
 	# Draw a tight background rectangle aroudn the actual font metrics.
 	draw_rect(
-		_annotation_rect(center, number, scale_factor, padding),
+		_annotation_rect(center, number, scale_factor, padding, include_value_sign),
 		annotation_background,
 		true,
 	)
 	
 	# Center the text horizontally and vertivally about the baseline.
-	var label_text: String = _format_annotation_value(number)
+	var label_text: String = _format_annotation_value(number, include_value_sign)
 	var width: float = _font.get_string_size(label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, annotation_font_size).x
 	var ascent: float = _font.get_ascent(annotation_font_size)
 	var descent: float = _font.get_descent(annotation_font_size)
@@ -329,7 +333,7 @@ func _try_draw_line_annotation(a: Vector2, b: Vector2, value: float, occupied: A
 				continue
 			
 			# Keep the occupied area for the next annotation candidate.
-			_draw_number(center, value, line_annotation_scale, line_annotation_padding)
+			_draw_number(center, value, line_annotation_scale, line_annotation_padding, false)
 			occupied.append(bounds)
 			
 			return true
@@ -433,7 +437,7 @@ func _draw() -> void:
 			continue
 		
 		# Draw room annotation.
-		_draw_number(center, number, room_annotation_scale, room_annotation_padding)
+		_draw_number(center, number, room_annotation_scale, room_annotation_padding, true)
 		occupied_annotations.append(bounds)
 	
 	# Draw line annotations.

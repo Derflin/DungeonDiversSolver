@@ -838,6 +838,7 @@ func _calculate_weights_placement_type_corridor(_prepared_placement_type_data: D
 					"to": corridor_endpoint,
 					"value": cur_dir_weight,
 					"show_value": true,
+					"highlight_rooms": true,
 				})
 	
 	# Aggregate calculated weights according to the placement type config.

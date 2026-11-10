@@ -190,6 +190,9 @@ func hide_cursor() -> void:
 	# Hide hover details.
 	_hide_hover_details(true)
 	
+	# Hide placement explanation.
+	_hide_placement_explanation(true)
+	
 	# Stop existing animation
 	_kill_cursor_animation()
 	

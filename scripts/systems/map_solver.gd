@@ -435,13 +435,13 @@ func _filter_results_placement_type_placement_restrictions(result: MapSolverResu
 ## When [param cur_explanation] is provided, records one unlabelled segment from the candidate to each distinct source participating in a qualifying pair.
 ## Without [param cur_explanation] or if it's null, returns immediately after the first valid pair is found.
 func _filter_results_placement_type_placement_restrictions_intersection(prepared_placement_type_data: Dictionary[String, Variant], cur_coords: Vector2i, cur_explanation: MapSolverPlacementExplanation = null) -> bool:
-	# Retain unique source coordinates so the saved explanation has no repeated candidate to source segments, even if pairs overlap.
-	var recorded_sources: Dictionary[Vector2i, bool] = {}
+	# Avoid recording the same side more than once across valid pairs.
+	var recorded_segments: Dictionary[String, bool] = {}
 	var has_valid_pair: bool = false
 	
 	# Check if the current room coordinates align with X and Y axis for any set of points between the first and second intersect groups.
-	for intersect_1_coords in prepared_placement_type_data["intersect_group_coords_1"]:
-		for intersect_2_coords in prepared_placement_type_data["intersect_group_coords_2"]:
+	for intersect_1_coords: Vector2i in prepared_placement_type_data["intersect_group_coords_1"]:
+		for intersect_2_coords: Vector2i in prepared_placement_type_data["intersect_group_coords_2"]:
 			# Calculate the intersection rectangle boundaries.
 			var min_x: int = mini(intersect_1_coords.x, intersect_2_coords.x)
 			var max_x: int = maxi(intersect_1_coords.x, intersect_2_coords.x)
@@ -473,15 +473,45 @@ func _filter_results_placement_type_placement_restrictions_intersection(prepared
 			if cur_explanation == null:
 				return true
 			
-			# Store unique source links for the validated pair as part of explanation.
-			for source_coords: Vector2i in [intersect_1_coords, intersect_2_coords]:
-				if recorded_sources.has(source_coords):
+			# Determine the two possible intermediate corners defining l-shaped route between the intersected rooms.
+			var corner_1: Vector2i = Vector2i(intersect_1_coords.x, intersect_2_coords.y)
+			var corner_2: Vector2i = Vector2i(intersect_2_coords.x, intersect_1_coords.y)
+			
+			# Check whether the candidate belongs to the first route.
+			var on_first_route: bool = (
+				(cur_coords.x == intersect_1_coords.x and cur_coords.y >= min_y and cur_coords.y <= max_y)
+				or
+				(cur_coords.y == intersect_2_coords.y and cur_coords.x >= min_x and cur_coords.x <= max_x)
+			)
+			
+			# Choose the route containing the candidate.
+			var selected_corner: Vector2i = corner_1 if on_first_route else corner_2
+			var route_coords: Array[Vector2i] = [intersect_1_coords, selected_corner, intersect_2_coords]
+			
+			# Store each unique perimeter segment of the selected route.
+			for i: int in range(route_coords.size() - 1):
+				var from_coords: Vector2i = route_coords[i]
+				var to_coords: Vector2i = route_coords[i + 1]
+				
+				# Skip zero length segments.
+				if from_coords == to_coords:
 					continue
-				recorded_sources[source_coords] = true
+				
+				# Normalize orientation so reversed edges have the same key.
+				var a: Vector2i = from_coords
+				var b: Vector2i = to_coords
+				if a.x > b.x or (a.x == b.x and a.y > b.y):
+					var temporary: Vector2i = a
+					a = b
+					b = temporary
+				var segment_key: String = "%s|%s" % [str(a), str(b)]
+				if recorded_segments.has(segment_key):
+					continue
+				recorded_segments[segment_key] = true
 				
 				cur_explanation.segments.append({
-					"from": cur_coords,
-					"to": source_coords,
+					"from": a,
+					"to": b,
 					"value": 0.0,
 					"show_value": false,
 				})

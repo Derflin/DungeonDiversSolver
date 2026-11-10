@@ -706,7 +706,7 @@ func _is_result_cursor_hover_valid() -> bool:
 func _is_hover_details_display_valid() -> bool:
 	return (
 		hover_details_enabled 
-		and _map_solver_result_solve_stage != MapSolverResult.SolveStage.FOUND_SOLUTION 
+		and _map_solver_result_solve_stage == MapSolverResult.SolveStage.FOUND_SOLUTION 
 		and _is_result_cursor_hover_valid()
 	)
 

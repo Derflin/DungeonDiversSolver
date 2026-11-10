@@ -988,13 +988,14 @@ func _calculate_weights_placement_type_loop(prepared_placement_type_data: Dictio
 				cur_explanation != null,
 			)
 	
-	# Store one completed loop route.
+	# Store every saved completed loop route.
 	if cur_explanation != null and not representative_route.is_empty():
-		cur_explanation.paths.append({
-			"coords": representative_route["coords"],
-			"value": float(representative_route["value"]),
-			"show_value": false,
-		})
+		for route_coords: Array[Vector2i] in representative_route["routes"]:
+			cur_explanation.paths.append({
+				"coords": route_coords.duplicate(),
+				"value": float(representative_route["value"]),
+				"show_value": false,
+			})
 	
 	# Aggregate calculated weights according to the placement type config.
 	return _placement_type_aggregate_calculated_weights(placement_type, calculated_weights)
@@ -1057,13 +1058,14 @@ func _calculate_weights_placement_type_path(prepared_placement_type_data: Dictio
 			cur_explanation != null,
 		)
 	
-	# Record one representative completed path if any exists.
+	# Record every saved representative completed path if any exists.
 	if cur_explanation != null and not representative_route.is_empty():
-		cur_explanation.paths.append({
-			"coords": representative_route["coords"],
-			"value": float(representative_route["value"]),
-			"show_value": false,
-		})
+		for route_coords: Array[Vector2i] in representative_route["routes"]:
+			cur_explanation.paths.append({
+				"coords": route_coords.duplicate(),
+				"value": float(representative_route["value"]),
+				"show_value": false,
+			})
 	
 	# Aggregate calculated weights according to the placement type config
 	return _placement_type_aggregate_calculated_weights(placement_type, calculated_weights)
@@ -1153,17 +1155,23 @@ func _record_completed_room_path(length: int, paths_lengths_array: Array[float],
 	if not capture_route:
 		return
 	
-	# Select a representative from paths that were actually counted.
-	var replace_representative: bool = representative_route.is_empty()
-	if not replace_representative:
-		if prefer_shortest:
-			replace_representative = length < int(representative_route["value"])
-		else:
-			replace_representative = length > int(representative_route["value"])
+	# Determine whether the new path has a better representative length.
+	var replace_best: bool = representative_route.is_empty()
+	if not replace_best:
+		var previous_length: int = int(representative_route["value"])
+		replace_best = length < previous_length if prefer_shortest else length > previous_length
 	
-	if replace_representative:
-		representative_route["coords"] = current_route.duplicate()
+	# Invalidate all previously selected routes if better one was found.
+	if replace_best:
 		representative_route["value"] = float(length)
+		representative_route["routes"] = [current_route.duplicate()]
+		return
+	
+	# Keep additional distinct routes with the same best length.
+	if length == int(representative_route["value"]):
+		var selected_routes: Array = representative_route["routes"]
+		if not selected_routes.has(current_route):
+			selected_routes.append(current_route.duplicate())
 
 
 ## Recursively records every qualifying path length between two coordinates.

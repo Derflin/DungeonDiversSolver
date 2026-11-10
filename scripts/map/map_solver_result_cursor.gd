@@ -88,6 +88,7 @@ var _hover_room_name: String = "Secret Room"
 
 var _placement_explanation_tween: Tween
 var _placement_explanation_active: bool = false
+var _placement_explanation_grid_space: GridSpace = null
 
 
 @onready var value_display_root: Node2D = $ValueDisplayRoot
@@ -137,6 +138,9 @@ func _ready() -> void:
 	# Update value label if it was initialized before ready function
 	if _map_solver_result_coord != null:
 		_update_value_display()
+	
+	# Refresh placement explanation.
+	_refresh_placement_explanation()
 
 
 ## Continuously checks whether hover details and placement explanation should be displayed and handles changes to their visibility state. 
@@ -233,6 +237,9 @@ func update_data(map_solver_result_coord: MapSolverResultCoord, result_solve_sta
 	_map_solver_result_solve_stage = result_solve_stage
 	_hover_room_name = secret_room_display_name if not secret_room_display_name.is_empty() else hover_details_default_room_name
 	
+	# Store grid space reference for placement explanation.
+	_placement_explanation_grid_space = grid_space_reference
+	
 	# Update check mark display state.
 	_show_zero_weight_check = show_zero_weight_check
 	
@@ -250,15 +257,23 @@ func update_data(map_solver_result_coord: MapSolverResultCoord, result_solve_sta
 		# Make sure that placement explanation is hidden by default.
 		_hide_placement_explanation(true)
 		
-		# Initialize placement explanation scene display.
-		if grid_space_reference != null:
-			placement_explanation.configure(
-				_map_solver_result_coord.placement_explanations,
-				grid_space_reference,
-				value_label.get_theme_font("font"),
-			)
-		else:
-			placement_explanation.clear_data()
+		# Refresh the placement explanation data for the updated result coordinate.
+		_refresh_placement_explanation()
+
+
+## Updates the placement explanation renderer using this cursor's current result data.
+func _refresh_placement_explanation() -> void:
+	# Clear stale geometry when no result or gird reference is available.
+	if _map_solver_result_coord == null or _placement_explanation_grid_space == null:
+		placement_explanation.clear_data()
+		return
+	
+	# Initialize placement explanation scene display.
+	placement_explanation.configure(
+		_map_solver_result_coord.placement_explanations,
+		_placement_explanation_grid_space,
+		value_label.get_theme_font("font"),
+	)
 
 
 ## Updates value display and visibilty based on the map solver result coord and solve stage member parameters.

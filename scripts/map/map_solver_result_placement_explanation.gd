@@ -379,6 +379,11 @@ func _draw() -> void:
 			if bool(segment.get("highlight_rooms", false)):
 				_collect_segment_rooms(a, b, highlighted_rooms)
 			
+			# Store highlighted rooms only for provided "to" room, if it does exist.
+			if bool(segment.get("highlight_to_room", false)):
+				if _grid_space.has_room_cell_coords(b):
+					highlighted_rooms[b] = true
+			
 			# Store line annotations.
 			if bool(segment.get("show_value", false)):
 				line_annotations.append({

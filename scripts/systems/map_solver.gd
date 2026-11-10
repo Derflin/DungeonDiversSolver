@@ -897,12 +897,14 @@ func _calculate_weights_placement_type_distance(prepared_placement_type_data: Di
 		calculated_weights.append(distance)
 		
 		# Store calculated distance between two coords as part of explanation.
+		# Highlight only the source "to" room, withouth hightlighting any other rooms.
 		if cur_explanation != null:
 			cur_explanation.segments.append({
 				"from": cur_coords,
 				"to": related_room_type_coords,
 				"value": distance,
 				"show_value": true,
+				"highlight_to_room": true,
 			})
 	
 	# Aggregate calculated weights according to the placement type config.

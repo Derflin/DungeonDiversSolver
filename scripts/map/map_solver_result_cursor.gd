@@ -273,6 +273,7 @@ func _refresh_placement_explanation() -> void:
 	
 	# Initialize placement explanation scene display.
 	placement_explanation.configure(
+		_map_solver_result_coord.coords,
 		_map_solver_result_coord.placement_explanations,
 		_placement_explanation_grid_space,
 		value_label.get_theme_font("font"),

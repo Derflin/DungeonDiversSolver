@@ -47,6 +47,8 @@ extends Node2D
 @export_range(0.0, 5.0, 0.5) var line_annotation_clearance: float = 1.0
 
 
+## Coordinates of the candidate placement room whose interior must remain unobstructed.
+var _candidate_coords: Vector2i = Vector2i.ZERO
 ## Placement explanations that should currently be displayed.
 var _explanations: Array[MapSolverPlacementExplanation] = []
 ## Grid space reference used to convert map coordinates into positions.
@@ -57,8 +59,9 @@ var _font: Font
 
 ## Configures the visualization with provided [param explanations] list of placement explanations and provided [param grid_space] and [param font], which are references required for drawing them.
 ## Calling this function triggers a request to redraw the already displayed explanations.
-func configure(explanations: Array[MapSolverPlacementExplanation], grid_space: GridSpace, font: Font) -> void:
+func configure(candidate_coords: Vector2i, explanations: Array[MapSolverPlacementExplanation], grid_space: GridSpace, font: Font) -> void:
 	# Store the explanations data and drawing references.
+	_candidate_coords = candidate_coords
 	_explanations = explanations.duplicate()
 	_grid_space = grid_space
 	_font = font
@@ -98,8 +101,12 @@ func _room_rect_local(coords: Vector2i) -> Rect2:
 
 ## Prepares a local room rect and adjusts it to set it's center to be positioned in the center of the current scene.
 func _candidate_room_rect() -> Rect2:
-	var room_size: Vector2 = _room_rect_local(Vector2i.ZERO).size
-	return Rect2(-room_size * 0.5, room_size)
+	return _room_rect_local(_candidate_coords)
+
+
+## Returns the center of the candidate in the overlay's local coordinates.
+func _candidate_center_local() -> Vector2:
+	return _point(_candidate_coords)
 
 
 ## Draws a line between two map coordinates while leaving the candidate room's interior clear for it's own display.
@@ -107,45 +114,44 @@ func _draw_segment(from_coords: Vector2i, to_coords: Vector2i, color: Color) -> 
 	_draw_local_segment(_point(from_coords), _point(to_coords), color)
 
 
-## Draws the portions of a local-space line lying outside the candidate room rectangle.
-## Uses Liang-Barsky line/rectangle clipping to find the entry and exit distances along the segment, then omits the insde span.
+## Draws a line between the provided [param start] and [param finish] positions using the provided [param color].
+## Excludes any part of the line that intersects the placement candidate room.
+## Uses the cadidate room rectangle as a clipping polygon and draws only the line sections that remain outside of it.
 func _draw_local_segment(start: Vector2, finish: Vector2, color: Color) -> void:
-	var rect: Rect2 = _candidate_room_rect().grow(cursor_line_gap)
-	var delta: Vector2 = finish - start
-	if delta.is_zero_approx():
+	# Filter out processing if both positions are effectively identical.
+	if start.is_equal_approx(finish):
 		return
 	
-	# Boundary parameters for left, right, top and bottom planes.
-	var p: Array[float] = [-delta.x, delta.x, -delta.y, delta.y]
-	var q: Array[float] = [start.x - rect.position.x, rect.end.x - start.x, start.y - rect.position.y, rect.end.y - start.y]
-	var entry: float = 0.0
-	var exit: float = 1.0
+	# Prepare the candidate room rectangle, including the optional visual gap between the room border and the displayed line.
+	var candidate_rect: Rect2 = _candidate_room_rect().grow(cursor_line_gap)
 	
-	# Find the interval of the segment that lies inside the rectangle.
-	for i: int in range(4):
-		if is_zero_approx(p[i]):
-			if q[i] < 0.0:
-				# Parallel to, but outside, one rectangle boundary.
-				draw_line(start, finish, color, line_width, false)
-				return
+	# Convert the candidate room rectangle into a polygon containing its four corners in clockwise order.
+	var candidate_polygon: PackedVector2Array = PackedVector2Array([
+		candidate_rect.position,
+		Vector2(candidate_rect.end.x, candidate_rect.position.y),
+		candidate_rect.end,
+		Vector2(candidate_rect.position.x, candidate_rect.end.y),
+	])
+	
+	# Prepare the original line using the provided start and end positions.
+	var original_line: PackedVector2Array = PackedVector2Array([start, finish])
+	
+	# Subtract the candidate room polygon from the original line.
+	# This returns all remaining sections that are outside the room.
+	var remaining_lines: Array[PackedVector2Array] = (
+		Geometry2D.clip_polyline_with_polygon(
+			original_line, 
+			candidate_polygon,
+		)
+	)
+	
+	# Draw each remaining line section separately.
+	for remaining_line: PackedVector2Array in remaining_lines:
+		# Skip sections that don't contain enough points to draw a line.
+		if remaining_line.size() < 2:
 			continue
 		
-		var t: float = q[i] / p[i]
-		if p[i] < 0.0:
-			entry = maxf(entry, t)
-		else:
-			entry = minf(exit, t)
-		
-		if entry > exit:
-			# The segment doesn't cross the candidate rectangle.
-			draw_line(start, finish, color, line_width, false)
-			return
-	
-	# Draw each exterio span, skipping the candidate's interior.
-	if entry > 0.0001:
-		draw_line(start, start + delta * entry, color, line_width, false)
-	if exit < 0.9999:
-		draw_line(start + delta * exit, finish, color, line_width, false)
+		draw_polyline(remaining_line, color, line_width, false)
 
 
 ## Format a numerical float value for annotation to only display 2 decimal places and then removes any trailing zeros.
@@ -297,8 +303,11 @@ func _try_draw_line_annotation(a: Vector2, b: Vector2, value: float, occupied: A
 	if _font == null:
 		return false
 	
+	# Prepare candidate center as the annotation's reference point.
+	var candidate_center: Vector2 = _candidate_center_local()
+	
 	# Identify the endpoint closest to this candidate origin.
-	var near: Vector2 = a if a.length_squared() <= b.length_squared() else b
+	var near: Vector2 = a if a.distance_squared_to(candidate_center) <= b.distance_squared_to(candidate_center) else b
 	var far: Vector2 = a if near == a else b
 	var line_vector: Vector2 = far - near
 	var line_length: float = line_vector.length()
@@ -323,7 +332,7 @@ func _try_draw_line_annotation(a: Vector2, b: Vector2, value: float, occupied: A
 			center += perpendicular * float(side) * line_annotation_side_step
 			
 			# Keep label centers within the allowed candidate centered radius.
-			if center.length() > line_annotation_max_distance:
+			if center.distance_to(candidate_center) > line_annotation_max_distance:
 				continue
 			
 			var bounds: Rect2 = _annotation_rect(center, value, line_annotation_scale, line_annotation_padding)

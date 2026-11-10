@@ -514,6 +514,7 @@ func _filter_results_placement_type_placement_restrictions_intersection(prepared
 					"to": b,
 					"value": 0.0,
 					"show_value": false,
+					"highlight_rooms": true,
 				})
 	
 	return has_valid_pair

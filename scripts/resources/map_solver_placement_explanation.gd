@@ -12,6 +12,7 @@ var placement_type_index: int = -1
 ## [br]- [code]"to"[/code]: [code]Vector2i[/code] -> Ending map coordinates.
 ## [br]- [code]"value"[/code]: [code]float[/code] -> Optional numeric annotation.
 ## [br]- [code]"show_value"[/code]: [code]bool[/code] -> Whether the numeric annotation is displayed.
+## [br]= [code]"highlight_rooms"[/code]: [code]bool[/code] -> Whether to highlight existing rooms along this straight segment.
 var segments: Array[Dictionary] = []
 
 ## Used to represent ordered routes connecting map coordinates.

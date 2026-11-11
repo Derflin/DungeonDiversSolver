@@ -73,6 +73,10 @@ var hover_details_hud_margin: float = 2.0
 @export var candidate_hover_enabled: bool = true
 ## Color drawn over the entire candidate room upon hover.
 @export var candidate_hover_color: Color = Color(0.30, 0.60, 0.95, 0.35)
+## Enables the fade transition when showing or hiding the blue candidate room highlight.
+@export var candidate_hover_transition_enabled: bool = true
+## Duration of the candidate room highlight fade transition.
+@export var candidate_hover_transition_duration: float = 0.16
 
 @export_group("Hover Information Indicator", "hover_info_indicator_")
 ## Enables the persistent information availability icon on result cursors.
@@ -108,6 +112,9 @@ var hover_details_hud_margin: float = 2.0
 
 
 var _cursor_animation: Tween
+
+var _candidate_hover_tween: Tween = null
+var _candidate_hover_active: bool = false
 
 var _value_display_tween: Tween
 var _value_label_scale_tween: Tween
@@ -173,6 +180,7 @@ func _ready() -> void:
 	
 	# Initialize candidate hover highlight and hover information icon.
 	candidate_hover_highlight.hide()
+	candidate_hover_highlight.modulate.a = 0.0
 	_initialize_hover_info_indicator()
 	
 	# Initialize the animation player for corners sprite
@@ -212,13 +220,16 @@ func _process(_delta: float) -> void:
 	elif not explanation_valid and _placement_explanation_active:
 		_hide_placement_explanation()
 	
-	# Check if candidate hover highlight is valid to be shown and show/hide it accordingly based on it.
+	# Check if candidate hover highlight is valid to be shown and show/hide it accordingly based on it and it's current active status.
 	var candidate_hover_valid: bool = (
 		candidate_hover_enabled
 		and _is_cursor_hover_stage()
 		and _is_result_cursor_hover_valid()
 	)
-	candidate_hover_highlight.visible = candidate_hover_valid
+	if candidate_hover_valid and not _candidate_hover_active:
+		_show_candidate_hover_highlight()
+	elif not candidate_hover_valid and _candidate_hover_active:
+		_hide_candidate_hover_highlight()
 
 
 ## Shows cursor either immediately if the [member cursor_animation_enabled] is disabled or initializes the animation for it.
@@ -253,7 +264,7 @@ func hide_cursor() -> void:
 	
 	# Disable hover detection for the remainder of the hide animation.
 	_cursor_hiding = true
-	candidate_hover_highlight.hide()
+	_hide_candidate_hover_highlight(true)
 	
 	# Hide hover details.
 	_hide_hover_details(true)
@@ -411,10 +422,12 @@ func _initialize_hover_info_indicator() -> void:
 
 ## Updates the candidate hover highlight polygon and the state, position and appearence of the hover information indicator.
 func _refresh_cursor_hover_visuals() -> void:
+	# Immediately reset the candidate hover transition before updating its geometry or switching to a different result coordinate.
+	_hide_candidate_hover_highlight(true)
+	
 	# Clear previous viusals when the cursor doesn't have valid room data.
 	if _map_solver_result_coord == null or _placement_explanation_grid_space == null:
 		candidate_hover_highlight.polygon = PackedVector2Array()
-		candidate_hover_highlight.hide()
 		hover_info_indicator.hide()
 		return
 	
@@ -435,7 +448,6 @@ func _refresh_cursor_hover_visuals() -> void:
 	# Prepare the candidate hover highlight overlay.
 	candidate_hover_highlight.polygon = cursor_corners
 	candidate_hover_highlight.color = candidate_hover_color
-	candidate_hover_highlight.hide()
 	
 	# Show the indicator if it should be active.
 	var indicator_visible: bool = (
@@ -906,6 +918,79 @@ func _kill_placement_explanation_tween() -> void:
 	if _placement_explanation_tween != null and _placement_explanation_tween.is_valid():
 		_placement_explanation_tween.kill()
 	_placement_explanation_tween = null
+
+
+## Shows the candidate hover highlight node.
+func _show_candidate_hover_highlight() -> void:
+	# Filter out processing if the candidate highlight is already active.
+	if _candidate_hover_active:
+		return
+	
+	# Set flag indicating that the candidate highlight is active.
+	_candidate_hover_active = true
+	
+	# Stop any existing candidate highlight animation.
+	_kill_candidate_hover_tween()
+	
+	# Initialize the starting opacity if the highlight was hidden.
+	if not candidate_hover_highlight.visible:
+		candidate_hover_highlight.modulate.a = 0.0
+	
+	# Make sure the candidate highlight is visible before animating it.
+	candidate_hover_highlight.show()
+	
+	# Immediately apply candidate hover highlight state if transition for it is disabled.
+	if not candidate_hover_transition_enabled or candidate_hover_transition_duration <= 0.0:
+		candidate_hover_highlight.modulate.a = 1.0
+		return
+	
+	# Initialize the candidate highlight fade-in transition.
+	_candidate_hover_tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_candidate_hover_tween.tween_property(candidate_hover_highlight, "modulate:a", 1.0, candidate_hover_transition_duration)
+
+
+## Hides the candidate hover highlight node.
+func _hide_candidate_hover_highlight(immediate: bool = false) -> void:
+	# Unset the candidate highlight active state.
+	_candidate_hover_active = false
+	
+	# Filter out processing if the node hasn't been initialized yet.
+	if not is_node_ready():
+		return
+	
+	# Stop any currently running candidate highlight transition.
+	_kill_candidate_hover_tween()
+	
+	# Immediately hide the highlight if requested, if transitions are disabled, or if hte highlight is already hidden.
+	if immediate or not candidate_hover_transition_enabled or candidate_hover_transition_duration <= 0.0 or not candidate_hover_highlight.visible:
+		candidate_hover_highlight.hide()
+		candidate_hover_highlight.modulate.a = 0.0
+		return
+	
+	# Initialize the candidate highlight fade-out transition.
+	_candidate_hover_tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	_candidate_hover_tween.tween_property(candidate_hover_highlight, "modulate:a", 0.0, candidate_hover_transition_duration)
+	
+	# Hide the highlight after its fade-out transition finishes.
+	_candidate_hover_tween.finished.connect(_on_candidate_hover_highlight_hide_finished)
+
+
+## Finalizes the candidate highlight hide transition by hiding its node.
+func _on_candidate_hover_highlight_hide_finished() -> void:
+	# Filter out processing if the highlight become active again.
+	if _candidate_hover_active:
+		return
+	
+	# Apply the final hidden state.
+	candidate_hover_highlight.hide()
+	candidate_hover_highlight.modulate.a = 0.0
+
+
+## Stops any existing animation set for the candidate hover highlight.
+func _kill_candidate_hover_tween() -> void:
+	if _candidate_hover_tween != null and _candidate_hover_tween.is_valid():
+		_candidate_hover_tween.kill()
+	_candidate_hover_tween = null
 
 
 ## Checks if the mouse is currently over any hud element that might block local interaction with the hover details scene instance.

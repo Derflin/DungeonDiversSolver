@@ -82,7 +82,7 @@ var hover_details_hud_margin: float = 2.0
 ## Enables the persistent information availability icon on result cursors.
 @export var hover_info_indicator_enabled: bool = true
 ## Diamater of the circular indicator background in local pixels.
-@export_range(8.0, 20.0, 1.0) var hover_info_indicator_diameter: float = 4.0
+@export_range(2.0, 20.0, 0.5) var hover_info_indicator_diameter: float = 4.0
 ## Minimum space between the indicator's outer border and the edges of the result cursor.
 @export_range(0.0, 4.0, 0.5) var hover_info_indicator_corner_inset: float = 0.0
 ## Free space between the circular background edge and the icon texture.

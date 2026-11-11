@@ -81,7 +81,7 @@ var hover_details_hud_margin: float = 2.0
 @export_group("Hover Information Indicator", "hover_info_indicator_")
 ## Enables the persistent information availability icon on result cursors.
 @export var hover_info_indicator_enabled: bool = true
-## Diamater of the circular indicator background in local pixels.
+## Diameter of the circular indicator background in local pixels.
 @export_range(2.0, 20.0, 0.5) var hover_info_indicator_diameter: float = 4.0
 ## Minimum space between the indicator's outer border and the edges of the result cursor.
 @export_range(0.0, 4.0, 0.5) var hover_info_indicator_corner_inset: float = 0.0
@@ -168,6 +168,8 @@ var _cursor_hiding: bool = false
 @onready var hover_details: MapSolverResultHoverDetails = $HoverDetails
 @onready var placement_explanation: MapSolverResultPlacementExplanation = $PlacementExplanation
 
+
+#region Result Cursor Lifecycle and State
 
 func _ready() -> void:
 	# Initialize initial state
@@ -323,6 +325,10 @@ func _kill_cursor_animation() -> void:
 	
 	_cursor_animation = null
 
+#endregion
+
+
+#region Result Data and Solver Stages
 
 ## Initialize result cursor with the map solver result coord that it's based on.
 func update_data(map_solver_result_coord: MapSolverResultCoord, result_solve_stage: MapSolverResult.SolveStage, grid_space_reference: GridSpace, secret_room_display_name: String = "", show_zero_weight_check: bool = false) -> void:
@@ -387,13 +393,17 @@ func _is_placement_explanation_stage() -> bool:
 	)
 
 
-## Returns whether the current map solver stage suuports hovering result cursors.
+## Returns whether the current map solver stage supports hovering result cursors.
 func _is_cursor_hover_stage() -> bool:
 	return (
 		_is_placement_explanation_stage()
 		or _map_solver_result_solve_stage == MapSolverResult.SolveStage.FOUND_SOLUTION
 	)
 
+#endregion
+
+
+#region Hover Information Indicator
 
 ## Creates a filled circular polygon of the provided [param radius] around the hover information indicator's local origin.
 func _make_hover_info_indicator_circle(radius: float) -> PackedVector2Array:
@@ -565,14 +575,18 @@ func _kill_hover_info_indicator_tween() -> void:
 		_hover_info_indicator_tween.kill()
 	_hover_info_indicator_tween = null
 
+#endregion
 
-## Updates the candidate hover highlight polygon and the state, position and appearence of the hover information indicator.
-## When [param aniamte_indicator] is enabled, animates the hover info indicator alongside the result cursor's existing value display transition.
+
+#region Hover Visual Geometry and State
+
+## Updates the candidate hover highlight polygon and the state, position and appearance of the hover information indicator.
+## When [param animate_indicator] is enabled, animates the hover info indicator alongside the result cursor's existing value display transition.
 func _refresh_cursor_hover_visuals(animate_indicator: bool = false) -> void:
 	# Immediately reset the candidate hover transition before updating its geometry or switching to a different result coordinate.
 	_hide_candidate_hover_highlight(true)
 	
-	# Clear previous viusals when the cursor doesn't have valid room data.
+	# Clear previous visuals when the cursor doesn't have valid room data.
 	if _map_solver_result_coord == null or _placement_explanation_grid_space == null:
 		candidate_hover_highlight.polygon = PackedVector2Array()
 		hover_info_indicator.hide()
@@ -639,9 +653,13 @@ func _refresh_cursor_hover_visuals(animate_indicator: bool = false) -> void:
 	# Updates the hover information indicator's active or unavailable state.
 	_set_hover_info_indicator_state(has_hover_information, animate_indicator)
 
+#endregion
+
+
+#region Value Display and Label Animations
 
 ## Updates value display and visibilty based on the map solver result coord and solve stage member parameters.
-## Handles the intialization of transition animation for the changes that would be applied to the value display.
+## Handles the initialization of transition animation for the changes that would be applied to the value display.
 ## Provided [param animate_transition] flag defines if the changes should be applied through aniamtion or immediately.
 func _update_value_display(animate_transition: bool = false) -> void:
 	# Check whether the green checkmark should be displayed.
@@ -715,7 +733,7 @@ func _update_value_display(animate_transition: bool = false) -> void:
 
 
 ## Stops any existing animation set for the value display.
-func _kill_value_display_tween():
+func _kill_value_display_tween() -> void:
 	if _value_display_tween != null and _value_display_tween.is_valid():
 		_value_display_tween.kill()
 	_value_display_tween = null
@@ -916,6 +934,10 @@ func _kill_value_label_scale_tween() -> void:
 func _on_value_label_resized() -> void:
 	value_label.position = -value_label.size / 2.0 + value_label_visual_offset
 
+#endregion
+
+
+#region Hover Details Transitions
 
 ## Shows the hover details scene instance.
 func _show_hover_details() -> void:
@@ -1013,6 +1035,10 @@ func _kill_hover_details_tween() -> void:
 		_hover_details_tween.kill()
 	_hover_details_tween = null
 
+#endregion
+
+
+#region Placement Explanation Transitions
 
 ## Shows the placement explanation scene instance.
 func _show_placement_explanation() -> void:
@@ -1066,6 +1092,10 @@ func _kill_placement_explanation_tween() -> void:
 		_placement_explanation_tween.kill()
 	_placement_explanation_tween = null
 
+#endregion
+
+
+#region Candidate Hover Highlight Transitions
 
 ## Shows the candidate hover highlight node.
 func _show_candidate_hover_highlight() -> void:
@@ -1139,6 +1169,10 @@ func _kill_candidate_hover_tween() -> void:
 		_candidate_hover_tween.kill()
 	_candidate_hover_tween = null
 
+#endregion
+
+
+#region Hover Eligibility and Connector Geometry
 
 ## Checks if the mouse is currently over any hud element that might block local interaction with the hover details scene instance.
 func _mouse_is_over_blocking_hud() -> bool:
@@ -1251,6 +1285,10 @@ func _update_hover_connector() -> void:
 	# Update hover connector points.
 	hover_connector.points = PackedVector2Array([start_point, end_point])
 
+#endregion
+
+
+#region Hover Details Layout and HUD Avoidance
 
 ## Returns a hover details local position that should be set for it according to the provided parameters.
 ## Uses provided [param cursor_rect] as a representation of the hover area rect to access its position and size to define base from which the result position is calculated.
@@ -1547,3 +1585,5 @@ func _choose_hover_details_placement() -> Dictionary:
 			best_direction = direction
 	
 	return {"position": best_position, "direction": best_direction}
+
+#endregion

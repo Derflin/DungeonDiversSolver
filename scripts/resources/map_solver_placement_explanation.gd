@@ -14,6 +14,7 @@ var placement_type_index: int = -1
 ## [br]- [code]"show_value"[/code]: [code]bool[/code] -> Whether the numeric annotation is displayed.
 ## [br]= [code]"highlight_rooms"[/code]: [code]bool[/code] -> Whether to highlight existing rooms along this straight segment.
 ## [br]- [code]"highlight_to_room"[/code]: [code]bool[/code] -> Whether the room at the [code]"to"[/code] coordinates should be highlighted.
+## [br]- [code]"fallback_room_coords"[/code]: [code]Vector2i[/code] -> Map coordinates for which the numeric annotation would be displayed if it fails to be displayed over the default placement over line.
 var segments: Array[Dictionary] = []
 
 ## Used to represent ordered routes connecting map coordinates.

@@ -43,8 +43,14 @@ extends Node2D
 @export_range(1.0, 20.0, 1.0) var line_annotation_distance_step: float = 6.0
 ## Spacing for alternative placements to either side of the line.
 @export_range(0.0, 20.0, 1.0) var line_annotation_side_step: float = 4.0
+## Maximum number of perpendicular offset steps that can be used during regular placement.
+@export_range(0, 4, 1) var line_annotation_max_side_steps: int = 2
 ## Extra separation when testing annotation rectangle overlaps.
 @export_range(0.0, 5.0, 0.5) var line_annotation_clearance: float = 1.0
+## Enables a second placement attempt for line annotations that couldn't be displayed using the regular positioning restrictions.
+@export var line_annotation_fallback_enabled: bool = true
+## Maximum number of perpendicular offset steps that can be used during fallback placement when searching for additional space.
+@export_range(2, 8, 1) var line_annotation_fallback_max_side_steps: int = 4
 
 
 ## Coordinates of the candidate placement room whose interior must remain unobstructed.
@@ -298,7 +304,7 @@ func _annotation_overlaps(rect: Rect2, occupied: Array[Rect2]) -> bool:
 
 ## Searches near the candidate along a measurement line from provided [param a] and [param b] points for a readable annotation position using the provided [param value] number as annotation text.
 ## Preserves a configurable maximum candidate radius and tries small perpendicular offsets to prevent label collisions by comparing with other annotation saved in provided [param occupied] list.
-func _try_draw_line_annotation(a: Vector2, b: Vector2, value: float, occupied: Array[Rect2]) -> bool:
+func _try_draw_line_annotation(a: Vector2, b: Vector2, value: float, occupied: Array[Rect2], fallback: bool = false) -> bool:
 	# Filter out processing if no font reference was provided.
 	if _font == null:
 		return false
@@ -312,35 +318,58 @@ func _try_draw_line_annotation(a: Vector2, b: Vector2, value: float, occupied: A
 	# Assign the closest and farthest endpoints.
 	var near: Vector2 = a if a_is_nearer else b
 	var far: Vector2 = b if a_is_nearer else a
+	
+	# Calculate the measurement line direction and length.
 	var line_vector: Vector2 = far - near
 	var line_length: float = line_vector.length()
+	
 	if is_zero_approx(line_length):
 		return false
 	
 	var direction: Vector2 = line_vector / line_length
 	var perpendicular: Vector2 = Vector2(-direction.y, direction.x)
-	var max_distance: float = minf(line_annotation_max_distance, line_length)
+	
+	# Prepare the permitted distance range.
+	var min_distance: float = 0.0 if fallback else line_annotation_min_distance
+	var max_distance: float = line_length if fallback else minf(line_annotation_max_distance, line_length)
+	
+	# Fitler out processing if the permitted distance range is empty.
+	if min_distance > max_distance:
+		return false
+	
+	# Prepare the candidate room bounds to prevent label overlap.
 	var candidate_room: Rect2 = _candidate_room_rect().grow(2.0)
+	
+	# prepare the side offsets in preferred order.
+	var side_steps: Array[int] = [0]
+	for index: int in range(line_annotation_fallback_max_side_steps if fallback else line_annotation_max_side_steps):
+		side_steps.append(index)
+		side_steps.append(-index)
 	
 	# Prefer positions close to the candidate, then move progressively away.
 	# Try both sides of the line for each distance before moving farther.
-	var attempts: int = maxi(1, ceili((max_distance - line_annotation_min_distance) / line_annotation_distance_step) + 1)
-	for side: int in [0, 1, -1, 2, -2]:
+	var attempts: int = maxi(1, ceili((max_distance - min_distance) / line_annotation_distance_step) + 1)
+	for side: int in side_steps:
 		for attempt: int in range(attempts):
-			var distance: float = line_annotation_min_distance + float(attempt) * line_annotation_distance_step
-			if distance > max_distance:
-				break
+			# Calculate the next position along the line.
+			var distance: float = minf(min_distance + float(attempt) * line_annotation_distance_step, max_distance)
 			
+			# Apply the current perpendicualr offset.
 			var center: Vector2 = near + direction * distance
 			center += perpendicular * float(side) * line_annotation_side_step
 			
-			# Keep label centers within the allowed candidate centered radius.
-			if center.distance_to(candidate_center) > line_annotation_max_distance:
+			# Keep label centers within the allowed candidate centered radius only during the regular placement attempts.
+			if not fallback and center.distance_to(candidate_center) > line_annotation_max_distance:
 				continue
 			
+			# Calculate the area occupied by the annotation.
 			var bounds: Rect2 = _annotation_rect(center, value, line_annotation_scale, line_annotation_padding)
+			
+			# Prevent drawing over the candidate placement room.
 			if bounds.intersects(candidate_room):
 				continue
+			
+			# Prevent overlapping previously drawn annotations.
 			if _annotation_overlaps(bounds, occupied):
 				continue
 			
@@ -393,6 +422,7 @@ func _draw() -> void:
 					"from": _point(a),
 					"to": _point(b),
 					"value": float(segment.get("value", 0.0)),
+					"fallback_room_coords": segment.get("fallback_room_coords", null),
 				})
 		
 		# Check collected paths.
@@ -465,6 +495,37 @@ func _draw() -> void:
 			return a_length < b_length
 	)
 	
+	# Prepare a list for annotations that couldn't be positioned using the preferred placement restrictions.
+	var missing_line_annotations: Array[Dictionary] = []
+	
 	# Draw line annotations.
 	for entry: Dictionary in line_annotations:
-		_try_draw_line_annotation(entry["from"], entry["to"], float(entry["value"]), occupied_annotations)
+		var annotation_drawn: bool = _try_draw_line_annotation(entry["from"], entry["to"], float(entry["value"]), occupied_annotations, false)
+		
+		# Track any annotations that couldn't be displayed.
+		if not annotation_drawn:
+			missing_line_annotations.append(entry)
+	
+	# Retry drawing line annotations for annotations that are missing.
+	if line_annotation_fallback_enabled:
+		var unresolved_line_annotations: Array[Dictionary] = []
+		
+		for entry: Dictionary in missing_line_annotations:
+			var annotation_drawn: bool = _try_draw_line_annotation(entry["from"], entry["to"], float(entry["value"]), occupied_annotations, true)
+			
+			# Track any annotations that couldn't be displayed.
+			if not annotation_drawn:
+				unresolved_line_annotations.append(entry)
+		
+		# Display annotations that couldn't be placed along their measurement lines directly over their assigned source rooms.
+		for entry: Dictionary in unresolved_line_annotations:
+			# Skip annotations without a defined fallback room.
+			var fallback_coords: Variant = entry.get("fallback_room_coords", null)
+			if not fallback_coords is Vector2i:
+				continue
+			
+			# Calculate the source room center.
+			var room_center: Vector2 = _point(fallback_coords as Vector2i)
+			
+			# Display the annotation using the existing line annotation style.
+			_draw_number(room_center, float(entry["value"]), line_annotation_scale, line_annotation_padding, false)

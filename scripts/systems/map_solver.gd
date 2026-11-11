@@ -905,6 +905,7 @@ func _calculate_weights_placement_type_distance(prepared_placement_type_data: Di
 				"value": distance,
 				"show_value": true,
 				"highlight_to_room": true,
+				"fallback_room_coords": related_room_type_coords,
 			})
 	
 	# Aggregate calculated weights according to the placement type config.

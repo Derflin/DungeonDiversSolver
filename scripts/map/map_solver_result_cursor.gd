@@ -412,7 +412,7 @@ func _initialize_hover_info_indicator() -> void:
 	# Draw the dark outline slightly larger than the colored circular background.
 	var radius: float = hover_info_indicator_diameter * 0.5
 	
-	hover_info_indicator_outline.polygon = _make_hover_info_indicator_circle(radius + 1.0)
+	hover_info_indicator_outline.polygon = _make_hover_info_indicator_circle(radius + hover_info_indicator_outline_width)
 	hover_info_indicator_outline.color = hover_info_indicator_outline_color
 	hover_info_indicator_background.polygon = _make_hover_info_indicator_circle(radius)
 	
@@ -618,7 +618,7 @@ func _refresh_cursor_hover_visuals(animate_indicator: bool = false) -> void:
 	var cursor_rect: Rect2 = _get_hover_cursor_rect()
 	
 	# Calculate the full radius of the indicator.
-	var indicator_outer_radius: float = hover_info_indicator_diameter * 0.5 + 1.0 + hover_info_indicator_corner_inset
+	var indicator_outer_radius: float = hover_info_indicator_diameter * 0.5 + hover_info_indicator_outline_width + hover_info_indicator_corner_inset
 	
 	# Position the indicator in the top-right corner of the result cursor.
 	hover_info_indicator.position = Vector2(

@@ -68,6 +68,44 @@ var hover_details_hud_margin: float = 2.0
 @export var placement_explanation_enabled: bool = true
 @export var placement_explanation_animation_duration: float = 0.16
 
+@export_group("Candidate Hover Highlight", "candidate_hover_")
+## Enables the translucent room highlight while hovering a result cursor.
+@export var candidate_hover_enabled: bool = true
+## Color drawn over the entire candidate room upon hover.
+@export var candidate_hover_color: Color = Color(0.30, 0.60, 0.95, 0.35)
+
+@export_group("Hover Information Indicator", "hover_info_indicator_")
+## Enables the persistent information availability icon on result cursors.
+@export var hover_info_indicator_enabled: bool = true
+## Diamater of the circular indicator background in local pixels.
+@export_range(8.0, 20.0, 1.0) var hover_info_indicator_diameter: float = 4.0
+## Minimum space between the indicator's outer border and the edges of the result cursor.
+@export_range(0.0, 4.0, 0.5) var hover_info_indicator_corner_inset: float = 0.0
+## Free space between the circular background edge and the icon texture.
+@export_range(0.0, 5.0, 0.5) var hover_info_indicator_icon_padding: float = 0.5
+## Background color when hovering the result cursor can show additional details.
+@export var hover_info_indicator_available_background: Color = Color(0.85, 0.72, 0.46, 1.0)
+## Background color when no additional hover information is available.
+@export var hover_info_indicator_unavailable_background: Color = Color(0.36, 0.35, 0.35, 0.95)
+## Tint applied to the indicator icon texture when hover information exists.
+@export var hover_info_indicator_available_icon_color: Color = Color(0.16, 0.14, 0.12, 1.0)
+## Tint applied to the indicator icon texture when hover information is unavailable.
+@export var hover_info_indicator_unavailable_icon_color: Color = Color(0.72, 0.70, 0.68, 1.0)
+
+@export_subgroup("Outline", "hover_info_indicator_outline_")
+## Thickness of the circular outline surrounding the information indicator.
+@export_range(0.0, 3.0, 0.25) var hover_info_indicator_outline_width: float = 1.0
+## Color used for the circular outline surrounding the information indicator.
+@export var hover_info_indicator_outline_color: Color = Color(0.15, 0.13, 0.12, 1.0)
+
+@export_subgroup("Unavailable Slash", "hover_info_indicator_unavailable_slash_")
+## Width of the diagonal slash displayed over unavailable information icons.
+@export_range(0.5, 3.0, 0.25) var hover_info_indicator_unavailable_slash_width: float = 1.0
+## Color used for the diagonal slash displayed over unavailable information icons.
+@export var hover_info_indicator_unavailable_slash_color: Color = Color(0.16, 0.15, 0.15, 1.0)
+## Length of the diagonal slash relative to the indicator's background radius.
+@export_range(0.25, 1.5, 0.05) var hover_info_indicator_unavailable_slash_length_factor: float = 0.75
+
 
 var _cursor_animation: Tween
 
@@ -90,13 +128,21 @@ var _placement_explanation_tween: Tween
 var _placement_explanation_active: bool = false
 var _placement_explanation_grid_space: GridSpace = null
 
+var _cursor_hiding: bool = false
 
+
+@onready var candidate_hover_highlight: Polygon2D = $CandidateHoverHighlight
+@onready var corners_sprite: Sprite2D = $Corners
+@onready var corners_animation_player: AnimationPlayer = $Corners/AnimationPlayer
 @onready var value_display_root: Node2D = $ValueDisplayRoot
 @onready var value_label_root: Node2D = $ValueDisplayRoot/ValueLabelRoot
 @onready var value_label: ScrambleLabel = $ValueDisplayRoot/ValueLabelRoot/ValueLabel
 @onready var value_check_mark: Sprite2D = $ValueDisplayRoot/ValueCheckMark
-@onready var corners_sprite: Sprite2D = $Corners
-@onready var corners_animation_player: AnimationPlayer = $Corners/AnimationPlayer
+@onready var hover_info_indicator: Node2D = $HoverInfoIndicator
+@onready var hover_info_indicator_outline: Polygon2D = $HoverInfoIndicator/CircleOutline
+@onready var hover_info_indicator_background: Polygon2D = $HoverInfoIndicator/CircleBackground
+@onready var hover_info_indicator_icon: Sprite2D = $HoverInfoIndicator/Icon
+@onready var hover_info_indicator_unavailable_slash: Line2D = $HoverInfoIndicator/UnavailableSlash
 @onready var hover_area: Area2D = $HoverArea
 @onready var hover_collision_shape: CollisionShape2D = $HoverArea/CollisionShape2D
 @onready var hover_connector: Line2D = $HoverConnector
@@ -125,6 +171,10 @@ func _ready() -> void:
 	placement_explanation.hide()
 	placement_explanation.modulate.a = 0.0
 	
+	# Initialize candidate hover highlight and hover information icon.
+	candidate_hover_highlight.hide()
+	_initialize_hover_info_indicator()
+	
 	# Initialize the animation player for corners sprite
 	_initialize_corners_animation_player()
 	
@@ -141,9 +191,12 @@ func _ready() -> void:
 	
 	# Refresh placement explanation.
 	_refresh_placement_explanation()
+	
+	# Refresh candidate hover geometry and icon status after the explanation renderer has received its data.
+	_refresh_cursor_hover_visuals()
 
 
-## Continuously checks whether hover details and placement explanation should be displayed and handles changes to their visibility state. 
+## Continuously checks whether hover details, placement explanation and candidate hover highlight should be displayed and handles changes to their visibility state. 
 func _process(_delta: float) -> void:
 	# Check if hover details are valid to be shown and show/hide them accordingly based on it and their current active status.
 	var hover_valid: bool = _is_hover_details_display_valid()
@@ -158,10 +211,21 @@ func _process(_delta: float) -> void:
 		_show_placement_explanation()
 	elif not explanation_valid and _placement_explanation_active:
 		_hide_placement_explanation()
+	
+	# Check if candidate hover highlight is valid to be shown and show/hide it accordingly based on it.
+	var candidate_hover_valid: bool = (
+		candidate_hover_enabled
+		and _is_cursor_hover_stage()
+		and _is_result_cursor_hover_valid()
+	)
+	candidate_hover_highlight.visible = candidate_hover_valid
 
 
 ## Shows cursor either immediately if the [member cursor_animation_enabled] is disabled or initializes the animation for it.
 func show_cursor() -> void:
+	# Allow hover visuals again when this cursor is displayed.
+	_cursor_hiding = false
+	
 	# Stop existing animation
 	_kill_cursor_animation()
 	
@@ -186,6 +250,10 @@ func hide_cursor() -> void:
 	# Filter out processing if the cursor is already hidden
 	if not visible:
 		return
+	
+	# Disable hover detection for the remainder of the hide animation.
+	_cursor_hiding = true
+	candidate_hover_highlight.hide()
 	
 	# Hide hover details.
 	_hide_hover_details(true)
@@ -262,6 +330,9 @@ func update_data(map_solver_result_coord: MapSolverResultCoord, result_solve_sta
 		
 		# Refresh the placement explanation data for the updated result coordinate.
 		_refresh_placement_explanation()
+		
+		# Refresh candidate hover highlight and hover information indicator.
+		_refresh_cursor_hover_visuals()
 
 
 ## Updates the placement explanation renderer using this cursor's current result data.
@@ -278,6 +349,142 @@ func _refresh_placement_explanation() -> void:
 		_placement_explanation_grid_space,
 		value_label.get_theme_font("font"),
 	)
+
+
+## Returns whether the current map solver stage can display placement explanation geometry when the corresponding result cursor is hovered.
+func _is_placement_explanation_stage() -> bool:
+	return(
+		_map_solver_result_solve_stage == MapSolverResult.SolveStage.FOUND_VALID_PLACEMENTS
+		or _map_solver_result_solve_stage == MapSolverResult.SolveStage.CALCULATED_WEIGHTS
+	)
+
+
+## Returns whether the current map solver stage suuports hovering result cursors.
+func _is_cursor_hover_stage() -> bool:
+	return (
+		_is_placement_explanation_stage()
+		or _map_solver_result_solve_stage == MapSolverResult.SolveStage.FOUND_SOLUTION
+	)
+
+
+## Creates a filled circular polygon of the provided [param radius] around the hover information indicator's local origin.
+func _make_hover_info_indicator_circle(radius: float) -> PackedVector2Array:
+	var points: PackedVector2Array = PackedVector2Array()
+	var vertex_count: int = 16
+	
+	for vertex_index: int in range(vertex_count):
+		var angle: float = TAU * float(vertex_index) / float(vertex_count)
+		points.append(Vector2(cos(angle), sin(angle)) * radius)
+	
+	return points
+
+
+## Initializes the hover information indicator circles, slash and icon.
+func _initialize_hover_info_indicator() -> void:
+	# Draw the dark outline slightly larger than the colored circular background.
+	var radius: float = hover_info_indicator_diameter * 0.5
+	
+	hover_info_indicator_outline.polygon = _make_hover_info_indicator_circle(radius + 1.0)
+	hover_info_indicator_outline.color = hover_info_indicator_outline_color
+	hover_info_indicator_background.polygon = _make_hover_info_indicator_circle(radius)
+	
+	# Prepare the diagonal line displayed across an unavailable information icon.
+	var slash_extent: float = radius * hover_info_indicator_unavailable_slash_length_factor
+	hover_info_indicator_unavailable_slash.points = PackedVector2Array([
+		Vector2(-slash_extent, -slash_extent),
+		Vector2(slash_extent, slash_extent),
+	])
+	hover_info_indicator_unavailable_slash.width = hover_info_indicator_unavailable_slash_width
+	hover_info_indicator_unavailable_slash.default_color = hover_info_indicator_unavailable_slash_color
+	
+	# Fit the chosen texture inside the circle without assuming its source image resolution.
+	if hover_info_indicator_icon.texture != null:
+		var texture_size: Vector2 = hover_info_indicator_icon.texture.get_size()
+		var available_icon_size: float = maxf(1.0, hover_info_indicator_diameter - hover_info_indicator_icon_padding * 2.0)
+		if texture_size.x > 0.0 and texture_size.y > 0.0:
+			var icon_scale: float = minf(available_icon_size / texture_size.x, available_icon_size / texture_size.y)
+			hover_info_indicator_icon.scale = Vector2.ONE * icon_scale
+	
+	# Initialize hover info indicator visible status.
+	hover_info_indicator.hide()
+
+
+## Updates the candidate hover highlight polygon and the state, position and appearence of the hover information indicator.
+func _refresh_cursor_hover_visuals() -> void:
+	# Clear previous viusals when the cursor doesn't have valid room data.
+	if _map_solver_result_coord == null or _placement_explanation_grid_space == null:
+		candidate_hover_highlight.polygon = PackedVector2Array()
+		candidate_hover_highlight.hide()
+		hover_info_indicator.hide()
+		return
+	
+	# Fetch the full candidate room rectangle in grid space coordinates.
+	var grid_rect: Rect2 = _placement_explanation_grid_space.get_room_rect(_map_solver_result_coord.coords)
+	var grid_corners: PackedVector2Array = PackedVector2Array([
+		grid_rect.position,
+		Vector2(grid_rect.end.x, grid_rect.position.y),
+		grid_rect.end,
+		Vector2(grid_rect.position.x, grid_rect.end.y),
+	])
+	
+	# Convert the corners to this cursor's local coordinate system.
+	var cursor_corners: PackedVector2Array = PackedVector2Array()
+	for grid_corner: Vector2 in grid_corners:
+		cursor_corners.append(to_local(_placement_explanation_grid_space.to_global(grid_corner)))
+	
+	# Prepare the candidate hover highlight overlay.
+	candidate_hover_highlight.polygon = cursor_corners
+	candidate_hover_highlight.color = candidate_hover_color
+	candidate_hover_highlight.hide()
+	
+	# Show the indicator if it should be active.
+	var indicator_visible: bool = (
+		hover_info_indicator_enabled
+		and _is_cursor_hover_stage()
+		and hover_info_indicator_icon.texture != null
+		and (
+			_map_solver_result_solve_stage != MapSolverResult.SolveStage.FOUND_SOLUTION
+			or hover_details_enabled
+		)
+	)
+	hover_info_indicator.visible = indicator_visible
+	if not indicator_visible:
+		return
+	
+	# Prepare the result cursor bounds.
+	var cursor_rect: Rect2 = _get_hover_cursor_rect()
+	
+	# Calculate the full radius of the indicator.
+	var indicator_outer_radius: float = hover_info_indicator_diameter * 0.5 + 1.0 + hover_info_indicator_corner_inset
+	
+	# Position the indicator in the top-right corner of the result cursor.
+	hover_info_indicator.position = Vector2(
+		cursor_rect.end.x - indicator_outer_radius,
+		cursor_rect.position.y + indicator_outer_radius,
+	)
+
+	# Determine whether hovering reveals additional information.
+	var has_hover_information: bool = (
+		_map_solver_result_solve_stage == MapSolverResult.SolveStage.FOUND_SOLUTION
+		or (
+			_is_placement_explanation_stage()
+			and placement_explanation_enabled
+			and placement_explanation.has_visuals()
+		)
+	)
+	
+	# Set the active or unavailable appearance using the same icon.
+	hover_info_indicator_background.color = (
+		hover_info_indicator_available_background
+		if has_hover_information
+		else hover_info_indicator_unavailable_background
+	)
+	hover_info_indicator_icon.modulate = (
+		hover_info_indicator_available_icon_color
+		if has_hover_information
+		else hover_info_indicator_unavailable_icon_color
+	)
+	hover_info_indicator_unavailable_slash.visible = not has_hover_information
 
 
 ## Updates value display and visibilty based on the map solver result coord and solve stage member parameters.
@@ -715,7 +922,7 @@ func _mouse_is_over_blocking_hud() -> bool:
 ## Returns false if the result cursor isn't visible.
 func _is_result_cursor_hover_valid() -> bool:
 	# Check whether the result cursor is currently visible and if the map solver result coords aren't empty.
-	if not is_visible_in_tree() or _map_solver_result_coord == null:
+	if _cursor_hiding or not is_visible_in_tree() or _map_solver_result_coord == null:
 		return false
 	
 	# Check whether the mouse is physically inside the hover rectangle.

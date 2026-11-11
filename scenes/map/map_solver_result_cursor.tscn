@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://1jpsxhf8b8nc" path="res://assets/icons/cursor/RoomSolvedCursor-Corners.png" id="3_7l876"]
 [ext_resource type="PackedScene" uid="uid://dtnhj178gkkg3" path="res://scenes/map/map_solver_result_hover_details.tscn" id="5_7l876"]
 [ext_resource type="Texture2D" uid="uid://b3fyoxdqh1yfj" path="res://assets/icons/map_solver/third_party/kenney/game_icons/checkmark.png" id="5_pple3"]
+[ext_resource type="Texture2D" uid="uid://m8r6fwssug18" path="res://assets/icons/map_solver/third_party/kenney/game_icons/information.png" id="6_1yvij"]
 [ext_resource type="PackedScene" uid="uid://dyjj2ffksbhs1" path="res://scenes/map/map_solver_result_placement_explanation.tscn" id="7_1nym0"]
 
 [sub_resource type="Animation" id="Animation_rxhxr"]
@@ -52,11 +53,17 @@ size = Vector2(15, 15)
 script = ExtResource("1_0oae5")
 value_label_base_font_size = 16
 
+[node name="CandidateHoverHighlight" type="Polygon2D" parent="." unique_id=780398259]
+visible = false
+z_index = 1
+
 [node name="Edges" type="Sprite2D" parent="." unique_id=2130384106]
+z_index = 2
 scale = Vector2(0.9, 0.9)
 texture = ExtResource("2_rxhxr")
 
 [node name="Corners" type="Sprite2D" parent="." unique_id=1155506020]
+z_index = 2
 texture = ExtResource("3_7l876")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="Corners" unique_id=1592089844]
@@ -82,6 +89,21 @@ self_modulate = Color(0.47843137, 0.9098039, 0.47843137, 1)
 texture_filter = 1
 scale = Vector2(0.2, 0.2)
 texture = ExtResource("5_pple3")
+
+[node name="HoverInfoIndicator" type="Node2D" parent="." unique_id=1235111952]
+visible = false
+z_index = 11
+
+[node name="CircleOutline" type="Polygon2D" parent="HoverInfoIndicator" unique_id=297132855]
+
+[node name="CircleBackground" type="Polygon2D" parent="HoverInfoIndicator" unique_id=658372423]
+
+[node name="Icon" type="Sprite2D" parent="HoverInfoIndicator" unique_id=651125810]
+texture_filter = 1
+texture = ExtResource("6_1yvij")
+
+[node name="UnavailableSlash" type="Line2D" parent="HoverInfoIndicator" unique_id=1836605072]
+width = 1.5
 
 [node name="HoverArea" type="Area2D" parent="." unique_id=659989009]
 collision_layer = 0

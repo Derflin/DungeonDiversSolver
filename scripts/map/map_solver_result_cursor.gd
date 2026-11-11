@@ -466,7 +466,7 @@ func _set_hover_info_indicator_state(available: bool, animate_change: bool = fal
 	var had_previous_state: bool = _hover_info_indicator_state_initialized
 	
 	# Check whether the availability actually changed.
-	var availability_changed: bool = had_previous_state and _hover_info_indicator_state_initialized != available
+	var availability_changed: bool = had_previous_state and _hover_info_indicator_available != available
 	
 	# Store the current state for future updates.
 	_hover_info_indicator_available = available

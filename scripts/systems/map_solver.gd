@@ -39,6 +39,7 @@ const DIRECTION_TO_BARRICADE_CONNECTED_ROOM_DIRECTION_FLAGS: Dictionary[Directio
 }
 
 const MAX_PLACEMENT_SCENARIOS: int = 25000
+const MAX_VALIDATION_EXPLANATION_ROUTES: int = 128
 
 
 var text_color_code_gradient: Gradient = Gradient.new()
@@ -520,47 +521,88 @@ func _filter_results_placement_type_placement_restrictions_intersection(prepared
 	return has_valid_pair
 
 
-#TODO: maybe add some use for _cur_explanation
 ## Checks if [param cur_coords] room has at least 2 neighbouring rooms that belong to the same room group.
 ## Provided [param prepared_placement_type_data] dictionary contains a dictionary with room coords used as keys and their assigned group number as values.
-func _filter_results_placement_type_placement_restrictions_loop(prepared_placement_type_data: Dictionary[String, Variant], cur_coords: Vector2i, _cur_explanation: MapSolverPlacementExplanation = null) -> bool:
+func _filter_results_placement_type_placement_restrictions_loop(prepared_placement_type_data: Dictionary[String, Variant], cur_coords: Vector2i, cur_explanation: MapSolverPlacementExplanation = null) -> bool:
 	var cur_coords_valid: bool = false
 	
-	# Check if there are at least 2 negihbours to the current room that have the same group other than -1
+	# Check if there are at least 2 negihbours to the current room that have the same group other than -1.
 	var neighbours_groups_count: Dictionary[int, int] = {}
 	for current_dir: Direction in Direction.values():
-		# For each direction apart from the default NONE direction
+		# For each direction apart from the default NONE direction.
 		if current_dir == Direction.NONE:
 			continue
 		
-		# Calculate count of groups based on the neighbours
+		# Calculate count of groups based on the neighbours.
 		var neighbour_coords := cur_coords + DIRECTION_TO_COORDS_OFFSET[current_dir]
 		if neighbour_coords in prepared_placement_type_data["room_connections_groups"]:
-			# Check if the room doesn't have a blockade in the direction of the current coords, if yes then skip counting it
+			# Check if the room doesn't have a blockade in the direction of the current coords, if yes then skip counting it.
 			var neighbour_room_instance_data := _map_state.get_room_instance(neighbour_coords)
 			if neighbour_room_instance_data.has_barricade(DIRECTION_TO_BARRICADE_CONNECTED_ROOM_DIRECTION_FLAGS[current_dir]):
 				continue
 			
-			# Add group instance to the count
+			# Add group instance to the count.
 			var neighbour_group_id = prepared_placement_type_data["room_connections_groups"][neighbour_coords]
 			if neighbour_group_id in neighbours_groups_count:
 				neighbours_groups_count[neighbour_group_id] += 1
 			else:
 				neighbours_groups_count[neighbour_group_id] = 1
 	
-	# Check if any of the neighbours group count is highier than 1, ignoring group id -1
+	# Check if any of the neighbours group count is highier than 1, ignoring group id -1.
 	for group_id in neighbours_groups_count:
 		if group_id != -1 and neighbours_groups_count[group_id] >= 2:
 			cur_coords_valid = true
 			break
 	
+	# Collect every accessible cycle passing through this candidate when visual explanations are requested.
+	if cur_coords_valid and cur_explanation != null:
+		var unused_path_lengths: Array[float] = []
+		var initial_route: Array[Vector2i] = [cur_coords]
+		
+		for current_dir: Direction in Direction.values():
+			# For each direction apart from the default NONE direction.
+			if current_dir == Direction.NONE:
+				continue
+			
+			# Ignore neighbours outside the prepared connected room groups.
+			var neighbour_coords: Vector2i = cur_coords + DIRECTION_TO_COORDS_OFFSET[current_dir]
+			if neighbour_coords not in prepared_placement_type_data["room_connections_groups"]:
+				continue
+			
+			var group_id: int = int(prepared_placement_type_data["room_connections_groups"][neighbour_coords])
+			if group_id == -1 or int(neighbours_groups_count.get(group_id, 0)) < 2:
+				continue
+			
+			# Check if the room doesn't have a blockade in the direction of the current coords, if yes then skip counting it.
+			var neighbour_room_instance_data := _map_state.get_room_instance(neighbour_coords)
+			if neighbour_room_instance_data.has_barricade(DIRECTION_TO_BARRICADE_CONNECTED_ROOM_DIRECTION_FLAGS[current_dir]):
+				continue
+			 
+			# Record all possible loop paths starting from the neighbour to the missing candidate room to close one loop.
+			_find_all_room_paths_lengths(
+				neighbour_coords,
+				cur_coords,
+				1,
+				{},
+				unused_path_lengths,
+				current_dir,
+				{},
+				false,
+				initial_route,
+				false,
+				cur_explanation,
+			)
+			
+			# Limit explanation generation.
+			if cur_explanation.paths.size() >= MAX_VALIDATION_EXPLANATION_ROUTES:
+				break
+	
 	return cur_coords_valid
 
 
-#TODO: maybe add some use for _cur_explanation
 ## Checks if [param cur_coords] room has at least one neighbour that belongs to the same group as any of the available start room.
 ## Provided [param prepared_placement_type_data] dictionary contains a dictionary with room coords used as keys and their assigned group number as values and a list of start room coords that should be checked in comparison to the current room coords. 
-func _filter_results_placement_type_placement_restrictions_path(prepared_placement_type_data: Dictionary[String, Variant], cur_coords: Vector2i, _cur_explanation: MapSolverPlacementExplanation = null) -> bool:
+func _filter_results_placement_type_placement_restrictions_path(prepared_placement_type_data: Dictionary[String, Variant], cur_coords: Vector2i, cur_explanation: MapSolverPlacementExplanation = null) -> bool:
 	var cur_coords_valid: bool = false
 	
 	# Check what groups are assigned to each neighbour of the current coords
@@ -582,6 +624,39 @@ func _filter_results_placement_type_placement_restrictions_path(prepared_placeme
 		if start_room_coords in prepared_placement_type_data["room_connections_groups"] and prepared_placement_type_data["room_connections_groups"][start_room_coords] in neighbours_groups:
 			cur_coords_valid = true
 			break
+	
+	# Collect every accessible route from the configured starting rooms to this candidate when visual explanations are requested.
+	if cur_coords_valid and cur_explanation != null:
+		var unused_path_lengths: Array[float] = []
+		var empty_route: Array[Vector2i] = []
+		
+		for start_room_coords: Vector2i in prepared_placement_type_data["start_room_group_coords"]:
+			# Skip starting rooms that cannot belong to a neighbouring group supporting the candidate according to the existing validator.
+			if start_room_coords not in prepared_placement_type_data["room_connections_groups"]:
+				continue
+			
+			var group_id: int = int(prepared_placement_type_data["room_connections_groups"][start_room_coords])
+			if group_id not in neighbours_groups:
+				continue
+			
+			# Record all possible paths.
+			_find_all_room_paths_lengths(
+				start_room_coords,
+				cur_coords,
+				0,
+				{},
+				unused_path_lengths,
+				Direction.NONE,
+				{},
+				false,
+				empty_route,
+				false,
+				cur_explanation,
+			)
+			
+			# Limit explanation generation.
+			if cur_explanation.paths.size() >= MAX_VALIDATION_EXPLANATION_ROUTES:
+				break
 	
 	return cur_coords_valid
 
@@ -1145,6 +1220,30 @@ func _find_room_neighbours_placement_type_weights(
 		_find_room_neighbours_placement_type_weights(start_coords, neighbour_coords, placement_type, neighbours_weights, checked_neighbours_coords, current_dir, contributions_by_coords, capture_contributions)
 
 
+## Records one completed path for a validation stage explanation without saving or aggregating their lenghts.
+func _record_validation_explanation_route(explanation: MapSolverPlacementExplanation, route_coords: Array[Vector2i]) -> void:
+	# Ignore empty routes and stop storing routes at the visual safety limit.
+	if route_coords.is_empty() or explanation.paths.size() >= MAX_VALIDATION_EXPLANATION_ROUTES:
+		return
+	
+	# Prepare the reverse route for direction independant comparison.
+	var reversed_route: Array[Vector2i] = route_coords.duplicate()
+	reversed_route.reverse()
+	
+	# Ignore a route if its geometry was already captured.
+	for saved_path: Dictionary in explanation.paths:
+		var saved_coords: Array = saved_path.get("coords", [])
+		if saved_coords == route_coords or saved_coords == reversed_route:
+			return
+	
+	# Save a route for the existing line and room highlight renderer.
+	explanation.paths.append({
+		"coords": route_coords.duplicate(),
+		"value": 0.0,
+		"show_value": false,
+	})
+
+
 ## Registers a completed route's length by appending the provided [param length] to the provided [param paths_lengths_array] list.
 ## Uses provided [param capture_route] flag to determine if the current path length should be saved as best representation.
 ## Best representative is set based on the provided [param prefer_shortest] flag which defined if it prefers shorter or longer paths as representatives.
@@ -1190,47 +1289,58 @@ func _find_all_room_paths_lengths(
 	prefer_shortest: bool = false,
 	current_route: Array[Vector2i] = [],
 	capture_route: bool = false,
+	validation_explanation: MapSolverPlacementExplanation = null,
 ) -> void:
-	# Prepare the path through this coordinate only when visual capture is on.
+	# Stop route-only traversal if the requested number of visual routes has already been collected. Weighted traversal is not affected.
+	if validation_explanation != null and validation_explanation.paths.size() >= MAX_VALIDATION_EXPLANATION_ROUTES:
+		return
+	
+	# Prepare the path through this coordinate only when visual capture is on or for validation stage route-only evidence.
 	var route_at_current: Array[Vector2i] = []
-	if capture_route:
+	if capture_route or validation_explanation != null:
 		route_at_current = current_route.duplicate()
 		route_at_current.append(cur_coords)
 	
-	# Stop further processing if current room is empty and check if they are the target room
+	# Stop further processing if current room is empty and check if they are the target room.
 	var cur_room_instance_data := _map_state.get_room_instance(cur_coords)
 	if cur_room_instance_data == null:
-		# Save path length if the current coords are the same as target coords
+		# Save path length or record route for validation stage route-only evidence if the current coords are the same as target coords.
 		if cur_coords == target_coords:
-			_record_completed_room_path(length, paths_lengths_array, representative_route, prefer_shortest, route_at_current, capture_route)
+			if validation_explanation != null:
+				_record_validation_explanation_route(validation_explanation, route_at_current)
+			else:
+				_record_completed_room_path(length, paths_lengths_array, representative_route, prefer_shortest, route_at_current, capture_route)
 		return
 	
-	# Check if the current room has a barricade in the same direction made as the last room, if yes then stop further processing
+	# Check if the current room has a barricade in the same direction made as the last room, if yes then stop further processing.
 	if last_dir != Direction.NONE and cur_room_instance_data.has_barricade(DIRECTION_TO_BARRICADE_CONNECTED_ROOM_DIRECTION_FLAGS[last_dir]):
 		return
 	
-	# Check if current coords are the same as the target coords and save them if they are
+	# Check if current coords are the same as the target coords and save them if they are.
 	if cur_coords == target_coords:
-		_record_completed_room_path(length, paths_lengths_array, representative_route, prefer_shortest, route_at_current, capture_route)
+		if validation_explanation != null:
+			_record_validation_explanation_route(validation_explanation, route_at_current)
+		else:
+			_record_completed_room_path(length, paths_lengths_array, representative_route, prefer_shortest, route_at_current, capture_route)
 	
-	# Stop further processing if current room is a secret room of any kind
+	# Stop further processing if current room is a secret room of any kind.
 	if cur_room_instance_data.get_secret_type_kind() != RoomSecretType.Kind.NONE:
 		return
 	
-	# Mark current coords as visited in the current recursive branch
+	# Mark current coords as visited in the current recursive branch.
 	visited[cur_coords] = true
 	
-	# Check each neighbouring room coords
+	# Check each neighbouring room coords.
 	for current_dir: Direction in Direction.values():
-		# For each direction apart from the default NONE direction and the last made direction
+		# For each direction apart from the default NONE direction and the last made direction.
 		if current_dir == Direction.NONE or (last_dir != Direction.NONE and current_dir == DIRECTION_TO_OPPOSITE_DIRECTION[last_dir]):
 			continue
 		
-		# Stop processing the direction if the current room has barricade set in the same direction
+		# Stop processing the direction if the current room has barricade set in the same direction.
 		if cur_room_instance_data.has_barricade(DIRECTION_TO_BARRICADE_CURRENT_ROOM_DIRECTION_FLAGS[current_dir]):
 			continue
 		
-		# Prepare a recursive check for a given direction if it wasn't visited before
+		# Prepare a recursive check for a given direction if it wasn't visited before.
 		var neighbour_coords := cur_coords + DIRECTION_TO_COORDS_OFFSET[current_dir]
 		if neighbour_coords not in visited:
 			_find_all_room_paths_lengths(
@@ -1244,9 +1354,10 @@ func _find_all_room_paths_lengths(
 				prefer_shortest,
 				route_at_current,
 				capture_route,
+				validation_explanation,
 			)
 	
-	# Unmark current coords as visited
+	# Unmark current coords as visited.
 	visited.erase(cur_coords)
 
 

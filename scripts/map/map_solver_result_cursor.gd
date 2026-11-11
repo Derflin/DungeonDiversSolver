@@ -589,7 +589,10 @@ func _refresh_cursor_hover_visuals(animate_indicator: bool = false) -> void:
 	# Clear previous visuals when the cursor doesn't have valid room data.
 	if _map_solver_result_coord == null or _placement_explanation_grid_space == null:
 		candidate_hover_highlight.polygon = PackedVector2Array()
+		_kill_hover_info_indicator_tween()
 		hover_info_indicator.hide()
+		hover_info_indicator.modulate.a = 1.0
+		_hover_info_indicator_state_initialized = false
 		return
 	
 	# Fetch the full candidate room rectangle in grid space coordinates.

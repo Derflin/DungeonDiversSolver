@@ -50,6 +50,8 @@ var _map_state_all_room_coords: Array[Vector2i]
 var _placement_selection_overflow: bool = false
 
 
+#region Solver Initialization and Execution
+
 func _init() -> void:
 	# Prepare map state copy
 	_map_state = GameState.map_state.copy()
@@ -126,6 +128,10 @@ func find_secret_room_locations(
 		result.append_status_message("No more currently valid placements detected")
 	return result
 
+#endregion
+
+
+#region Base Placement Validation
 
 ## Finds valid candidate coordinates according to the provided [param placement_config] configuration.
 ## Saved the valid candidate coordinates in the provided [param result] that is used to store and aggregate the map solver results.
@@ -353,6 +359,10 @@ func _check_if_neighbours_allow_secret_placement(room_coords: Vector2i) -> bool:
 	
 	return true
 
+#endregion
+
+
+#region Placement Type Validation
 
 ## Filters placement candidates inside provided [param result] using optional provided [param placement_type] specific restrictions.
 ## When provided [param capture_explanations] flag is set, stores evidence on each placement candidate that passes a supported restriction, preserving the placement type's provided [param placement_type_index].
@@ -436,13 +446,17 @@ func _filter_results_placement_type_placement_restrictions(result: MapSolverResu
 ## When [param cur_explanation] is provided, records one unlabelled segment from the candidate to each distinct source participating in a qualifying pair.
 ## Without [param cur_explanation] or if it's null, returns immediately after the first valid pair is found.
 func _filter_results_placement_type_placement_restrictions_intersection(prepared_placement_type_data: Dictionary[String, Variant], cur_coords: Vector2i, cur_explanation: MapSolverPlacementExplanation = null) -> bool:
+	# Unpack prepared placement type data.
+	var intersect_group_coords_1: Array[Vector2i] = prepared_placement_type_data["intersect_group_coords_1"]
+	var intersect_group_coords_2: Array[Vector2i] = prepared_placement_type_data["intersect_group_coords_2"]
+	
 	# Avoid recording the same side more than once across valid pairs.
 	var recorded_segments: Dictionary[String, bool] = {}
 	var has_valid_pair: bool = false
 	
 	# Check if the current room coordinates align with X and Y axis for any set of points between the first and second intersect groups.
-	for intersect_1_coords: Vector2i in prepared_placement_type_data["intersect_group_coords_1"]:
-		for intersect_2_coords: Vector2i in prepared_placement_type_data["intersect_group_coords_2"]:
+	for intersect_1_coords: Vector2i in intersect_group_coords_1:
+		for intersect_2_coords: Vector2i in intersect_group_coords_2:
 			# Calculate the intersection rectangle boundaries.
 			var min_x: int = mini(intersect_1_coords.x, intersect_2_coords.x)
 			var max_x: int = maxi(intersect_1_coords.x, intersect_2_coords.x)
@@ -526,6 +540,9 @@ func _filter_results_placement_type_placement_restrictions_intersection(prepared
 func _filter_results_placement_type_placement_restrictions_loop(prepared_placement_type_data: Dictionary[String, Variant], cur_coords: Vector2i, cur_explanation: MapSolverPlacementExplanation = null) -> bool:
 	var cur_coords_valid: bool = false
 	
+	# Unpack prepared placement type data.
+	var room_connections_groups: Dictionary[Vector2i, int] = prepared_placement_type_data["room_connections_groups"]
+	
 	# Check if there are at least 2 negihbours to the current room that have the same group other than -1.
 	var neighbours_groups_count: Dictionary[int, int] = {}
 	for current_dir: Direction in Direction.values():
@@ -535,14 +552,14 @@ func _filter_results_placement_type_placement_restrictions_loop(prepared_placeme
 		
 		# Calculate count of groups based on the neighbours.
 		var neighbour_coords := cur_coords + DIRECTION_TO_COORDS_OFFSET[current_dir]
-		if neighbour_coords in prepared_placement_type_data["room_connections_groups"]:
+		if neighbour_coords in room_connections_groups:
 			# Check if the room doesn't have a blockade in the direction of the current coords, if yes then skip counting it.
 			var neighbour_room_instance_data := _map_state.get_room_instance(neighbour_coords)
 			if neighbour_room_instance_data.has_barricade(DIRECTION_TO_BARRICADE_CONNECTED_ROOM_DIRECTION_FLAGS[current_dir]):
 				continue
 			
 			# Add group instance to the count.
-			var neighbour_group_id = prepared_placement_type_data["room_connections_groups"][neighbour_coords]
+			var neighbour_group_id = room_connections_groups[neighbour_coords]
 			if neighbour_group_id in neighbours_groups_count:
 				neighbours_groups_count[neighbour_group_id] += 1
 			else:
@@ -566,10 +583,10 @@ func _filter_results_placement_type_placement_restrictions_loop(prepared_placeme
 			
 			# Ignore neighbours outside the prepared connected room groups.
 			var neighbour_coords: Vector2i = cur_coords + DIRECTION_TO_COORDS_OFFSET[current_dir]
-			if neighbour_coords not in prepared_placement_type_data["room_connections_groups"]:
+			if neighbour_coords not in room_connections_groups:
 				continue
 			
-			var group_id: int = int(prepared_placement_type_data["room_connections_groups"][neighbour_coords])
+			var group_id: int = int(room_connections_groups[neighbour_coords])
 			if group_id == -1 or int(neighbours_groups_count.get(group_id, 0)) < 2:
 				continue
 			
@@ -605,6 +622,10 @@ func _filter_results_placement_type_placement_restrictions_loop(prepared_placeme
 func _filter_results_placement_type_placement_restrictions_path(prepared_placement_type_data: Dictionary[String, Variant], cur_coords: Vector2i, cur_explanation: MapSolverPlacementExplanation = null) -> bool:
 	var cur_coords_valid: bool = false
 	
+	# Unpack prepared placement type data.
+	var start_room_group_coords: Array[Vector2i] = prepared_placement_type_data["start_room_group_coords"]
+	var room_connections_groups: Dictionary[Vector2i, int] = prepared_placement_type_data["room_connections_groups"]
+	
 	# Check what groups are assigned to each neighbour of the current coords
 	var neighbours_groups: Array[int] = []
 	for current_dir: Direction in Direction.values():
@@ -614,14 +635,14 @@ func _filter_results_placement_type_placement_restrictions_path(prepared_placeme
 		
 		# Save each neighbour group
 		var neighbour_coords := cur_coords + DIRECTION_TO_COORDS_OFFSET[current_dir]
-		if neighbour_coords in prepared_placement_type_data["room_connections_groups"]:
-			var neighbour_group_id = prepared_placement_type_data["room_connections_groups"][neighbour_coords]
+		if neighbour_coords in room_connections_groups:
+			var neighbour_group_id = room_connections_groups[neighbour_coords]
 			if neighbour_group_id not in neighbours_groups:
 				neighbours_groups.append(neighbour_group_id)
 	
 	# Check if any starting rooms have the same group as any of the neighbour rooms checked
-	for start_room_coords in prepared_placement_type_data["start_room_group_coords"]:
-		if start_room_coords in prepared_placement_type_data["room_connections_groups"] and prepared_placement_type_data["room_connections_groups"][start_room_coords] in neighbours_groups:
+	for start_room_coords in start_room_group_coords:
+		if start_room_coords in room_connections_groups and room_connections_groups[start_room_coords] in neighbours_groups:
 			cur_coords_valid = true
 			break
 	
@@ -630,12 +651,12 @@ func _filter_results_placement_type_placement_restrictions_path(prepared_placeme
 		var unused_path_lengths: Array[float] = []
 		var empty_route: Array[Vector2i] = []
 		
-		for start_room_coords: Vector2i in prepared_placement_type_data["start_room_group_coords"]:
+		for start_room_coords: Vector2i in start_room_group_coords:
 			# Skip starting rooms that cannot belong to a neighbouring group supporting the candidate according to the existing validator.
-			if start_room_coords not in prepared_placement_type_data["room_connections_groups"]:
+			if start_room_coords not in room_connections_groups:
 				continue
 			
-			var group_id: int = int(prepared_placement_type_data["room_connections_groups"][start_room_coords])
+			var group_id: int = int(room_connections_groups[start_room_coords])
 			if group_id not in neighbours_groups:
 				continue
 			
@@ -660,6 +681,10 @@ func _filter_results_placement_type_placement_restrictions_path(prepared_placeme
 	
 	return cur_coords_valid
 
+#endregion
+
+
+#region Room and Connection Utilities
 
 func _find_room_types_coords(room_type: RoomType) -> Array[Vector2i]:
 	var found_coords: Array[Vector2i] = []
@@ -725,6 +750,10 @@ func _assign_neighbour_group_room_connection(coords_to_group_id: Dictionary[Vect
 		if not cur_room_instance_data.has_barricade(DIRECTION_TO_BARRICADE_CURRENT_ROOM_DIRECTION_FLAGS[current_dir]):
 			_assign_neighbour_group_room_connection(coords_to_group_id, group_id, neighbour_coords, current_dir)
 
+#endregion
+
+
+#region Weight Calculation and Aggregation
 
 ## Calculates per candidate weights using configured provided [param placement_config].
 ## Provided [param result] is used to both access the already existing valid candidates and to store the calculated weights for them.
@@ -877,6 +906,10 @@ func _calculate_weight_placement_type(result: MapSolverResult, placement_type: S
 	
 	return type_weights
 
+#endregion
+
+
+#region Placement Type Weight Calculators
 
 ## Calculates a candidate weight for [param placement_type] corridor by aggregating lengths returned from each valid starting direction from the provided [param cur_coords] position.
 ## When [param cur_explanation] is provided, records all the calculated corridor lengths.
@@ -958,13 +991,16 @@ func _calculate_weights_placement_type_distance(prepared_placement_type_data: Di
 	# Prepare array for calculated weights.
 	var calculated_weights: Array[float] = []
 	
+	# Unpack prepared placement type data.
+	var related_room_types_coords: Array[Vector2i] = prepared_placement_type_data["related_room_types_coords"]
+	
 	#NOTE: Against what the game description may sound like, it appears that this formula is incorrect, since it uses room centers, while the game calculates the distances using the room farthest corners.
 	## Calculate absolute distance from each related room types coords to the current room coords
-	#for related_room_type_coords in prepared_placement_type_data["related_room_types_coords"]:
+	#for related_room_type_coords in related_room_types_coords:
 	#	calculated_weights.append(cur_coords.distance_to(related_room_type_coords))
 	
 	# Calculate the grid distance from each related room type to the current room coordinates using the room center + 1 to account for the calculations taking into account farthest corners of the room rather than their centers.
-	for related_room_type_coords: Vector2i in prepared_placement_type_data["related_room_types_coords"]:
+	for related_room_type_coords: Vector2i in related_room_types_coords:
 		var delta: Vector2i = cur_coords - related_room_type_coords
 		var distance_x: float = float(absi(delta.x) + 1)
 		var distance_y: float = float(absi(delta.y) + 1)
@@ -1000,6 +1036,9 @@ func _calculate_weights_placement_type_loop(prepared_placement_type_data: Dictio
 	# Prepare array for calculated weights.
 	var calculated_weights: Array[float] = []
 	
+	# Unpack prepared placement type data.
+	var room_connections_groups: Dictionary[Vector2i, int] = prepared_placement_type_data["room_connections_groups"]
+	
 	# Retain only one representative route for the visual explanation.
 	var representative_route: Dictionary = {}
 	var prefer_shortest: bool = placement_type.count_type == SecretPlacementType.CountType.MIN
@@ -1013,14 +1052,14 @@ func _calculate_weights_placement_type_loop(prepared_placement_type_data: Dictio
 		
 		# Prepare a list of neighbour coords divided into each separate groups.
 		var neighbour_coords := cur_coords + DIRECTION_TO_COORDS_OFFSET[current_dir]
-		if neighbour_coords in prepared_placement_type_data["room_connections_groups"]:
+		if neighbour_coords in room_connections_groups:
 			# Check if the room doesn't have a blockade in the direction of the current coords, if yes then skip counting it.
 			var neighbour_room_instance_data := _map_state.get_room_instance(neighbour_coords)
 			if neighbour_room_instance_data.has_barricade(DIRECTION_TO_BARRICADE_CONNECTED_ROOM_DIRECTION_FLAGS[current_dir]):
 				continue
 			
 			# Assign neighbour coords to correct group/
-			var neighbour_group_id = prepared_placement_type_data["room_connections_groups"][neighbour_coords]
+			var neighbour_group_id = room_connections_groups[neighbour_coords]
 			if neighbour_group_id in neighbours_groups_coords:
 				neighbours_groups_coords[neighbour_group_id].append(neighbour_coords)
 			else:
@@ -1117,12 +1156,15 @@ func _calculate_weights_placement_type_path(prepared_placement_type_data: Dictio
 	# Prepare array for calculated weights
 	var calculated_weights: Array[float] = []
 	
+	# Unpack prepared placement type data.
+	var start_room_types_coords: Array[Vector2i] = prepared_placement_type_data["start_room_types_coords"]
+	
 	# Select one completed route for visualizing this placement type.
 	var representative_route: Dictionary = {}
 	var prefer_shortest: bool = placement_type.count_type == SecretPlacementType.CountType.MIN
 	
 	# Find all room paths lengths for each starter room found
-	for start_room_coords in prepared_placement_type_data["start_room_types_coords"]:
+	for start_room_coords in start_room_types_coords:
 		_find_all_room_paths_lengths(
 			start_room_coords, 
 			cur_coords, 
@@ -1148,6 +1190,10 @@ func _calculate_weights_placement_type_path(prepared_placement_type_data: Dictio
 	# Aggregate calculated weights according to the placement type config
 	return _placement_type_aggregate_calculated_weights(placement_type, calculated_weights)
 
+#endregion
+
+
+#region Weight and Path Traversal Helpers
 
 ## Records neighbour weight contribution for the provided [param cur_coords] by appending it's contribution to the provided [param neighbours_weights] list.
 ## Also assigns contribution to the provided [param contributions_by_coords] dictionary that tracks each coord exact weight contribution if the provided [param capture_contributions] flag is set.
@@ -1379,6 +1425,10 @@ func _placement_type_aggregate_calculated_weights(placement_type: SecretPlacemen
 	
 	return output_weight
 
+#endregion
+
+
+#region Solution Prediction
 
 func _find_solutions(result: MapSolverResult, placement_config: SecretPlacementConfig, secret_room_generate_count: int) -> bool:
 	# Set status message and filter out processing if the placement config weight count type is set to none.
@@ -1536,3 +1586,5 @@ func _is_group_selection_maximal(selected_from_group: Array[Vector2i], available
 	
 	# Otherwise return true.
 	return true
+
+#endregion

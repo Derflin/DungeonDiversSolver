@@ -96,6 +96,14 @@ var hover_details_hud_margin: float = 2.0
 ## Tint applied to the indicator icon texture when hover information is unavailable.
 @export var hover_info_indicator_unavailable_icon_color: Color = Color(0.72, 0.70, 0.68, 1.0)
 
+@export_subgroup("Transition", "hover_info_indicator_transition_")
+## Enables the hover information indicator transtion when its availability changes or when the result curosr's displayed value is updated.
+@export var hover_info_indicator_transition_enabled: bool = true
+## Duration of the complete indicator fade-out and fade-in transition.
+@export_range(0.0, 1.0, 0.01) var hover_info_indicator_transition_duration: float = 0.2
+## Lowest opacity reached when briefly dimming the indicator during a value label scramble animation.
+@export_range(0.0, 1.0, 0.05) var hover_info_indicator_transition_dim_opacity: float = 0.4
+
 @export_subgroup("Outline", "hover_info_indicator_outline_")
 ## Thickness of the circular outline surrounding the information indicator.
 @export_range(0.0, 3.0, 0.25) var hover_info_indicator_outline_width: float = 1.0
@@ -120,6 +128,10 @@ var _value_display_tween: Tween
 var _value_label_scale_tween: Tween
 var _value_label_adjust_size_during_scramble: bool = true
 var _value_label_scramble_started_in_call: bool = false
+
+var _hover_info_indicator_tween: Tween = null
+var _hover_info_indicator_available: bool = false
+var _hover_info_indicator_state_initialized: bool = false
 
 var _map_solver_result_coord: MapSolverResultCoord = null
 var _map_solver_result_solve_stage: MapSolverResult.SolveStage
@@ -182,6 +194,7 @@ func _ready() -> void:
 	candidate_hover_highlight.hide()
 	candidate_hover_highlight.modulate.a = 0.0
 	_initialize_hover_info_indicator()
+	hover_info_indicator.modulate.a = 1.0
 	
 	# Initialize the animation player for corners sprite
 	_initialize_corners_animation_player()
@@ -266,6 +279,10 @@ func hide_cursor() -> void:
 	_cursor_hiding = true
 	_hide_candidate_hover_highlight(true)
 	
+	# Stop the hover information indicator transition when removing the cursor.
+	_kill_hover_info_indicator_tween()
+	hover_info_indicator.modulate.a = 1.0
+	
 	# Hide hover details.
 	_hide_hover_details(true)
 	
@@ -343,7 +360,7 @@ func update_data(map_solver_result_coord: MapSolverResultCoord, result_solve_sta
 		_refresh_placement_explanation()
 		
 		# Refresh candidate hover highlight and hover information indicator.
-		_refresh_cursor_hover_visuals()
+		_refresh_cursor_hover_visuals(animate_transition)
 
 
 ## Updates the placement explanation renderer using this cursor's current result data.
@@ -420,8 +437,138 @@ func _initialize_hover_info_indicator() -> void:
 	hover_info_indicator.hide()
 
 
+## Applies the hover information indicator's appearance based on whether additional hover information is [param available] for the current result.
+## Updates its background, icon tint and unavailable slash immediately.
+func _apply_hover_info_indicator_state(available: bool) -> void:
+	# Assign the appropriate circular background color.
+	hover_info_indicator_background.color = (
+		hover_info_indicator_available_background
+		if available
+		else hover_info_indicator_unavailable_background
+	)
+	
+	# Assign the appropriate icon tint.
+	hover_info_indicator_icon.modulate = (
+		hover_info_indicator_available_icon_color
+		if available
+		else hover_info_indicator_unavailable_icon_color
+	)
+	
+	# Display the unavailable slash only when no information exists.
+	hover_info_indicator_unavailable_slash.visible = not available
+
+
+## Updates the hover information indicator's availability state.
+## When the availability changes or [param animate_change] is enabled, fade out the previous appearance before applying the new one.
+## The first initialization always applies its appearance immediately.
+func _set_hover_info_indicator_state(available: bool, animate_change: bool = false) -> void:
+	# Determine whether the indicator already had an assigned state.
+	var had_previous_state: bool = _hover_info_indicator_state_initialized
+	
+	# Check whether the availability actually changed.
+	var availability_changed: bool = had_previous_state and _hover_info_indicator_state_initialized != available
+	
+	# Store the current state for future updates.
+	_hover_info_indicator_available = available
+	_hover_info_indicator_state_initialized = true
+	
+	# Preserve any running animation when no visual update is required.
+	if had_previous_state and not availability_changed and not animate_change:
+		return
+	
+	# Stop any existing indicator transition.
+	_kill_hover_info_indicator_tween()
+	
+	# Apply the appearance immediately when transitions are disabled, during initialization, or when the cursor is not visible.
+	if (
+		not had_previous_state
+		or not hover_info_indicator_transition_enabled
+		or hover_info_indicator_transition_duration <= 0.0
+		or not is_visible_in_tree()
+		or _cursor_hiding
+	):
+		_apply_hover_info_indicator_state(available)
+		hover_info_indicator.modulate.a = 1.0
+		return
+	
+	# Prepare the duration of each half of the transition.
+	var half_duration: float = hover_info_indicator_transition_duration * 0.5
+	
+	# Initialize a sequential fade-out and fade-in transition.
+	_hover_info_indicator_tween = create_tween()
+	
+	# Fade out the previous indicator appearance.
+	_hover_info_indicator_tween.tween_property(
+		hover_info_indicator,
+		"modulate:a",
+		0.0,
+		half_duration,
+	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	
+	# Replace the indicator appearance while it's invisible.
+	_hover_info_indicator_tween.tween_callback(
+		func() -> void: _apply_hover_info_indicator_state(available)
+	)
+	
+	# Fade in the updated indicator appearance.
+	_hover_info_indicator_tween.tween_property(
+		hover_info_indicator,
+		"modulate:a",
+		1.0,
+		half_duration,
+	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+
+## Briefly dims the hover information indicator when the displayed result value is being updated by the value label.
+func _pulse_hover_info_indicator() -> void:
+	# Filter out processing if transitions are disabled or the indicator hasn't received its initial display state yet.
+	if (
+		not hover_info_indicator_transition_enabled
+		or hover_info_indicator_transition_duration <= 0.0
+		or not _hover_info_indicator_state_initialized
+		or not hover_info_indicator.visible
+		or not is_visible_in_tree()
+		or _cursor_hiding
+	):
+		return
+	
+	# Don't interrupt an indicator transition already in progress.
+	if _hover_info_indicator_tween != null and _hover_info_indicator_tween.is_running():
+		return
+	
+	# Prepare the duration of each half of the dimming animation.
+	var half_duration: float = hover_info_indicator_transition_duration * 0.5
+	
+	# Initialize a sequential dim and restore transition.
+	_hover_info_indicator_tween = create_tween()
+	
+	# Dim the indicator while the result value is changing.
+	_hover_info_indicator_tween.tween_property(
+		hover_info_indicator,
+		"modulate:a",
+		hover_info_indicator_transition_dim_opacity,
+		half_duration,
+	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	
+	# Restore its original opacity.
+	_hover_info_indicator_tween.tween_property(
+		hover_info_indicator,
+		"modulate:a",
+		1.0,
+		half_duration,
+	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+
+## Stops any existing animation assigned to the hover information indicator.
+func _kill_hover_info_indicator_tween() -> void:
+	if _hover_info_indicator_tween != null and _hover_info_indicator_tween.is_valid():
+		_hover_info_indicator_tween.kill()
+	_hover_info_indicator_tween = null
+
+
 ## Updates the candidate hover highlight polygon and the state, position and appearence of the hover information indicator.
-func _refresh_cursor_hover_visuals() -> void:
+## When [param aniamte_indicator] is enabled, animates the hover info indicator alongside the result cursor's existing value display transition.
+func _refresh_cursor_hover_visuals(animate_indicator: bool = false) -> void:
 	# Immediately reset the candidate hover transition before updating its geometry or switching to a different result coordinate.
 	_hide_candidate_hover_highlight(true)
 	
@@ -461,6 +608,10 @@ func _refresh_cursor_hover_visuals() -> void:
 	)
 	hover_info_indicator.visible = indicator_visible
 	if not indicator_visible:
+		# Reset the indicator transition when its display is disabled.
+		_kill_hover_info_indicator_tween()
+		hover_info_indicator.modulate.a = 1.0
+		_hover_info_indicator_state_initialized = false
 		return
 	
 	# Prepare the result cursor bounds.
@@ -485,18 +636,8 @@ func _refresh_cursor_hover_visuals() -> void:
 		)
 	)
 	
-	# Set the active or unavailable appearance using the same icon.
-	hover_info_indicator_background.color = (
-		hover_info_indicator_available_background
-		if has_hover_information
-		else hover_info_indicator_unavailable_background
-	)
-	hover_info_indicator_icon.modulate = (
-		hover_info_indicator_available_icon_color
-		if has_hover_information
-		else hover_info_indicator_unavailable_icon_color
-	)
-	hover_info_indicator_unavailable_slash.visible = not has_hover_information
+	# Updates the hover information indicator's active or unavailable state.
+	_set_hover_info_indicator_state(has_hover_information, animate_indicator)
 
 
 ## Updates value display and visibilty based on the map solver result coord and solve stage member parameters.
@@ -717,9 +858,15 @@ func _fit_value_label_text(value_text: String) -> void:
 
 
 ## Handles emitted scramble started signal from value label node to handle the local scale adjustment for the value label root node.
+## Also initializes the brief dim for the hover information indicator.
 func _on_value_label_scramble_started(old_text: String, new_text: String, duration: float) -> void:
 	# Set flag that value label scramble started.
 	_value_label_scramble_started_in_call = true
+	
+	# Briefly dim the hover information indicator when the displayed value begins scrambling.
+	# Skip this when the value display already has its own transition.
+	if _value_display_tween == null or not _value_display_tween.is_running():
+		_pulse_hover_info_indicator()
 	
 	# Filter out processing if the flag for value label size adjusting during scramble is not set.
 	if not _value_label_adjust_size_during_scramble:

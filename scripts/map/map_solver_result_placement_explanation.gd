@@ -20,7 +20,7 @@ extends Node2D
 ## Color used for numerical annotations.
 @export var annotation_color: Color = Color(1, 1, 1, 1)
 ## Background color used behind numerical annotations.
-@export var annotation_background: Color = Color(0.07, 0.07, 0.08, 0.88)
+@export var annotation_background: Color = Color(0.07, 0.07, 0.08, 0.75)
 ## Font size used for numerical annotations.
 @export var annotation_font_size: int = 16
 
@@ -38,11 +38,11 @@ extends Node2D
 ## Earliest radius used for line label placement around the cursor.
 @export_range(0.0, 100.0, 1.0) var line_annotation_min_distance: float = 20.0
 ## Maximum permitted radius for the CENTER of a line annotation.
-@export_range(1.0, 200.0, 1.0) var line_annotation_max_distance: float = 48.0
+@export_range(1.0, 200.0, 1.0) var line_annotation_max_distance: float = 76.0
 ## Spacing between attempts to move a label along its line.
 @export_range(1.0, 20.0, 1.0) var line_annotation_distance_step: float = 6.0
 ## Spacing for alternative placements to either side of the line.
-@export_range(0.0, 20.0, 1.0) var line_annotation_side_step: float = 6.0
+@export_range(0.0, 20.0, 1.0) var line_annotation_side_step: float = 4.0
 ## Extra separation when testing annotation rectangle overlaps.
 @export_range(0.0, 5.0, 0.5) var line_annotation_clearance: float = 1.0
 
@@ -325,12 +325,12 @@ func _try_draw_line_annotation(a: Vector2, b: Vector2, value: float, occupied: A
 	# Prefer positions close to the candidate, then move progressively away.
 	# Try both sides of the line for each distance before moving farther.
 	var attempts: int = maxi(1, ceili((max_distance - line_annotation_min_distance) / line_annotation_distance_step) + 1)
-	for attempt: int in range(attempts):
-		var distance: float = line_annotation_min_distance + float(attempt) * line_annotation_distance_step
-		if distance > max_distance:
-			break
-		
-		for side: int in [0, 1, -1, 2, -2]:
+	for side: int in [0, 1, -1, 2, -2]:
+		for attempt: int in range(attempts):
+			var distance: float = line_annotation_min_distance + float(attempt) * line_annotation_distance_step
+			if distance > max_distance:
+				break
+			
 			var center: Vector2 = near + direction * distance
 			center += perpendicular * float(side) * line_annotation_side_step
 			
@@ -456,6 +456,14 @@ func _draw() -> void:
 		# Draw room annotation.
 		_draw_number(center, number, room_annotation_scale, room_annotation_padding, true)
 		occupied_annotations.append(bounds)
+	
+	# Sort line annotations by their line length, starting with the shortest to maximize the placement possibilities for them.
+	line_annotations.sort_custom(
+		func(a: Dictionary, b: Dictionary) -> bool:
+			var a_length: float = a["from"].distance_squared_to(a["to"])
+			var b_length: float = b["from"].distance_squared_to(b["to"])
+			return a_length < b_length
+	)
 	
 	# Draw line annotations.
 	for entry: Dictionary in line_annotations:

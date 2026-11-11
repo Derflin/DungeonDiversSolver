@@ -285,7 +285,16 @@ func _refresh_placement_explanation() -> void:
 ## Provided [param animate_transition] flag defines if the changes should be applied through aniamtion or immediately.
 func _update_value_display(animate_transition: bool = false) -> void:
 	# Check whether the green checkmark should be displayed.
-	var show_check: bool = _map_solver_result_solve_stage == MapSolverResult.SolveStage.CALCULATED_WEIGHTS and _show_zero_weight_check
+	var show_check: bool = (
+		(
+			_map_solver_result_solve_stage == MapSolverResult.SolveStage.FOUND_VALID_PLACEMENTS
+		)
+		or
+		(
+			_map_solver_result_solve_stage == MapSolverResult.SolveStage.CALCULATED_WEIGHTS
+			and _show_zero_weight_check
+		)
+	)
 	
 	# Prepare label text based on the solve stage and the map solver result coord.
 	var label_text: String = ""

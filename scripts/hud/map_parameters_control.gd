@@ -16,6 +16,10 @@ var drawer_minimum_ui_scale: int = 2
 @export var drawer_toggle_expand_icon: Texture2D
 @export var drawer_toggle_collapse_icon: Texture2D
 
+@export_group("Secret Room Help")
+## Shared control responsible for displaying the selected secret room's help.
+@export var secret_room_help_control: MapRoomSecretHelpControl
+
 
 var _map_parameter_entry = preload("res://scenes/hud/map_parameter_entry.tscn")
 
@@ -23,6 +27,9 @@ var _drawer_open: bool = false
 var _drawer_tween: Tween
 var _drawer_collapsed_visible_width: float = 0.0
 var _drawer_effective_ui_scale: int = 1
+
+# Secret room entries connected to help signals and active row highlighting.
+var _secret_help_entries: Array[MapParameterEntry] = []
 
 
 @onready var drawer_root: Control = $DrawerAnchor/DrawerRoot
@@ -38,6 +45,10 @@ var _drawer_effective_ui_scale: int = 1
 
 
 func _ready() -> void:
+	# Update row highlights when the shared help panel changes its selection.
+	if is_instance_valid(secret_room_help_control):
+		secret_room_help_control.active_entry_changed.connect(_on_help_active_entry_changed)
+	
 	# Populate static and dynamic map parameter entries
 	_populate_parameter_entries()
 	
@@ -55,9 +66,43 @@ func _ready() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	# Close the drawer if it's open and the input event click was triggered outside of it.
+	# Process only pointer press events that can activate or dismiss help panel.
+	var pointer_position: Variant = _pressed_pointer_position(event)
+	if pointer_position == null:
+		return
+	
+	# Filter out processing clicks that will be managed by any of the entries related to the help panel.
+	for entry: MapParameterEntry in _secret_help_entries:
+		if entry.contains_help_trigger_viewport_point(pointer_position):
+			return
+	
+	# Filter out processing clicks that will happen inside the help panel.
+	if is_instance_valid(secret_room_help_control):
+		if secret_room_help_control.contains_viewport_point(pointer_position):
+			return
+		if secret_room_help_control.is_open():
+			secret_room_help_control.dismiss()
+	
+	# Close the drawer only for presses outside both the drawer and help panel.
 	if _drawer_open and check_if_input_click_outside_drawer(event):
 		_set_drawer_open(not _drawer_open)
+
+
+## Returns the viewport position for a pressed mouse button or touch, otherwise returns null.
+func _pressed_pointer_position(event: InputEvent) -> Variant:
+	if event is InputEventMouseButton:
+		# Ignore releases and wheel scrolling when checking outside clicks.
+		if not event.pressed:
+			return null
+		if event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN, MOUSE_BUTTON_WHEEL_LEFT, MOUSE_BUTTON_WHEEL_RIGHT]:
+			return null
+		
+		return event.position
+		
+	elif event is InputEventScreenTouch and event.pressed:
+		return event.position
+	
+	return null
 
 
 ## Checks if the provided input event was for the pressed input event outside of the DrawerPanel and DrawerStrip nodes and returns a bool value.
@@ -94,6 +139,13 @@ func check_if_input_click_outside_drawer(event: InputEvent) -> bool:
 	var drawer_local_position := drawer_panel.make_canvas_position_local(event_position)
 	var strip_local_position := drawer_strip.make_canvas_position_local(event_position)
 	
+	# Consider the shared floating help panel as part of the drawer's interactive area.
+	if (
+		is_instance_valid(secret_room_help_control)
+		and secret_room_help_control.contains_viewport_point(event_position)
+	):
+		return false
+	
 	# Check whether the event occured outside the panel.
 	var panel_rect := Rect2(Vector2.ZERO, drawer_panel.size)
 	var strip_rect := Rect2(Vector2.ZERO, drawer_strip.size)
@@ -124,7 +176,7 @@ func initialize_drawer_scrollbar() -> void:
 
 func _create_static_map_grid_size_entry() -> void:
 	# Initialize static map grid size parameter entry
-	var parameter_entry_map_grid_size := _map_parameter_entry.instantiate()
+	var parameter_entry_map_grid_size: MapParameterEntry = _map_parameter_entry.instantiate()
 	map_grid_settings_container.add_child(parameter_entry_map_grid_size, true)
 	parameter_entry_map_grid_size.initialize_map_grid_size()
 	
@@ -144,9 +196,14 @@ func _create_dynamic_secret_settings_entries() -> void:
 			continue
 		
 		# Initialize dynamic map secret parameter entry
-		var parameter_entry_secret_type_count_max := _map_parameter_entry.instantiate()
+		var parameter_entry_secret_type_count_max: MapParameterEntry = _map_parameter_entry.instantiate()
 		map_secret_settings_container.add_child(parameter_entry_secret_type_count_max)
 		parameter_entry_secret_type_count_max.initialize_secret_type_count_max(secret_room_type_kind)
+		
+		# Track this entry and forward its help requests to the shared help panel.
+		_secret_help_entries.append(parameter_entry_secret_type_count_max)
+		parameter_entry_secret_type_count_max.help_preview_requested.connect(_on_entry_help_preview_requested)
+		parameter_entry_secret_type_count_max.help_activation_requested.connect(_on_entry_help_activation_requested)
 		
 		# Set node custom node name
 		var secret_room_type_id = GameData.room_secret_types.get_type(secret_room_type_kind).get_id()
@@ -195,6 +252,10 @@ func _refresh_drawer_layout() -> void:
 	
 	# Initialize drawer state to be instantly set according to the parameters
 	_set_drawer_open(_drawer_open, true)
+	
+	# Refresh popup placement after the drawer's size and scale have settled.
+	if _drawer_open and is_instance_valid(secret_room_help_control):
+		secret_room_help_control.call_deferred("refresh_layout")
 
 
 func _on_drawer_toggle_button_pressed() -> void:
@@ -207,6 +268,10 @@ func _on_drawer_toggle_button_pressed() -> void:
 func _set_drawer_open(open: bool, instant: bool = false) -> void:
 	# Set drawer status
 	_drawer_open = open
+	
+	# Hide contextual help panel before moving the drawer out of view.
+	if not open and is_instance_valid(secret_room_help_control):
+		secret_room_help_control.hide_immediate()
 	
 	# Check if any tween is running and kill if it does
 	if _drawer_tween:
@@ -414,5 +479,38 @@ func _on_other_menu_submenu_opened() -> void:
 ## Checks and returns a bool value indicating if there are currently any active tween transitions that would delay the creation of save screenshot.
 func has_pending_save_screenshot_transition() -> bool:
 	return _drawer_tween != null and _drawer_tween.is_valid()
+
+#endregion
+
+
+#region Secret Room Help
+
+## Returns the current scale used to render the drawer and its parameter entries.
+func get_drawer_ui_scale() -> float:
+	return float(_drawer_effective_ui_scale)
+
+
+## Opens temporary help panel for the secret room represented by the hovered entry.
+func _on_entry_help_preview_requested(entry: MapParameterEntry) -> void:
+	if not is_instance_valid(secret_room_help_control):
+		return
+	
+	var room: RoomSecretType = GameData.room_secret_types.get_type(entry.secret_type_kind)
+	secret_room_help_control.request_preview(room, entry, drawer_panel, get_drawer_ui_scale())
+
+
+## Pins or switches the description for the clicked or tapped room entry.
+func _on_entry_help_activation_requested(entry: MapParameterEntry) -> void:
+	if not is_instance_valid(secret_room_help_control):
+		return
+	
+	var room: RoomSecretType = GameData.room_secret_types.get_type(entry.secret_type_kind)
+	secret_room_help_control.request_pin(room, entry, drawer_panel, get_drawer_ui_scale())
+
+
+## Updates all row highlights to reflect the current active and pinned entry.
+func _on_help_active_entry_changed(entry: MapParameterEntry, pinned: bool) -> void:
+	for child: MapParameterEntry in _secret_help_entries:
+		child.set_help_selected(child == entry, pinned and child == entry)
 
 #endregion

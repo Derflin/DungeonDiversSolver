@@ -83,6 +83,16 @@ var animation_random_max_timer_interval: float = 2.0
 var _merged_static_texture: Texture2D
 
 
+## Returns whether the room contains at least one block supported by the help panel.
+func has_help_content() -> bool:
+	# A room may contain unconfigured or placeholder blocks in its resource.
+	for block: RoomSecretHelpBlock in help_blocks:
+		if block != null and block.has_renderable_content():
+			return true
+	
+	return false
+
+
 func generate_secret_background_icon_pair_frames(seed_id: int, background_check: bool = false, icon_check: bool = false) -> Dictionary:
 	var result_dict = {"frame": -1, "triggered_base_frame": false}
 	

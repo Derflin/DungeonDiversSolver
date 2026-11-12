@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://q8745vdh26mn" path="res://scenes/hud/map_parameters_control.tscn" id="2_iuonh"]
 [ext_resource type="PackedScene" uid="uid://b65s6cwmlyn4f" path="res://scenes/hud/map_solver_control.tscn" id="3_k2fmo"]
 [ext_resource type="PackedScene" uid="uid://dbher8pgko3e0" path="res://scenes/hud/map_manager_control.tscn" id="5_ow5a4"]
+[ext_resource type="PackedScene" uid="uid://cn0aoor0wyoo2" path="res://scenes/hud/map_room_secret_help_control.tscn" id="6_b1x3f"]
 [ext_resource type="PackedScene" uid="uid://8bk1yrjo8s7q" path="res://scenes/save_system/ui/save_manager_control.tscn" id="6_hujxm"]
 [ext_resource type="PackedScene" uid="uid://d0dhy4jipapar" path="res://scenes/ui/components/modal_confirmation_dialog.tscn" id="8_b1x3f"]
 
@@ -37,8 +38,12 @@ mouse_filter = 2
 [node name="MapSolverControl" parent="HudLayer/HudRoot" unique_id=195301154 groups=["blocks_map_result_tooltips", "save_screenshot_transition_wait"] instance=ExtResource("3_k2fmo")]
 layout_mode = 1
 
-[node name="MapParametersControl" parent="HudLayer/HudRoot" unique_id=1239913164 groups=["blocks_map_result_tooltips", "save_screenshot_transition_wait"] instance=ExtResource("2_iuonh")]
+[node name="MapParametersControl" parent="HudLayer/HudRoot" unique_id=1239913164 node_paths=PackedStringArray("secret_room_help_control") groups=["blocks_map_result_tooltips", "save_screenshot_transition_wait"] instance=ExtResource("2_iuonh")]
 z_index = 5
+layout_mode = 1
+secret_room_help_control = NodePath("../MapRoomSecretHelpControl")
+
+[node name="MapRoomSecretHelpControl" parent="HudLayer/HudRoot" unique_id=429819148 instance=ExtResource("6_b1x3f")]
 layout_mode = 1
 
 [node name="MapManagerControl" parent="HudLayer/HudRoot" unique_id=871488007 node_paths=PackedStringArray("save_manager_control") groups=["blocks_map_result_tooltips", "save_screenshot_transition_wait"] instance=ExtResource("5_ow5a4")]

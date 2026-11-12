@@ -48,6 +48,8 @@ var _help_pinned: bool = false
 @onready var entry_value_editor := $ValueEditor
 
 
+#region Initialization
+
 func _ready() -> void:
 	# Allow the icon and title to receive input without intercepting the value editor.
 	mouse_filter = Control.MOUSE_FILTER_PASS
@@ -67,6 +69,43 @@ func _ready() -> void:
 	mouse_exited.connect(_on_help_row_exited)
 
 
+func initialize_map_grid_size() -> void:
+	# Initialize parameters.
+	parameter_type = ParameterType.MAP_GRID_SIZE
+	
+	# Get initial state of variables that will be managed by this parameter entry scene.
+	_get_map_grid_size()
+	
+	# Connect signals related to the parameter that will be managed by this parameter entry scene.
+	GameSettings.map_grid_size_parameter_changed.connect(_on_game_settings_map_grid_size_parameter_changed)
+	
+	# Set initialized data into display nodes.
+	display_icon()
+	refresh_display_texts()
+
+
+func initialize_secret_type_count_max(_secret_type_kind: RoomSecretType.Kind) -> void:
+	# Initialize parameters.
+	parameter_type = ParameterType.SECRET_TYPE_COUNT_MAX
+	secret_type_kind = _secret_type_kind
+	
+	# Get initial state of variables that will be managed by this parameter entry scene.
+	_get_secret_type_count_current()
+	_get_secret_type_count_max()
+	
+	# Connect signals related to the parameter that will be managed by this parameter entry scene.
+	GameState.map_secrets_count_current_changed.connect(_on_game_state_map_secrets_count_current_changed)
+	GameSettings.map_secrets_count_max_changed.connect(_on_game_settings_map_secrets_count_max_changed)
+	
+	# Set initialized data into display nodes.
+	display_icon()
+	refresh_display_texts()
+
+#endregion
+
+
+#region Help Interaction
+
 ## Returns whether this entry represents a secret room with displayable help.
 func _has_help() -> bool:
 	# Filter out processing if the parameter type isn't for a secret type or the assigned secret type is none.
@@ -78,49 +117,51 @@ func _has_help() -> bool:
 	return room != null and room.has_help_content()
 
 
-## Requests a preview when the pointer enters the icon or title.
+## Requests a temporary preview when the pointer enters the room icon or title.
 func _on_help_trigger_entered() -> void:
 	# Emit help preview requested signal if there is any help content for the current entry.
 	if _has_help():
 		help_preview_requested.emit(self)
 
 
-## Requests persistent help when the icon or title receives an activation input.
+## Handles click and touch activation of the room help panel.
 func _on_help_trigger_gui_input(event: InputEvent) -> void:
 	# Filter out processing if there isn't any help content for the current entry.
 	if not _has_help():
 		return
 	
-	# Treat a primary mouse press as a persistent help activation.
+	# Primary mouse presses activate or toggle the current room's description.
 	if event is InputEventMouseButton:
 		if event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 			help_activation_requested.emit(self)
+			
+	# Direct touch presses activate help when a synthetic mouse event is not used.
 	elif event is InputEventScreenTouch:
 		# Avoid double activation when godot synthesizes a mouse event from a touch.
 		if event.pressed and event.device != InputEvent.DEVICE_ID_EMULATION and not Input.emulate_mouse_from_touch:
 			help_activation_requested.emit(self)
 
 
-## Updates the highlight while the pointer is inside the row.
+## Updates the row's temporary pointer-hover highlight.
 func _on_help_row_entered() -> void:
 	_help_row_hovered = true
 	queue_redraw()
 
 
-## Clears hover highlighting when the pointer leaves the row.
+## Removes the temporary highlight after the pointer leaves the row.
 func _on_help_row_exited() -> void:
 	_help_row_hovered = false
 	queue_redraw()
 
 
-## Sets the active row highlight and whether it represents a pinned selection.
+## Updates the active and pinned selection highlight for this entry.
 func set_help_selected(selected: bool, pinned: bool = false) -> void:
 	_help_selected = selected
 	_help_pinned = pinned
 	queue_redraw()
 
 
-## Draws a highlight around help enabled entries that are hovered or selected.
+## Draws the configurable highlight around interactive secret-room rows.
 func _draw() -> void:
 	# Filter out processing if there isn't any help content for the current entry.
 	if not _has_help():
@@ -137,7 +178,7 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), border_color, false, help_border_width)
 
 
-## Checks whether a viewport point is inside a control after ancestor clipping.
+## Checks whether a viewport position remains inside a control after clipping.
 func _contains_visible_viewport_point(target: Control, viewport_position: Vector2) -> bool:
 	# Filter out processing if the target node isn't valid or it's not visible.
 	if not is_instance_valid(target) or not target.is_visible_in_tree():
@@ -160,12 +201,12 @@ func _contains_visible_viewport_point(target: Control, viewport_position: Vector
 	return visible_rect.has_point(viewport_position)
 
 
-## Checks whether the pointer is inside the visible part of this parameter row.
+## Checks whether the pointer is inside the visible part of this row.
 func contains_row_viewport_point(viewport_position: Vector2) -> bool:
 	return _contains_visible_viewport_point(self, viewport_position)
 
 
-## Checks whether the pointer is inside a visible room icon or title trigger.
+## Checks whether the pointer is inside the visible room icon or title.
 func contains_help_trigger_viewport_point(viewport_position: Vector2) -> bool:
 	# Filter out processing and return false if the current entry doesn't contain anything to be displayed in help.
 	if not _has_help():
@@ -179,69 +220,44 @@ func contains_help_trigger_viewport_point(viewport_position: Vector2) -> bool:
 	# Otherwise return false.
 	return false
 
-
-func initialize_map_grid_size() -> void:
-	# Initialize parameters
-	parameter_type = ParameterType.MAP_GRID_SIZE
-	
-	# Get initial state of variables that will be managed by this parameter entry scene
-	_get_map_grid_size()
-	
-	# Connect signals related to the parameter that will be managed by this parameter entry scene
-	GameSettings.map_grid_size_parameter_changed.connect(_on_game_settings_map_grid_size_parameter_changed)
-	
-	# Set initialized data into display nodes
-	display_icon()
-	refresh_display_texts()
+#endregion
 
 
-func initialize_secret_type_count_max(_secret_type_kind: RoomSecretType.Kind) -> void:
-	# Initialize parameters
-	parameter_type = ParameterType.SECRET_TYPE_COUNT_MAX
-	secret_type_kind = _secret_type_kind
-	
-	# Get initial state of variables that will be managed by this parameter entry scene
-	_get_secret_type_count_current()
-	_get_secret_type_count_max()
-	
-	# Connect signals related to the parameter that will be managed by this parameter entry scene
-	GameState.map_secrets_count_current_changed.connect(_on_game_state_map_secrets_count_current_changed)
-	GameSettings.map_secrets_count_max_changed.connect(_on_game_settings_map_secrets_count_max_changed)
-	
-	# Set initialized data into display nodes
-	display_icon()
-	refresh_display_texts()
-
+#region Parameter Data
 
 func _get_map_grid_size() -> void:
-	# Check if appropriate parameter entry type
+	# Check if appropriate parameter entry type.
 	if parameter_type != ParameterType.MAP_GRID_SIZE:
 		return
 	
-	# Gather map_grid_size from the game settings
+	# Gather map_grid_size from the game settings.
 	map_grid_size = GameSettings.map_grid_size
 
 
 func _get_secret_type_count_current() -> void:
-	# Check if appropriate parameter entry type
+	# Check if appropriate parameter entry type.
 	if parameter_type != ParameterType.SECRET_TYPE_COUNT_MAX or secret_type_kind == null or secret_type_kind == RoomSecretType.Kind.NONE:
 		return
 	
-	# Gather secret_type_value_current from the game state
+	# Gather secret_type_value_current from the game state.
 	secret_type_value_current = GameState.map_secrets_count_current[secret_type_kind]
 
 
 func _get_secret_type_count_max() -> void:
-	# Check if appropriate parameter entry type
+	# Check if appropriate parameter entry type.
 	if parameter_type != ParameterType.SECRET_TYPE_COUNT_MAX or secret_type_kind == null or secret_type_kind == RoomSecretType.Kind.NONE:
 		return
 	
-	# Gather secret_type_value_max from the game settings
+	# Gather secret_type_value_max from the game settings.
 	secret_type_value_max = GameSettings.map_secrets_count_max[secret_type_kind]
 
+#endregion
+
+
+#region Parameter Display
 
 func display_icon() -> void:
-	# Prepare and assign icon texture depending on the parameter entry type
+	# Prepare and assign icon texture depending on the parameter entry type.
 	if parameter_type == ParameterType.MAP_GRID_SIZE:
 		entry_icon.texture = GameSettings.map_grid_size_icon
 	
@@ -256,7 +272,7 @@ func refresh_display_texts() -> void:
 
 
 func _update_count_label() -> void:
-	# Prepare and assign label parameters depending on the parameter entry type
+	# Prepare and assign label parameters depending on the parameter entry type.
 	if parameter_type == ParameterType.MAP_GRID_SIZE:
 		var label_text := "%dx%d" % [map_grid_size.x, map_grid_size.y]
 		var label_color := label_default_color
@@ -275,7 +291,7 @@ func _update_count_label() -> void:
 
 
 func _update_description_label() -> void:
-	# Prepare and assign label parameters depending on the parameter entry type
+	# Prepare and assign label parameters depending on the parameter entry type.
 	if parameter_type == ParameterType.MAP_GRID_SIZE:
 		var label_text := "Grid Size"
 		var label_color := label_default_color
@@ -293,66 +309,72 @@ func _update_description_label() -> void:
 
 
 func _update_value_editor() -> void:
-	# Prepare and assign spinbox value editor parameters depending on the parameter entry type
+	# Prepare and assign spinbox value editor parameters depending on the parameter entry type.
 	if parameter_type == ParameterType.MAP_GRID_SIZE:
 		entry_value_editor.value = map_grid_size.x
 	
 	elif parameter_type == ParameterType.SECRET_TYPE_COUNT_MAX and secret_type_kind != null and secret_type_kind != RoomSecretType.Kind.NONE:
 		entry_value_editor.value = secret_type_value_max
 
+#endregion
+
+
+#region Parameter Change Signals
 
 func _on_game_settings_map_grid_size_parameter_changed() -> void:
-	# Check if appropriate parameter entry type
+	# Check if appropriate parameter entry type.
 	if parameter_type != ParameterType.MAP_GRID_SIZE:
 		return
 	
-	# Assign value
+	# Assign value.
 	map_grid_size = GameSettings.map_grid_size
 	
-	# Set collected data into display nodes
+	# Set collected data into display nodes.
 	refresh_display_texts()
 
 
 func _on_game_state_map_secrets_count_current_changed(kind: RoomSecretType.Kind, value: int) -> void:
-	# Check if appropriate parameter entry type
+	# Check if appropriate parameter entry type.
 	if parameter_type != ParameterType.SECRET_TYPE_COUNT_MAX or secret_type_kind == null or secret_type_kind == RoomSecretType.Kind.NONE:
 		return
 	
-	# Check if appropriate signal kind parameter type
+	# Check if appropriate signal kind parameter type.
 	if kind != secret_type_kind:
 		return
 	
-	# Assign value
+	# Assign value.
 	secret_type_value_current = value
 	
-	# Set collected data into display nodes
+	# Set collected data into display nodes.
 	refresh_display_texts()
 
 
 func _on_game_settings_map_secrets_count_max_changed(kind: RoomSecretType.Kind, value: int) -> void:
-	# Check if appropriate parameter entry type
+	# Check if appropriate parameter entry type.
 	if parameter_type != ParameterType.SECRET_TYPE_COUNT_MAX or secret_type_kind == null or secret_type_kind == RoomSecretType.Kind.NONE:
 		return
 	
-	# Check if appropriate signal kind parameter type
+	# Check if appropriate signal kind parameter type.
 	if kind != secret_type_kind:
 		return
 	
-	# Assign value
+	# Assign value.
 	secret_type_value_max = value
 	
-	# Set collected data into display nodes
+	# Set collected data into display nodes.
 	refresh_display_texts()
 
 
 func _on_value_editor_value_changed(value: float) -> void:
-	# Gather value from spinbox value editor and save it game_settings
+	# Gather value from spinbox value editor and save it game_settings.
 	if parameter_type == ParameterType.MAP_GRID_SIZE:
 		GameSettings.set_map_grid_size(entry_value_editor.value)
 	
 	elif parameter_type == ParameterType.SECRET_TYPE_COUNT_MAX and secret_type_kind != null and secret_type_kind != RoomSecretType.Kind.NONE:
 		GameSettings.set_map_secrets_count_max(secret_type_kind, entry_value_editor.value)
 	
-	# Manually release focus from the spinbox editor fields
+	# Manually release focus from the spinbox editor fields.
 	entry_value_editor.release_focus()
 	entry_value_editor.get_line_edit().release_focus()
+
+#endregion

@@ -76,6 +76,9 @@ var animation_random_max_timer_interval: float = 2.0
 @export_group("Placement Config", "placement_")
 @export var placement_config: SecretPlacementConfig = null
 
+@export_group("Help", "help_")
+@export var help_blocks: Array[RoomSecretHelpBlock] = []
+
 
 var _merged_static_texture: Texture2D
 

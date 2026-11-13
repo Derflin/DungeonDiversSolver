@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bn1xlytmmwobf"
-path="res://.godot/imported/MapSolver-Cancel.png-f6bc9e6e723cf2017b0c8aa68fe9bcff.ctex"
+uid="uid://cp045b4m1epgg"
+path="res://.godot/imported/UI-Cancel.png-61a754d375ba153d0ea0103d2d797e85.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/icons/map_solver/MapSolver-Cancel.png"
-dest_files=["res://.godot/imported/MapSolver-Cancel.png-f6bc9e6e723cf2017b0c8aa68fe9bcff.ctex"]
+source_file="res://assets/icons/ui/UI-Cancel.png"
+dest_files=["res://.godot/imported/UI-Cancel.png-61a754d375ba153d0ea0103d2d797e85.ctex"]
 
 [params]
 

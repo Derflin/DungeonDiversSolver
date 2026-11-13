@@ -86,6 +86,7 @@ var _reference_regex: RegEx
 @onready var header: HBoxContainer = $HelpPanel/MarginContainer/VBoxContainer/HeaderContainer
 @onready var header_room_icon: ScrambleTextureRect = $HelpPanel/MarginContainer/VBoxContainer/HeaderContainer/RoomIcon
 @onready var header_room_name: ScrambleLabel = $HelpPanel/MarginContainer/VBoxContainer/HeaderContainer/RoomName
+@onready var header_close_button: Button = $HelpPanel/MarginContainer/VBoxContainer/HeaderContainer/CloseButton
 @onready var separator: HSeparator = $HelpPanel/MarginContainer/VBoxContainer/HSeparator
 @onready var scroll_container: SmoothScrollContainer = $HelpPanel/MarginContainer/VBoxContainer/DescriptionRegion/DescriptionScrollContainer
 @onready var description_contents: VBoxContainer = $HelpPanel/MarginContainer/VBoxContainer/DescriptionRegion/DescriptionScrollContainer/DescriptionContents
@@ -109,6 +110,9 @@ func _ready() -> void:
 	_reference_regex = RegEx.new()
 	var error: Error = _reference_regex.compile("\\{(room|icon|name):(secret|special):([A-Za-z0-9_]+)\\}")
 	assert(error == OK, "MapRoomSecretHelpControl: Could not compile help room reference pattern")
+	
+	# Allow the visible help panel to be dismissed by close button.
+	header_close_button.pressed.connect(dismiss)
 	
 	# Connect the viewport size changed signal to handle resizing of the panel.
 	get_viewport().size_changed.connect(_on_viewport_resized)

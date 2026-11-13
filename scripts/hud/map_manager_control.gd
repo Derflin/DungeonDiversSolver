@@ -151,6 +151,9 @@ func _on_load_button_pressed() -> void:
 	if save_manager_control.visible:
 		return
 	
+	# Wait fr pending hud transitions before opening a menu that pauses the scene tree.
+	await _wait_for_save_screenshot_transitions()
+	
 	# Open save manager display in load mode.
 	save_manager_control.open_load_mode()
 

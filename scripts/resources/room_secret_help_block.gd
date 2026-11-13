@@ -24,6 +24,8 @@ enum BlockType {
 @export var content_media_image: Texture2D
 ## Frames reserved for animated illustrations displayed by ANIMATION block type.
 @export var content_media_animation_frames: SpriteFrames
+## Name of the SpriteFrames animation played by ANIMATION block type.
+@export var content_media_animation_name: StringName = &"default"
 ## Optional caption displayed below an illustration for IMAGE and ANIMATION block types.
 @export var content_media_caption: String = ""
 
@@ -40,8 +42,15 @@ func has_renderable_content() -> bool:
 			return content_media_image != null
 			
 		BlockType.ANIMATION:
-			# Animated illustration playback is not available in the current renderer.
-			return false
+			# Require an animation that can display at least its initial frame.
+			if content_media_animation_frames == null:
+				return false
+			if not content_media_animation_frames.has_animation(content_media_animation_name):
+				return false
+			if content_media_animation_frames.get_frame_count(content_media_animation_name) == 0:
+				return false
+			
+			return content_media_animation_frames.get_frame_texture(content_media_animation_name, 0) != null
 			
 		_:
 			return false

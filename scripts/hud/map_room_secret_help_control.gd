@@ -449,7 +449,7 @@ func _populate_description(room: RoomSecretType) -> void:
 	
 	# Preserve resource order while creating supported text and image blocks..
 	for block: RoomSecretHelpBlock in room.help_blocks:
-		if block == null:
+		if block == null or not block.has_renderable_content():
 			continue
 		
 		match block.block_type:
@@ -458,8 +458,7 @@ func _populate_description(room: RoomSecretType) -> void:
 			RoomSecretHelpBlock.BlockType.IMAGE:
 				_add_image_block(block)
 			RoomSecretHelpBlock.BlockType.ANIMATION:
-				# Report animation blocks until a dedicated player is implemented.
-				push_warning("Animated help block not rendered yet; implement a SpriteFrames-backed UI control when needed")
+				_add_animation_block(block)
 
 
 ## Creates a container for one independently spaced help-content block.
@@ -525,13 +524,43 @@ func _add_image_block(block: RoomSecretHelpBlock) -> void:
 	image_rect.custom_minimum_size = Vector2.ONE
 	item.add_child(image_rect)
 	
-	# Add descriptive caption for image if any is set on the block.
-	if not block.content_media_caption.is_empty():
-		var caption := Label.new()
-		caption.text = block.content_media_caption
-		caption.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		item.add_child(caption)
+	# Add descriptive caption for image.
+	_add_media_caption(item, block.content_media_caption)
+
+
+## Creates an animated illustration using the frames and caption assigned to the help block.
+func _add_animation_block(block: RoomSecretHelpBlock) -> void:
+	# Skip blocks without an available frame animation.
+	if not block.has_renderable_content():
+		return
+	
+	# Prepare item container for the block contents.
+	var item: VBoxContainer = _new_content_item()
+	
+	# Prepare an animation rect and configure it.
+	var animation_rect := RoomSecretHelpAnimationRect.new()
+	animation_rect.custom_minimum_size = Vector2.ONE
+	item.add_child(animation_rect)
+	
+	animation_rect.configure(block.content_media_animation_frames, block.content_media_animation_name)
+	
+	# Add descriptive caption for animation.
+	_add_media_caption(item, block.content_media_caption)
+
+
+## Adds an optional wrapping caption beneath a help illustration.
+func _add_media_caption(item: VBoxContainer, caption_text: String) -> void:
+	# Skip empty captions.
+	if caption_text.strip_edges().is_empty():
+		return
+	
+	# Prepare a descriptive caption label.
+	var caption := Label.new()
+	caption.text = caption_text
+	caption.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	caption.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	item.add_child(caption)
 
 
 ## Renders text with room icons and names resolved from the current catalogs.
@@ -628,6 +657,15 @@ func _measure_description_content() -> void:
 				text_label.custom_minimum_size.y = 0.0
 				text_label.size.x = available_width
 				text_label.custom_minimum_size.y = maxf(1.0, ceilf(float(text_label.get_content_height())))
+				
+			elif child_node is RoomSecretHelpAnimationRect:
+				var animation_rect: RoomSecretHelpAnimationRect = child_node
+				
+				# Reserve enough space for the largest frame without stretching it.
+				var frame_size: Vector2 = animation_rect.get_natural_size()
+				var shown_width: float = minf(available_width, frame_size.x)
+				var shown_height: float = frame_size.y * shown_width / maxf(1.0, frame_size.x)
+				animation_rect.custom_minimum_size = Vector2(ceilf(shown_width), ceilf(shown_height))
 				
 			elif child_node is TextureRect:
 				var image_rect: TextureRect = child_node

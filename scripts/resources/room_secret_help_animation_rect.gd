@@ -14,6 +14,7 @@ var _animation_name: StringName = &"default"
 var _frame_index: int = 0
 var _frame_elapsed: float = 0.0
 var _playing: bool = false
+var _playback_direction: int = 1
 
 # Largest frame dimensions, used to reserve a stable illustration area.
 var _natural_size: Vector2 = Vector2.ONE
@@ -43,6 +44,7 @@ func configure(frames: SpriteFrames, animation_name: StringName = &"default") ->
 	_animation_name = animation_name
 	_frame_index = 0
 	_frame_elapsed = 0.0
+	_playback_direction = 1
 	_natural_size = Vector2.ONE
 	texture = null
 	
@@ -125,19 +127,33 @@ func _get_current_frame_seconds() -> float:
 ## Displays the next frame or completes playback when a non-looping clip ends.
 func _advance_frame() -> void:
 	var frame_count: int = _frames.get_frame_count(_animation_name)
+	var loop_mode: SpriteFrames.LoopMode = _frames.get_animation_loop_mode(_animation_name)
 	
-	# Restart a looping clip or retain the last frame of a non-looping clip.
-	if _frame_index + 1 >= frame_count:
-		if _frames.get_animation_loop(_animation_name):
-			_frame_index = 0
-		else:
-			_playing = false
-			set_process(false)
-			return
-	else:
-		_frame_index += 1
+	# Determine the next frame index according to the animation's looping behaviour.
+	match loop_mode:
+		SpriteFrames.LOOP_NONE:
+			# Stop playback after the final frame has completed its duration.
+			if _frame_index >= frame_count - 1:
+				_playing = false
+				set_process(false)
+				return
+			
+			_frame_index += 1
+			
+		SpriteFrames.LOOP_LINEAR:
+			# Restart the animation after reaching its final frame.
+			_frame_index = (_frame_index + 1) % frame_count
+			
+		SpriteFrames.LOOP_PINGPONG:
+			# Reverse playback direction when reaching either end of the animation.
+			if _frame_index >= frame_count - 1:
+				_playback_direction = -1
+			elif _frame_index <= 0:
+				_playback_direction = 1
+			
+			_frame_index += _playback_direction
 	
-	# Change only the displayed frame, the reserved control dimensions stay fixed.
+	# Update the displayed texture without changing the reserved control dimensions.
 	texture = _frames.get_frame_texture(_animation_name, _frame_index)
 
 #endregion

@@ -175,15 +175,27 @@ func request_preview(room: RoomSecretType, entry: MapParameterEntry, drawer: Con
 	_select_room(room, entry, drawer, ui_scale)
 
 
-## Pins a room description, switches pinned rooms, or toggles the active selection off.
-func request_pin(room: RoomSecretType, entry: MapParameterEntry, drawer: Control, ui_scale: float) -> void:
+## Pins the selected room, or returns an active pin to preview mode when the mouse remains over its entry.
+func request_pin(room: RoomSecretType, entry: MapParameterEntry, drawer: Control, ui_scale: float, from_touch: bool = false) -> void:
 	# Filter out processing if there isn't a valid help description available for the room.
 	if not _is_valid_help(room):
 		return
 	
-	# Activating the already pinned entry acts as a toggle.
+	# An activation of the pinned entry toggles the persistent state off.
 	if is_pinned() and _active_entry == entry:
-		dismiss()
+		var keep_preview: bool = (
+			not from_touch
+			and is_instance_valid(entry)
+			and entry.contains_help_trigger_viewport_point(get_viewport().get_mouse_position())
+		)
+		
+		if keep_preview:
+			_mode = HelpMode.PREVIEW
+			_cancel_pending_close()
+			active_entry_changed.emit(entry, false)
+		else:
+			dismiss()
+		
 		return
 	
 	# Display the help panel in pinned mode.

@@ -21,12 +21,12 @@ enum ParameterType {
 @export var label_invalid_color := Color.RED
 
 @export_group("Help Highlight", "help_")
-## Border color displayed while the pointer is over a room with available help.
-@export var help_hover_border_color: Color = Color(0.72, 0.64, 0.50, 0.8)
-## Border color displayed while the room's help description is pinned.
-@export var help_pinned_border_color: Color = Color(0.98, 0.81, 0.45, 1.0)
-## Width of the outline drawn around interactive secret room entries.
-@export_range(0.0, 8.0, 0.5) var help_border_width: float = 1.0
+## Outline style used while the pointer hovers over or previews room help.
+@export var help_preview_style: StyleBoxFlat
+## Outline style used while the associated room help is pinned.
+@export var help_pinned_style: StyleBoxFlat
+## Amount by which the visual outline extends beyond the help interaction region.
+@export var help_highlight_padding: Vector2 = Vector2(2.0, 2.0)
 ## Space reserved between the help trigger region and the value editor.
 @export var help_editor_gap: float = 3.0
 ## Maximum pointer movement still treated as a touch tap.
@@ -254,19 +254,20 @@ func set_help_selected(selected: bool, pinned: bool = false) -> void:
 
 ## Draws the configurable highlight around interactive secret-room rows.
 func _draw() -> void:
-	# Filter out processing if there isn't any help content for the current entry.
-	if not _has_help():
+	# Draw help feedback only for entries with renderable room help content.
+	if not _has_help() or (not _help_selected and not _help_row_hovered):
 		return
 	
-	# Filter out processing if entry isn't selected or hovered.
-	if not _help_selected and not _help_row_hovered:
+	# Select the exported border style for the current interaction state.
+	var style: StyleBoxFlat = help_pinned_style if _help_pinned else help_preview_style
+	if style == null:
 		return
 	
-	# A pinned selection uses a distinct outline from temporary hover feedback.
-	var border_color: Color = help_pinned_border_color if _help_pinned else help_hover_border_color
-	
-	# Draw a highlight rectangle.
-	draw_rect(Rect2(Vector2.ZERO, size), border_color, false, help_border_width)
+	# Expand the visible border without changing the input rectangle or entry layout.
+	var border_rect: Rect2 = _get_help_region_rect()
+	border_rect.position -= help_highlight_padding
+	border_rect.size += help_highlight_padding * 2.0
+	draw_style_box(style, border_rect)
 
 
 ## Checks whether a viewport position remains inside a control after clipping.

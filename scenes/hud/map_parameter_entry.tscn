@@ -2,6 +2,32 @@
 
 [ext_resource type="Script" uid="uid://cexom05snbka" path="res://scripts/hud/map_parameter_entry.gd" id="1_ullu6"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ullu6"]
+draw_center = false
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.86504203, 0.8209799, 0.735357, 0.8)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+expand_margin_left = 3.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tkbw1"]
+draw_center = false
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.9911565, 0.91132057, 0.7014107, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+expand_margin_left = 3.0
+
 [sub_resource type="LabelSettings" id="LabelSettings_tkbw1"]
 resource_local_to_scene = true
 
@@ -16,6 +42,8 @@ grow_vertical = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 6
 script = ExtResource("1_ullu6")
+help_preview_style = SubResource("StyleBoxFlat_ullu6")
+help_pinned_style = SubResource("StyleBoxFlat_tkbw1")
 
 [node name="IconContainer" type="Control" parent="." unique_id=435234217]
 custom_minimum_size = Vector2(15, 15)

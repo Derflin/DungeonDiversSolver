@@ -96,15 +96,14 @@ func _input(event: InputEvent) -> void:
 
 ## Returns the viewport position for a pressed mouse button or touch, otherwise returns null.
 func _pressed_pointer_position(event: InputEvent) -> Variant:
+	# Handle only mouse input events assigned to the map selection action.
 	if event is InputEventMouseButton:
-		# Ignore releases and wheel scrolling when checking outside clicks.
-		if not event.pressed:
-			return null
-		if event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN, MOUSE_BUTTON_WHEEL_LEFT, MOUSE_BUTTON_WHEEL_RIGHT]:
+		if not event.is_action_pressed(&"map_select"):
 			return null
 		
 		return event.position
 		
+	# Handle touchscreen presses independently of the mapped mouse selection action.
 	elif event is InputEventScreenTouch and event.pressed:
 		return event.position
 	
@@ -119,12 +118,8 @@ func check_if_input_click_outside_drawer(event: InputEvent) -> bool:
 	var event_position: Vector2
 	# Handle mouse as current pointer device.
 	if event is InputEventMouseButton:
-		# Filter out processing if the event pressed state flag is unset.
-		if not event.pressed:
-			return false
-		
-		# Ignore mouse wheel scrolling.
-		if event.button_index == MOUSE_BUTTON_WHEEL_UP or event.button_index == MOUSE_BUTTON_WHEEL_DOWN or event.button_index == MOUSE_BUTTON_WHEEL_LEFT or event.button_index == MOUSE_BUTTON_WHEEL_RIGHT:
+		# Filter out mouse inputs that aren't assigned to the map selection action.
+		if not event.is_action_pressed(&"map_select"):
 			return false
 		
 		event_position = event.position
@@ -524,12 +519,16 @@ func _on_entry_help_preview_requested(entry: MapParameterEntry) -> void:
 
 
 ## Pins or switches the description for the clicked or tapped room entry.
-func _on_entry_help_activation_requested(entry: MapParameterEntry) -> void:
+func _on_entry_help_activation_requested(entry: MapParameterEntry, from_touch: bool) -> void:
+	# Filter out processing if the shared help panel is unavailable.
 	if not is_instance_valid(secret_room_help_control):
 		return
 	
+	# Retrieve the secret room resource associated with the activated entry.
 	var room: RoomSecretType = GameData.room_secret_types.get_type(entry.secret_type_kind)
-	secret_room_help_control.request_pin(room, entry, drawer_panel, get_drawer_ui_scale())
+	
+	# Request activation and forward the originating input type
+	secret_room_help_control.request_pin(room, entry, drawer_panel, get_drawer_ui_scale(), from_touch)
 
 
 ## Updates all row highlights to reflect the current active and pinned entry.

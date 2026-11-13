@@ -2,10 +2,10 @@ class_name MapParameterEntry
 extends HBoxContainer
 
 
-## Emitted when the pointer enters a secret room's icon or title.
+## Emitted when the pointer enters the room help region.
 signal help_preview_requested(entry: MapParameterEntry)
-## Emitted when the icon or title is clicked or tapped.
-signal help_activation_requested(entry: MapParameterEntry)
+## Emitted when the room help region is actived by mouse selection or touch.
+signal help_activation_requested(entry: MapParameterEntry, from_touch: bool)
 
 
 enum ParameterType {
@@ -27,6 +27,10 @@ enum ParameterType {
 @export var help_pinned_border_color: Color = Color(0.98, 0.81, 0.45, 1.0)
 ## Width of the outline drawn around interactive secret room entries.
 @export_range(0.0, 8.0, 0.5) var help_border_width: float = 1.0
+## Space reserved between the help trigger region and the value editor.
+@export var help_editor_gap: float = 3.0
+## Maximum pointer movement still treated as a touch tap.
+@export var help_touch_tap_max_movement: float = 12.0
 
 
 var parameter_type: ParameterType = ParameterType.NONE
@@ -39,6 +43,19 @@ var secret_type_value_max: int = 0
 var _help_row_hovered: bool = false
 var _help_selected: bool = false
 var _help_pinned: bool = false
+
+# Prevents a touchscreen's emulated cursor from creating a hover-only preview.
+var _allow_mouse_hover: bool = true
+
+# Touch gesture currently being checked for activation of this entry.
+var _touch_index: int = -1
+var _touch_start_position: Vector2 = Vector2.ZERO
+var _touch_has_moved: bool = false
+
+# Start of an emulated touch-to-mouse gesture delivered through the gui.
+var _emulated_press_position: Vector2 = Vector2.ZERO
+var _emulated_pressed: bool = false
+var _emulated_moved: bool = false
 
 
 @onready var entry_icon_container: Control = $IconContainer
@@ -58,15 +75,7 @@ func _ready() -> void:
 	entry_count_label.mouse_filter = Control.MOUSE_FILTER_PASS
 	entry_description_label.mouse_filter = Control.MOUSE_FILTER_PASS
 	
-	# Trigger the help panel only from the room icon and description label.
-	entry_icon_container.mouse_entered.connect(_on_help_trigger_entered)
-	entry_description_label.mouse_entered.connect(_on_help_trigger_entered)
-	entry_icon_container.gui_input.connect(_on_help_trigger_gui_input)
-	entry_description_label.gui_input.connect(_on_help_trigger_gui_input)
 	
-	# Keep a visual highlight while the pointer remains anywhere over the row.
-	mouse_entered.connect(_on_help_row_entered)
-	mouse_exited.connect(_on_help_row_exited)
 
 
 func initialize_map_grid_size() -> void:
@@ -117,41 +126,123 @@ func _has_help() -> bool:
 	return room != null and room.has_help_content()
 
 
-## Requests a temporary preview when the pointer enters the room icon or title.
-func _on_help_trigger_entered() -> void:
-	# Emit help preview requested signal if there is any help content for the current entry.
-	if _has_help():
+## Returns the local area covering the icon, count, title and spaces between them.
+func _get_help_region_rect() -> Rect2:
+	var right_edge: float = maxf(0.0, entry_value_editor.position.x - help_editor_gap)
+	return Rect2(Vector2.ZERO, Vector2(right_edge, size.y))
+
+
+## Keeps the hover highlight and help preview synchronized with one input region.
+func _process(_delta: float) -> void:
+	# Non-secret entries and touch-only interaction don't create mouse previews.
+	if not _has_help() or not _allow_mouse_hover:
+		if _help_row_hovered:
+			_help_row_hovered = false
+			queue_redraw()
+		return
+	
+	# Check if mouse hovers over the the entry hover area.
+	var hovering: bool = contains_help_trigger_viewport_point(get_viewport().get_mouse_position())
+	
+	# Filter out processing if the entry mouse hover state is the same as the just checked one.
+	if hovering == _help_row_hovered:
+		return
+	
+	# Update row hover.
+	_help_row_hovered = hovering
+	queue_redraw()
+	
+	# Emit signal to request the help preview.
+	if hovering:
 		help_preview_requested.emit(self)
 
 
-## Handles click and touch activation of the room help panel.
-func _on_help_trigger_gui_input(event: InputEvent) -> void:
-	# Filter out processing if there isn't any help content for the current entry.
+## Tracks physical mouse input and native touchscreen gestures separately.
+func _input(event: InputEvent) -> void:
+	# Filter out processing if the entry doesn't contain any help.
 	if not _has_help():
 		return
 	
-	# Primary mouse presses activate or toggle the current room's description.
-	if event is InputEventMouseButton:
-		if event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			help_activation_requested.emit(self)
+	# Handle native touchscreen press and release events.
+	if event is InputEventScreenTouch:
+		# Disable hover previews while interacting through touchscreen input.
+		_allow_mouse_hover = false
+		
+		# Avoid processing the same touch through both native and emulated mouse events.
+		if Input.emulate_mouse_from_touch:
+			return
+		
+		# Register the start of a touch gesture within the interactive help region.
+		if event.pressed and _touch_index == -1:
+			if contains_help_trigger_viewport_point(event.position):
+				_touch_index = event.index
+				_touch_start_position = event.position
+				_touch_has_moved = false
 			
-	# Direct touch presses activate help when a synthetic mouse event is not used.
-	elif event is InputEventScreenTouch:
-		# Avoid double activation when godot synthesizes a mouse event from a touch.
-		if event.pressed and event.device != InputEvent.DEVICE_ID_EMULATION and not Input.emulate_mouse_from_touch:
-			help_activation_requested.emit(self)
+		# Evaluate the completed gesture when the tracked touch is released.
+		elif not event.pressed and event.index == _touch_index:
+			var is_tap: bool = not _touch_has_moved and event.position.distance_to(_touch_start_position) <= help_touch_tap_max_movement
+			
+			# Reset the active touch gesture before processing its activation.
+			_touch_index = -1
+			
+			# Activate help only for taps released within the interactive region.
+			if is_tap and contains_help_trigger_viewport_point(event.position):
+				help_activation_requested.emit(self, true)
+		
+	# Track touch movement to prevent scrolling gestures from activating help.
+	elif event is InputEventScreenDrag and event.index == _touch_index:
+		if event.position.distance_to(_touch_start_position) > help_touch_tap_max_movement:
+			_touch_has_moved = true
+		
+	# Restore hover-based interaction when a physical mouse is used.
+	elif event is InputEventMouseMotion and event.device != InputEvent.DEVICE_ID_EMULATION:
+		_allow_mouse_hover = true
 
 
-## Updates the row's temporary pointer-hover highlight.
-func _on_help_row_entered() -> void:
-	_help_row_hovered = true
-	queue_redraw()
-
-
-## Removes the temporary highlight after the pointer leaves the row.
-func _on_help_row_exited() -> void:
-	_help_row_hovered = false
-	queue_redraw()
+## Handles mouse selection and emulated touchscreen activation within the interactive help region.
+func _gui_input(event: InputEvent) -> void:
+	# Filter out processing if the entry doesn't contain any help.
+	if not _has_help():
+		return
+	
+	# Track pointer movement during an emulated touchscreen press to distinguish tapping from dragging.
+	if event is InputEventMouseMotion and _emulated_pressed:
+		var mouse_motion: InputEventMouseMotion = event
+		if mouse_motion.position.distance_to(_emulated_press_position) > help_touch_tap_max_movement:
+			_emulated_moved = true
+		return
+	
+	# Filter out other input event types apart from mouse button events.
+	if not event is InputEventMouseButton:
+		return
+	
+	# Process only input events associated with the mapped selection action.
+	var mouse_event: InputEventMouseButton = event
+	if not mouse_event.is_action_pressed(&"map_select") and not mouse_event.is_action_released(&"map_select"):
+		return
+	
+	# Handle mouse button events emulated from touchscreen input.
+	if mouse_event.device == InputEvent.DEVICE_ID_EMULATION:
+		if mouse_event.pressed:
+			# Store the initial press position and whether it occurred inside the help region.
+			_emulated_pressed = _get_help_region_rect().has_point(mouse_event.position)
+			_emulated_press_position = mouse_event.position
+			_emulated_moved = false
+		else:
+			# Activate help only when a completed tap remains inside the help region.
+			if _emulated_pressed and not _emulated_moved and _get_help_region_rect().has_point(mouse_event.position):
+				help_activation_requested.emit(self, true)
+			
+			# Reset the gesture state after releasing the emulated mouse button.
+			_emulated_pressed = false
+		
+		return
+	
+	# Activate help when a physical mouse selects the interactive help region.
+	if mouse_event.pressed and _get_help_region_rect().has_point(mouse_event.position):
+		help_activation_requested.emit(self, false)
+		accept_event()
 
 
 ## Updates the active and pinned selection highlight for this entry.
@@ -203,22 +294,22 @@ func _contains_visible_viewport_point(target: Control, viewport_position: Vector
 
 ## Checks whether the pointer is inside the visible part of this row.
 func contains_row_viewport_point(viewport_position: Vector2) -> bool:
-	return _contains_visible_viewport_point(self, viewport_position)
+	return contains_help_trigger_viewport_point(viewport_position)
 
 
-## Checks whether the pointer is inside the visible room icon or title.
+## Checks whether the pointer is inside the visible, interactive help area.
 func contains_help_trigger_viewport_point(viewport_position: Vector2) -> bool:
-	# Filter out processing and return false if the current entry doesn't contain anything to be displayed in help.
-	if not _has_help():
+	# Filter out processing and return false if the current entry doesn't contain anything to be displayed in help or the scene isn't displayed.
+	if not _has_help() or not is_visible_in_tree():
 		return false
 	
-	# Count labels and vlaue editors don't activate the description panel.
-	for trigger: Control in [entry_icon_container, entry_description_label]:
-		if _contains_visible_viewport_point(trigger, viewport_position):
-			return true
+	# Reject coordinates outside the portion visible within thee drawer scroll viewport.
+	if not _contains_visible_viewport_point(self, viewport_position):
+		return false
 	
-	# Otherwise return false.
-	return false
+	# Check whether viewport position lies inside the interactive help area.
+	var local_position: Vector2 = make_canvas_position_local(viewport_position)
+	return _get_help_region_rect().has_point(local_position)
 
 #endregion
 

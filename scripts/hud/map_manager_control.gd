@@ -6,7 +6,7 @@ signal map_manager_reset_map_state_requested()
 signal map_manager_reset_map_settings_requested()
 
 
-const SAVE_SCREENSHOT_TRANSITION_GROUP: StringName = &"save_screenshot_transition_wait"
+const HUD_TRANSITION_WAIT_GROUP: StringName = &"hud_transition_wait"
 const MAX_TRANSITION_WAIT_MS: int = 1500
 
 
@@ -152,7 +152,7 @@ func _on_load_button_pressed() -> void:
 		return
 	
 	# Wait fr pending hud transitions before opening a menu that pauses the scene tree.
-	await _wait_for_save_screenshot_transitions()
+	await _wait_for_hud_transitions()
 	
 	# Open save manager display in load mode.
 	save_manager_control.open_load_mode()
@@ -161,7 +161,7 @@ func _on_load_button_pressed() -> void:
 ## Returns a game screenshot based on the current viewport state.
 func _capture_game_screenshot() -> Image:
 	# Wait for all the game screenshot related transitions to end before starting to prepare a screenshot.
-	await _wait_for_save_screenshot_transitions()
+	await _wait_for_hud_transitions()
 	
 	# Await for when the current frame will be finished rendering.
 	await RenderingServer.frame_post_draw
@@ -170,16 +170,16 @@ func _capture_game_screenshot() -> Image:
 	return get_viewport().get_texture().get_image()
 
 
-#region Save Screenshot Transition Wait Group
+#region HUD Transition Wait Group
 
 ## Checks and returns a bool value indicating if there are currently any active tween transitions that would delay the creation of save screenshot.
-func has_pending_save_screenshot_transition() -> bool:
+func has_pending_hud_transition() -> bool:
 	return false
 
 
-## Check related nodes in the SAVE_SCREENSHOT_TRANSITION_GROUP group and waits until all their pending save screenshot has passed.
+## Check related nodes in the HUD_TRANSITION_WAIT_GROUP group and waits until all their pending save screenshot has passed.
 ## If the waiting time would exceed the static value defined in MAX_TRANSITION_WAIT_MS static variable, it will automatically stop waiting.
-func _wait_for_save_screenshot_transitions() -> void:
+func _wait_for_hud_transitions() -> void:
 	# Get current time.
 	var start_time := Time.get_ticks_msec()
 	
@@ -187,15 +187,15 @@ func _wait_for_save_screenshot_transitions() -> void:
 	while true:
 		var has_pending_transition := false
 		
-		# Check if any of the nodes assigned to the SAVE_SCREENSHOT_TRANSITION_GROUP has some pending transitions.
-		for node in get_tree().get_nodes_in_group(SAVE_SCREENSHOT_TRANSITION_GROUP):
+		# Check if any of the nodes assigned to the HUD_TRANSITION_WAIT_GROUP has some pending transitions.
+		for node in get_tree().get_nodes_in_group(HUD_TRANSITION_WAIT_GROUP):
 			# Filter out processing if the node doesn't have appropriate function for checking pending transitions and push warnign for it.
-			if not node.has_method("has_pending_save_screenshot_transition"):
+			if not node.has_method("has_pending_hud_transition"):
 				push_warning("Missing transition check method on: " + node.name)
 				continue
 			
 			# Check pending transitions for the node.
-			if node.call("has_pending_save_screenshot_transition"):
+			if node.call("has_pending_hud_transition"):
 				has_pending_transition = true
 				break
 		

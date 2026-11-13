@@ -811,10 +811,10 @@ func _update_scroll_bar_state() -> void:
 #endregion
 
 
-#region Save Screenshot Transition Wait Group
+#region HUD Transition Wait Group
 
 ## Checks and returns a bool value indicating if the help panel is still visible and needs to finish closing which would delay the creation of save screenshot.
-func has_pending_save_screenshot_transition() -> bool:
+func has_pending_hud_transition() -> bool:
 	return is_open() or help_panel.visible
 
 #endregion

@@ -87,7 +87,7 @@ corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 corner_detail = 5
 
-[node name="MapSolverControl" type="Control" unique_id=195301154]
+[node name="MapSolverControl" type="Control" unique_id=195301154 groups=["blocks_map_result_tooltips", "hud_transition_wait"]]
 texture_filter = 1
 layout_mode = 3
 anchors_preset = 15

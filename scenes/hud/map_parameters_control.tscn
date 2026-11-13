@@ -17,7 +17,7 @@ axis_stretch_horizontal = 1
 axis_stretch_vertical = 1
 modulate_color = Color(0.09803922, 0.09803922, 0.09803922, 0.6)
 
-[node name="MapParametersControl" type="Control" unique_id=1239913164]
+[node name="MapParametersControl" type="Control" unique_id=1239913164 groups=["blocks_map_result_tooltips", "hud_transition_wait"]]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0

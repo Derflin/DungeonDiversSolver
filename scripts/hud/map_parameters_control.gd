@@ -498,10 +498,10 @@ func _update_drawer_scroll_bar_visibility() -> void:
 #endregion
 
 
-#region Save Screenshot Transition Wait Group
+#region HUD Transition Wait Group
 
 ## Checks and returns a bool value indicating if there are currently any active tween transitions that would delay the creation of save screenshot.
-func has_pending_save_screenshot_transition() -> bool:
+func has_pending_hud_transition() -> bool:
 	return _drawer_tween != null and _drawer_tween.is_valid()
 
 #endregion

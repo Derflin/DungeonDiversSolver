@@ -809,3 +809,12 @@ func _update_scroll_bar_state() -> void:
 	_bar_tween.tween_property(description_scroll_bar, "modulate:a", 1.0 if needed else 0.0, transition_scroll_bar_fade_duration)
 
 #endregion
+
+
+#region Save Screenshot Transition Wait Group
+
+## Checks and returns a bool value indicating if the help panel is still visible and needs to finish closing which would delay the creation of save screenshot.
+func has_pending_save_screenshot_transition() -> bool:
+	return is_open() or help_panel.visible
+
+#endregion

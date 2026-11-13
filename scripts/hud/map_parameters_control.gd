@@ -82,6 +82,11 @@ func _input(event: InputEvent) -> void:
 		if entry.contains_help_trigger_viewport_point(pointer_position):
 			return
 	
+	# Keep the help panel active when interacting with the drawer toggle button.
+	var toggle_local_position: Vector2 = drawer_toggle_button.make_canvas_position_local(pointer_position)
+	if Rect2(Vector2.ZERO, drawer_toggle_button.size).has_point(toggle_local_position):
+		return
+	
 	# Filter out processing clicks that will happen inside the help panel.
 	if is_instance_valid(secret_room_help_control):
 		if secret_room_help_control.contains_viewport_point(pointer_position):
@@ -221,10 +226,6 @@ func _set_drawer_open(open: bool, instant: bool = false) -> void:
 	# Set drawer status.
 	_drawer_open = open
 	
-	# Hide contextual help panel before moving the drawer out of view.
-	if not open and is_instance_valid(secret_room_help_control):
-		secret_room_help_control.hide_immediate()
-	
 	# Check if any tween is running and kill if it does.
 	if _drawer_tween:
 		_drawer_tween.kill()
@@ -279,7 +280,13 @@ func close_drawer() -> void:
 		_set_drawer_open(not _drawer_open)
 
 
+## Closes the drawer and contextual help panel when another submenu is opened.
 func _on_other_menu_submenu_opened() -> void:
+	# Clear floating help before another screen can obscure or pause the HUD.
+	if is_instance_valid(secret_room_help_control):
+		secret_room_help_control.hide_immediate()
+	
+	# Collapse the parameter drawer indepedently of the help panel state for the parameter entry.
 	close_drawer()
 
 #endregion
@@ -326,9 +333,9 @@ func _refresh_drawer_layout() -> void:
 	# Initialize drawer state to be instantly set according to the parameters.
 	_set_drawer_open(_drawer_open, true)
 	
-	# Refresh popup placement after the drawer's size and scale have settled.
-	if _drawer_open and is_instance_valid(secret_room_help_control):
-		secret_room_help_control.call_deferred("refresh_layout")
+	# Refresh the help panel after either drawer state settles at the current HUD scale.
+	if is_instance_valid(secret_room_help_control) and secret_room_help_control.is_open():
+		secret_room_help_control.call_deferred("refresh_layout", get_drawer_ui_scale())
 
 
 func _on_control_resized() -> void:

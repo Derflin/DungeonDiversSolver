@@ -79,6 +79,11 @@ var _scroll_bar_required: bool = false
 # Compiled matcher used to resolve inline references to secret and special rooms.
 var _reference_regex: RegEx
 
+# Indicates that the drawer has changed the available width since the last content measurement.
+var _drawer_width_dirty: bool = false
+# Prevents concurrent description measurements during drawer movement.
+var _drawer_reflow_running: bool = false
+
 
 @onready var help_panel: PanelContainer = $HelpPanel
 @onready var panel_margin: MarginContainer = $HelpPanel/MarginContainer
@@ -255,8 +260,14 @@ func hide_immediate() -> void:
 	active_entry_changed.emit(null, false)
 
 
-## Recalculates the active panel after the drawer's position or scale changes.
-func refresh_layout() -> void:
+## Refreshes the active panel using the current scale of the parameter drawer.
+func refresh_layout(ui_scale: float = -1.0) -> void:
+	# Synchronize with drawer scaling that may have changed after a viewport resize.
+	if ui_scale > 0.0:
+		_ui_scale = maxf(1.0, ui_scale)
+		help_panel.scale = Vector2.ONE * _ui_scale
+	
+	# Recalculate the description width and height at the new scale.
 	_on_viewport_resized()
 
 #endregion
@@ -389,6 +400,9 @@ func _process(_delta: float) -> void:
 	# Filter out processing if the help panel mode is currently set to hidden.
 	if _mode == HelpMode.HIDDEN or not help_panel.visible:
 		return
+	
+	# Follow changes to the drawer edge.
+	_follow_drawer_layout()
 	
 	# Pinned content is controlled by activation rather than pointer position.
 	if _mode == HelpMode.PINNED:
@@ -654,6 +668,65 @@ func _update_panel_width() -> bool:
 	return true
 
 
+## Keeps the active help panel beside the drawer while its visible edge moves.
+func _follow_drawer_layout() -> void:
+	# Filter out processing if the help panel is hidden or the reference to the drawer panel isn't valid.
+	if _mode == HelpMode.HIDDEN or not help_panel.visible or not is_instance_valid(_drawer_panel):
+		return
+	
+	# Determine the actual drawer edge and width available in the viewport.
+	var drawer_left: float = _drawer_panel.get_global_rect().position.x
+	var available_pixels: float = drawer_left - layout_viewport_margin - layout_drawer_gap
+	var target_width: float = floorf(minf(layout_preferred_width, available_pixels / _ui_scale))
+	
+	# Dismiss the help panel and filter out processing if there isn't enough space to fit the minimum panel width after change.
+	if target_width < layout_minimum_width:
+		dismiss()
+		return
+	
+	# Keep the horizontal position attached to the drawer, inluding during its tween.
+	help_panel.global_position.x = roundf(drawer_left - layout_drawer_gap - target_width * _ui_scale)
+	
+	# Adjust width only when the available space actually changes.
+	if not is_equal_approx(help_panel.size.x, target_width):
+		# Release the previous body's minimum width constraint before shrinking.
+		description_contents.custom_minimum_size.x = 0.0
+		help_panel.size.x = target_width
+		_queue_drawer_width_reflow()
+
+
+## Schedules a single measurement worker to process the latest panel width.
+func _queue_drawer_width_reflow() -> void:
+	_drawer_width_dirty = true
+	if _drawer_reflow_running:
+		return
+	
+	_drawer_reflow_running = true
+	call_deferred("_reflow_after_drawer_width_change")
+
+
+## Updates description wrapping and panel height after horizontal size changes.
+func _reflow_after_drawer_width_change() -> void:
+	# Repeat when the drawer changes width again while the previous pass was running.
+	while _drawer_width_dirty and _mode != HelpMode.HIDDEN and is_inside_tree():
+		_drawer_width_dirty = false
+		
+		# Allow container widths to settle before measuring wrapped text.
+		await get_tree().process_frame
+		if _mode == HelpMode.HIDDEN or not is_inside_tree():
+			break
+		_measure_description_content()
+		
+		# Apply the measured content heights and place the panel at its current edge.
+		await get_tree().process_frame
+		if _mode == HelpMode.HIDDEN or not is_inside_tree():
+			break
+		_measure_description_content()
+		_apply_target_layout(false)
+	
+	_drawer_reflow_running = false
+
+
 ## Sizes generated text and image blocks using the description viewport width.
 func _measure_description_content() -> void:
 	# Use the width assigned by the container after the current panel layout pass.
@@ -739,20 +812,20 @@ func _apply_target_layout(animate_height: bool) -> void:
 		layout_viewport_margin,
 		maxf(layout_viewport_margin, get_viewport_rect().size.y - layout_viewport_margin - target_height * _ui_scale),
 	)
-	var target_position := Vector2(x, roundf(target_y))
 	
 	# Apply geometry immediately or interpolate height and position together.
+	help_panel.global_position.x = x
 	if animate_height:
 		# Animate panel height and vertical alignment together for a consistent transition.
 		_layout_tween = create_tween().set_parallel(true)
 		_layout_tween.set_trans(Tween.TRANS_QUAD)
 		_layout_tween.set_ease(Tween.EASE_OUT)
 		_layout_tween.tween_property(help_panel, "size:y", target_height, transition_layout_duration)
-		_layout_tween.tween_property(help_panel, "global_position", target_position, transition_layout_duration)
+		_layout_tween.tween_property(help_panel, "global_position:y", roundf(target_y), transition_layout_duration)
 		_layout_tween.chain().tween_callback(_update_scroll_bar_state)
 	else:
 		help_panel.size.y = target_height
-		help_panel.global_position = target_position
+		help_panel.global_position.y = roundf(target_y)
 		_update_scroll_bar_state()
 
 

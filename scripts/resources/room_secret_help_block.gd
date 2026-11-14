@@ -18,6 +18,8 @@ enum BlockType {
 @export_group("Content", "content_")
 ## Description text displayed by RULE and TIP block types.
 @export_multiline var content_text: String = ""
+## Enables the display for the title label above the specified text for the RULE and TIP block types.
+@export var content_text_title_enabled: bool = true
 
 @export_subgroup("Media", "content_media_")
 ## Static illustration displayed by IMAGE block type.

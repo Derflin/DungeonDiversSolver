@@ -592,11 +592,12 @@ func _add_text_block(block: RoomSecretHelpBlock) -> void:
 	var item := _new_content_item()
 	
 	# Prepare a title label depending on the block type.
-	var title_label := Label.new()
-	title_label.text = "RULE" if block.block_type == RoomSecretHelpBlock.BlockType.RULE else "TIP"
-	title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	title_label.modulate = content_heading_color
-	item.add_child(title_label)
+	if block.content_text_title_enabled:
+		var title_label := Label.new()
+		title_label.text = "RULE" if block.block_type == RoomSecretHelpBlock.BlockType.RULE else "TIP"
+		title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		title_label.modulate = content_heading_color
+		item.add_child(title_label)
 	
 	# Prepare a rich text label for displaying formatted content text from block.
 	var content_label := RichTextLabel.new()

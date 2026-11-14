@@ -16,11 +16,9 @@ var drawer_minimum_ui_scale: int = 2
 @export var drawer_toggle_expand_icon: Texture2D
 @export var drawer_toggle_collapse_icon: Texture2D
 
-@export_group("Secret Room Help")
-## Shared control responsible for displaying the selected secret room's help.
-@export var secret_room_help_control: MapRoomSecretHelpControl
-
 @export_group("Parameter Help")
+## Shared control responsible for displaying contextual help for map parameter entries.
+@export var map_parameter_help_control: MapParameterHelpControl
 ## Description resource displayed when the grid size map parameter entry requests help.
 @export var map_grid_size_help: MapParameterHelpData
 
@@ -52,8 +50,8 @@ var _help_entries: Array[MapParameterEntry] = []
 
 func _ready() -> void:
 	# Update row highlights when the shared help panel changes its selection.
-	if is_instance_valid(secret_room_help_control):
-		secret_room_help_control.active_entry_changed.connect(_on_help_active_entry_changed)
+	if is_instance_valid(map_parameter_help_control):
+		map_parameter_help_control.active_entry_changed.connect(_on_help_active_entry_changed)
 	
 	# Populate static and dynamic map parameter entries.
 	_populate_parameter_entries()
@@ -92,11 +90,11 @@ func _input(event: InputEvent) -> void:
 		return
 	
 	# Filter out processing clicks that will happen inside the help panel.
-	if is_instance_valid(secret_room_help_control):
-		if secret_room_help_control.contains_viewport_point(pointer_position):
+	if is_instance_valid(map_parameter_help_control):
+		if map_parameter_help_control.contains_viewport_point(pointer_position):
 			return
-		if secret_room_help_control.is_open():
-			secret_room_help_control.dismiss()
+		if map_parameter_help_control.is_open():
+			map_parameter_help_control.dismiss()
 	
 	# Close the drawer only for presses outside both the drawer and help panel.
 	if _drawer_open and check_if_input_click_outside_drawer(event):
@@ -151,8 +149,8 @@ func check_if_input_click_outside_drawer(event: InputEvent) -> bool:
 	
 	# Consider the shared floating help panel as part of the drawer's interactive area.
 	if (
-		is_instance_valid(secret_room_help_control)
-		and secret_room_help_control.contains_viewport_point(event_position)
+		is_instance_valid(map_parameter_help_control)
+		and map_parameter_help_control.contains_viewport_point(event_position)
 	):
 		return false
 	
@@ -288,8 +286,8 @@ func close_drawer() -> void:
 ## Closes the drawer and contextual help panel when another submenu is opened.
 func _on_other_menu_submenu_opened() -> void:
 	# Clear floating help before another screen can obscure or pause the HUD.
-	if is_instance_valid(secret_room_help_control):
-		secret_room_help_control.hide_immediate()
+	if is_instance_valid(map_parameter_help_control):
+		map_parameter_help_control.hide_immediate()
 	
 	# Collapse the parameter drawer indepedently of the help panel state for the parameter entry.
 	close_drawer()
@@ -339,8 +337,8 @@ func _refresh_drawer_layout() -> void:
 	_set_drawer_open(_drawer_open, true)
 	
 	# Refresh the help panel after either drawer state settles at the current HUD scale.
-	if is_instance_valid(secret_room_help_control) and secret_room_help_control.is_open():
-		secret_room_help_control.call_deferred("refresh_layout", get_drawer_ui_scale())
+	if is_instance_valid(map_parameter_help_control) and map_parameter_help_control.is_open():
+		map_parameter_help_control.call_deferred("refresh_layout", get_drawer_ui_scale())
 
 
 func _on_control_resized() -> void:
@@ -514,7 +512,7 @@ func has_pending_hud_transition() -> bool:
 #endregion
 
 
-#region Secret Room Help
+#region Parameter Help
 
 ## Returns the current scale used to render the drawer and its parameter entries.
 func get_drawer_ui_scale() -> float:
@@ -548,23 +546,23 @@ func _get_entry_help_source(entry: MapParameterEntry) -> Resource:
 ## Opens temporary help for the hovered parameter entry.
 func _on_entry_help_preview_requested(entry: MapParameterEntry) -> void:
 	# Filter out processing when the shared help panel is unavailable.
-	if not is_instance_valid(secret_room_help_control):
+	if not is_instance_valid(map_parameter_help_control):
 		return
 	
 	# Retrieve the contextual help resource associated with the requested entry.
 	var source: Resource = _get_entry_help_source(entry)
-	secret_room_help_control.request_preview(source, entry, drawer_panel, get_drawer_ui_scale())
+	map_parameter_help_control.request_preview(source, entry, drawer_panel, get_drawer_ui_scale())
 
 
 ## Pins or switches contextual help for the activated parameter entry.
 func _on_entry_help_activation_requested(entry: MapParameterEntry, from_touch: bool) -> void:
 	# Filter out processing when the shared help panel is unavailable.
-	if not is_instance_valid(secret_room_help_control):
+	if not is_instance_valid(map_parameter_help_control):
 		return
 	
 	# Retrieve the contextual help resource and forward the originating input type.
 	var source: Resource = _get_entry_help_source(entry)
-	secret_room_help_control.request_pin(source, entry, drawer_panel, get_drawer_ui_scale(), from_touch)
+	map_parameter_help_control.request_pin(source, entry, drawer_panel, get_drawer_ui_scale(), from_touch)
 
 
 ## Updates all row highlights to reflect the current active and pinned entry.

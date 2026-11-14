@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://cn0aoor0wyoo2"]
 
-[ext_resource type="Script" uid="uid://d2lod6egicm48" path="res://scripts/hud/map_room_secret_help_control.gd" id="1_kqdne"]
+[ext_resource type="Script" uid="uid://d2lod6egicm48" path="res://scripts/hud/map_parameter_help_control.gd" id="1_kqdne"]
 [ext_resource type="Script" uid="uid://c6v7ytd4a7med" path="res://scripts/ui/components/scramble_texture_rect.gd" id="2_f5vaq"]
 [ext_resource type="Script" uid="uid://b8x8oocqx8an3" path="res://scripts/ui/components/scramble_label.gd" id="3_l0jka"]
 [ext_resource type="Texture2D" uid="uid://cp045b4m1epgg" path="res://assets/icons/ui/UI-Cancel.png" id="4_f5vaq"]
@@ -23,7 +23,7 @@ corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 corner_detail = 5
 
-[node name="MapRoomSecretHelpControl" type="Control" unique_id=429819148 groups=["blocks_map_result_tooltips", "hud_transition_wait"]]
+[node name="MapParameterHelpControl" type="Control" unique_id=429819148 groups=["blocks_map_result_tooltips", "hud_transition_wait"]]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0

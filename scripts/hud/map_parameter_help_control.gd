@@ -1,8 +1,8 @@
-class_name MapRoomSecretHelpControl
+class_name MapParameterHelpControl
 extends Control
 
 
-## Emitted when the highlighted room entry changes or its pinned state is updated.
+## Emitted when the active parameter entry changes or its pinned state is updated.
 signal active_entry_changed(entry: MapParameterEntry, pinned: bool)
 
 
@@ -121,7 +121,7 @@ func _ready() -> void:
 	
 	# Duplicate the panel style so border animations don't modify  shared theme resources.
 	var base_style: StyleBoxFlat = help_panel.get_theme_stylebox("panel") as StyleBoxFlat
-	assert(base_style != null, "MapRoomSecretHelpControl: HelpPanel requires as StyleBoxFlat panel style")
+	assert(base_style != null, "MapParameterHelpControl: HelpPanel requires as StyleBoxFlat panel style")
 	_panel_style = base_style.duplicate(true) as StyleBoxFlat
 	help_panel.add_theme_stylebox_override("panel", _panel_style)
 	
@@ -136,7 +136,7 @@ func _ready() -> void:
 	# Compile the token pattern once for each description's inline room reference.
 	_reference_regex = RegEx.new()
 	var error: Error = _reference_regex.compile("\\{(room|icon|name):(secret|special):([A-Za-z0-9_]+)\\}")
-	assert(error == OK, "MapRoomSecretHelpControl: Could not compile help room reference pattern")
+	assert(error == OK, "MapParameterHelpControl: Could not compile help room reference pattern")
 	
 	# Allow the visible help panel to be dismissed by close button.
 	header_close_button.pressed.connect(dismiss)
@@ -169,17 +169,17 @@ func _fill_scramble_textures() -> void:
 
 #region Public Help Interface
 
-## Returns whether a room description is retained by explicit activation.
+## Returns whether a help description is retained by explicit activation.
 func is_pinned() -> bool:
 	return _mode == HelpMode.PINNED
 
 
-## Returns whether a room is actively displayed in preview or pinned mode.
+## Returns whether help is actively displayed in preview or pinned mode.
 func is_open() -> bool:
 	return _mode != HelpMode.HIDDEN
 
 
-## Returns the parameter entry associated with the active room description.
+## Returns the parameter entry associated with the active help description.
 func get_active_entry() -> MapParameterEntry:
 	return _active_entry
 
@@ -203,7 +203,7 @@ func request_preview(source: Resource, entry: MapParameterEntry, drawer: Control
 	
 	# Display the help panel in preview mode.
 	_mode = HelpMode.PREVIEW
-	_select_room(source, entry, drawer, ui_scale)
+	_select_help_source(source, entry, drawer, ui_scale)
 
 
 ## Pins contextual help or returns the selected entry to preview while hovered.
@@ -234,7 +234,7 @@ func request_pin(source: Resource, entry: MapParameterEntry, drawer: Control, ui
 	
 	# Display the help panel in pinned mode.
 	_mode = HelpMode.PINNED
-	_select_room(source, entry, drawer, ui_scale)
+	_select_help_source(source, entry, drawer, ui_scale)
 
 
 ## Clears the current selection and begins the panel's hide transition.
@@ -348,10 +348,10 @@ func _refresh_help_state_appearance(animate: bool = true) -> void:
 #endregion
 
 
-#region Room Selection and Transitions
+#region Help Selection and Transitions
 
 ## Selects a contextual help resource and starts the content or visibility transition.
-func _select_room(source: Resource, entry: MapParameterEntry, drawer: Control, ui_scale: float) -> void:
+func _select_help_source(source: Resource, entry: MapParameterEntry, drawer: Control, ui_scale: float) -> void:
 	# Determine whether a description must be built for the first time or replaced.
 	var first_open: bool = not help_panel.visible or _active_help_source == null
 	var source_changed: bool = _active_help_source != source
@@ -751,7 +751,7 @@ func _append_text_with_room_references(label: RichTextLabel, source: String) -> 
 		# Include the referenced room type data inside the label.
 		if room == null:
 			# Show a readable fallback when an identifier cannot be resolved.
-			push_warning("MapRoomSecretHelpControl: Unresolved help reference: %s" % reference.get_string())
+			push_warning("MapParameterHelpControl: Unresolved help reference: %s" % reference.get_string())
 			label.add_text("[unknown room: %s]" % room_id)
 		else:
 			# Insert the icon for references that request it.
@@ -760,7 +760,7 @@ func _append_text_with_room_references(label: RichTextLabel, source: String) -> 
 				if icon_texture != null:
 					label.add_image(icon_texture, maxi(1, roundi(content_inline_icon_width)), 0)
 				else:
-					push_warning("MapRoomSecretHelpControl: Help reference has no icon: %s" % room_id)
+					push_warning("MapParameterHelpControl: Help reference has no icon: %s" % room_id)
 			
 			# Add the display name only for name or combined references.
 			if operation == "room":

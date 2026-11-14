@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cc2jdvmrwlbfh"
-path="res://.godot/imported/question.png-1f0fd3092d64b670045583ebb8c6df12.ctex"
+path="res://.godot/imported/question.png-4dfa6553b94b1ea54e94cd64e4d4e11e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/icons/map_solver/third_party/kenney/game_icons/question.png"
-dest_files=["res://.godot/imported/question.png-1f0fd3092d64b670045583ebb8c6df12.ctex"]
+source_file="res://assets/icons/ui/third_party/kenney/game_icons/question.png"
+dest_files=["res://.godot/imported/question.png-4dfa6553b94b1ea54e94cd64e4d4e11e.ctex"]
 
 [params]
 

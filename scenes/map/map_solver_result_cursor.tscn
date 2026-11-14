@@ -6,7 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://1jpsxhf8b8nc" path="res://assets/icons/cursor/RoomSolvedCursor-Corners.png" id="3_7l876"]
 [ext_resource type="PackedScene" uid="uid://dtnhj178gkkg3" path="res://scenes/map/map_solver_result_hover_details.tscn" id="5_7l876"]
 [ext_resource type="Texture2D" uid="uid://b3fyoxdqh1yfj" path="res://assets/icons/map_solver/third_party/kenney/game_icons/checkmark.png" id="5_pple3"]
-[ext_resource type="Texture2D" uid="uid://m8r6fwssug18" path="res://assets/icons/map_solver/third_party/kenney/game_icons/information.png" id="6_1yvij"]
+[ext_resource type="Texture2D" uid="uid://m8r6fwssug18" path="res://assets/icons/ui/third_party/kenney/game_icons/information.png" id="6_1yvij"]
 [ext_resource type="PackedScene" uid="uid://dyjj2ffksbhs1" path="res://scenes/map/map_solver_result_placement_explanation.tscn" id="7_1nym0"]
 
 [sub_resource type="Animation" id="Animation_rxhxr"]

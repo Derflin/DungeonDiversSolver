@@ -60,6 +60,7 @@ var _emulated_moved: bool = false
 
 @onready var entry_icon_container: Control = $IconContainer
 @onready var entry_icon := $IconContainer/Icon
+@onready var help_info_indicator: MapParameterHelpIndicator = $HelpInfoIndicator
 @onready var entry_count_label := $CountLabel
 @onready var entry_description_label := $DescriptionLabel
 @onready var entry_value_editor := $ValueEditor
@@ -91,6 +92,9 @@ func initialize_map_grid_size() -> void:
 	# Set initialized data into display nodes.
 	display_icon()
 	refresh_display_texts()
+	
+	# Hide the room information indicator for parameter types that have no room help.
+	_refresh_help_indicator(false)
 
 
 func initialize_secret_type_count_max(_secret_type_kind: RoomSecretType.Kind) -> void:
@@ -109,6 +113,9 @@ func initialize_secret_type_count_max(_secret_type_kind: RoomSecretType.Kind) ->
 	# Set initialized data into display nodes.
 	display_icon()
 	refresh_display_texts()
+	
+	# Initialize the indicator from the secret room's available help content.
+	_refresh_help_indicator(false)
 
 #endregion
 
@@ -124,6 +131,31 @@ func _has_help() -> bool:
 	# Delegate help content validation to the owning room resource.
 	var room: RoomSecretType = GameData.room_secret_types.get_type(secret_type_kind)
 	return room != null and room.has_help_content()
+
+
+## Updates the information indicator using the entry, help availability and active help estate.
+func _refresh_help_indicator(animate: bool = true) -> void:
+	# Hide room specific help indicators for unrelated parameter types.
+	if parameter_type != ParameterType.SECRET_TYPE_COUNT_MAX:
+		help_info_indicator.hide()
+		return
+	
+	# Keep the indicator's layout space for every secret room entry.
+	help_info_indicator.show()
+	
+	# Display the unavailable indicator when the secret room has no help content.
+	if not _has_help():
+		help_info_indicator.set_indicator_state(MapParameterHelpIndicator.IndicatorState.UNAVAILABLE, animate)
+		return
+	
+	# Choose the icon associated with the shared help panel's active entry state.
+	if _help_selected:
+		if _help_pinned:
+			help_info_indicator.set_indicator_state(MapParameterHelpIndicator.IndicatorState.PINNED, animate)
+		else:
+			help_info_indicator.set_indicator_state(MapParameterHelpIndicator.IndicatorState.PREVIEW, animate)
+	else:
+		help_info_indicator.set_indicator_state(MapParameterHelpIndicator.IndicatorState.AVAILABLE, animate)
 
 
 ## Returns the local area covering the icon, count, title and spaces between them.
@@ -245,11 +277,15 @@ func _gui_input(event: InputEvent) -> void:
 		accept_event()
 
 
-## Updates the active and pinned selection highlight for this entry.
+## Updates the active selection highlight and indicator state for this entry.
 func set_help_selected(selected: bool, pinned: bool = false) -> void:
+	# Store the state reported by the shared help panel.
 	_help_selected = selected
-	_help_pinned = pinned
+	_help_pinned = selected and pinned
+	
+	# Refresh the entry outline and animate its information indicator.
 	queue_redraw()
+	_refresh_help_indicator()
 
 
 ## Draws the configurable highlight around interactive secret-room rows.

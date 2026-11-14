@@ -52,6 +52,14 @@ const SCROLL_OVERFLOW_EPSILON: float = 0.5
 @export var transition_layout_duration: float = 0.22
 ## Duration of changing the description scrollbar's opacity.
 @export var transition_scroll_bar_fade_duration: float = 0.12
+## Duration of the border color and close button state transitions.
+@export_range(0.0, 1.0, 0.01) var transition_state_duration: float = 0.16
+
+@export_group("State Appearance", "state_")
+## Default border color displayed while the help panel is being previewed.
+@export var state_preview_border_color: Color = Color(0.86504203, 0.8209799, 0.735357, 0.8)
+## Default border color displayed while the help panel is pinned.
+@export var state_pinned_border_color: Color = Color(0.9911565, 0.91132057, 0.7014107, 1.0)
 
 
 # Currently displayed resource, its source entry, and the drawer used for positioning.
@@ -75,6 +83,10 @@ var _bar_tween: Tween
 # Cache scrollbar visibility so range changes don't restart identical fades.
 var _scroll_bar_state_initialized: bool = false
 var _scroll_bar_required: bool = false
+
+# Panel border style and transition controlling visual feedback for the active help mode.
+var _panel_style: StyleBoxFlat
+var _state_tween: Tween
 
 # Compiled matcher used to resolve inline references to secret and special rooms.
 var _reference_regex: RegEx
@@ -105,6 +117,15 @@ func _ready() -> void:
 	# Keep the visual panel hidden by default.
 	help_panel.hide()
 	help_panel.modulate.a = 0.0
+	
+	# Duplicate the panel style so border animations don't modify  shared theme resources.
+	var base_style: StyleBoxFlat = help_panel.get_theme_stylebox("panel") as StyleBoxFlat
+	assert(base_style != null, "MapRoomSecretHelpControl: HelpPanel requires as StyleBoxFlat panel style")
+	_panel_style = base_style.duplicate(true) as StyleBoxFlat
+	help_panel.add_theme_stylebox_override("panel", _panel_style)
+	
+	# Initialize the preview border and keep the reserved close button disabled.
+	_refresh_help_state_appearance(false)
 	
 	# Synchronize the external scrollbar with the description container's scroll range.
 	description_scroll_bar.share(scroll_container.get_v_scroll_bar())
@@ -202,6 +223,9 @@ func request_pin(room: RoomSecretType, entry: MapParameterEntry, drawer: Control
 			_mode = HelpMode.PREVIEW
 			_cancel_pending_close()
 			active_entry_changed.emit(entry, false)
+			
+			# Update the panel border and close button after leaving pinned mode.
+			_refresh_help_state_appearance()
 		else:
 			dismiss()
 		
@@ -231,6 +255,9 @@ func dismiss() -> void:
 	_active_entry = null
 	active_entry_changed.emit(null, false)
 	
+	# Fade the panel's close button out and restore its preview border during dismissal.
+	_refresh_help_state_appearance()
+	
 	# Stop any already running visibility tween.
 	_stop_tween(_visibility_tween)
 	
@@ -258,6 +285,9 @@ func hide_immediate() -> void:
 	help_panel.modulate.a = 0.0
 	help_panel.hide()
 	active_entry_changed.emit(null, false)
+	
+	# Reset the panel's border and button state without scheduling new transitions.
+	_refresh_help_state_appearance(false)
 
 
 ## Refreshes the active panel using the current scale of the parameter drawer.
@@ -269,6 +299,50 @@ func refresh_layout(ui_scale: float = -1.0) -> void:
 	
 	# Recalculate the description width and height at the new scale.
 	_on_viewport_resized()
+
+#endregion
+
+
+#region Help State Appearance
+
+## Returns the border color used by the active entry's preview or pinned outline.
+func _get_help_state_border_color(pinned: bool) -> Color:
+	# Reuse the selected entry's actual exported border color when its style exists.
+	if is_instance_valid(_active_entry):
+		var entry_style: StyleBoxFlat = _active_entry.help_pinned_style if pinned else _active_entry.help_preview_style
+		if entry_style != null:
+			return entry_style.border_color
+		
+	# Use the configured panel colors when an active entry is not available.
+	return state_pinned_border_color if pinned else state_preview_border_color
+
+
+## Updates the help panel border and close button according to its current mode.
+func _refresh_help_state_appearance(animate: bool = true) -> void:
+	# Read the current pin state and determine the displayed border and button opacity.
+	var pinned: bool = _mode == HelpMode.PINNED
+	var target_border_color: Color = _get_help_state_border_color(pinned)
+	var target_button_opacity: float = 1.0 if pinned else 0.0
+	
+	# Keep the button in the header layout while disabling interaction outside pinned mode.
+	header_close_button.disabled = not pinned
+	header_close_button.mouse_filter = Control.MOUSE_FILTER_STOP if pinned else Control.MOUSE_FILTER_IGNORE
+	if not pinned:
+		header_close_button.release_focus()
+	
+	# Stop the previous appearance transition without resetting its current values.
+	_stop_tween(_state_tween)
+	
+	# Apply the state immediately during initialization or when transitions are disabled.
+	if not animate or transition_state_duration <= 0.0:
+		_panel_style.border_color = target_border_color
+		header_close_button.modulate.a = target_button_opacity
+		return
+	
+	# Animate the border color and reserved close button opacity together.
+	_state_tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_state_tween.tween_property(_panel_style, "border_color", target_border_color, transition_state_duration)
+	_state_tween.tween_property(header_close_button, "modulate:a", target_button_opacity, transition_state_duration)
 
 #endregion
 
@@ -290,6 +364,9 @@ func _select_room(room: RoomSecretType, entry: MapParameterEntry, drawer: Contro
 	
 	# Emit signal that hint panel active entry was changed.
 	active_entry_changed.emit(entry, is_pinned())
+	
+	# Synchronize the panel border and close button with the active help mode.
+	_refresh_help_state_appearance()
 	
 	# Filter out processing if the room hasn't changed and the help panel was already opened.
 	if not room_changed and not first_open:

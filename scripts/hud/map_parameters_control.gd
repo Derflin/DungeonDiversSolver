@@ -20,6 +20,10 @@ var drawer_minimum_ui_scale: int = 2
 ## Shared control responsible for displaying the selected secret room's help.
 @export var secret_room_help_control: MapRoomSecretHelpControl
 
+@export_group("Parameter Help")
+## Description resource displayed when the grid size map parameter entry requests help.
+@export var map_grid_size_help: MapParameterHelpData
+
 
 var _map_parameter_entry = preload("res://scenes/hud/map_parameter_entry.tscn")
 
@@ -29,7 +33,7 @@ var _drawer_collapsed_visible_width: float = 0.0
 var _drawer_effective_ui_scale: int = 1
 
 # Secret room entries connected to help signals and active row highlighting.
-var _secret_help_entries: Array[MapParameterEntry] = []
+var _help_entries: Array[MapParameterEntry] = []
 
 
 @onready var drawer_root: Control = $DrawerAnchor/DrawerRoot
@@ -78,7 +82,7 @@ func _input(event: InputEvent) -> void:
 		return
 	
 	# Filter out processing clicks that will be managed by any of the entries related to the help panel.
-	for entry: MapParameterEntry in _secret_help_entries:
+	for entry: MapParameterEntry in _help_entries:
 		if entry.contains_help_trigger_viewport_point(pointer_position):
 			return
 	
@@ -175,7 +179,10 @@ func _create_static_map_grid_size_entry() -> void:
 	# Initialize static map grid size parameter entry.
 	var parameter_entry_map_grid_size: MapParameterEntry = _map_parameter_entry.instantiate()
 	map_grid_settings_container.add_child(parameter_entry_map_grid_size, true)
-	parameter_entry_map_grid_size.initialize_map_grid_size()
+	parameter_entry_map_grid_size.initialize_map_grid_size(map_grid_size_help)
+	
+	# Register the netry for contextual help and active selection updates.
+	_register_help_entry(parameter_entry_map_grid_size)
 	
 	# Set node custom node name.
 	parameter_entry_map_grid_size.name = "%s (%s)" % [
@@ -198,9 +205,7 @@ func _create_dynamic_secret_settings_entries() -> void:
 		parameter_entry_secret_type_count_max.initialize_secret_type_count_max(secret_room_type_kind)
 		
 		# Track this entry and forward its help requests to the shared help panel.
-		_secret_help_entries.append(parameter_entry_secret_type_count_max)
-		parameter_entry_secret_type_count_max.help_preview_requested.connect(_on_entry_help_preview_requested)
-		parameter_entry_secret_type_count_max.help_activation_requested.connect(_on_entry_help_activation_requested)
+		_register_help_entry(parameter_entry_secret_type_count_max)
 		
 		# Set node custom node name.
 		var secret_room_type_id = GameData.room_secret_types.get_type(secret_room_type_kind).get_id()
@@ -516,31 +521,55 @@ func get_drawer_ui_scale() -> float:
 	return float(_drawer_effective_ui_scale)
 
 
-## Opens temporary help panel for the secret room represented by the hovered entry.
+## Registers a parameter entry for help requests and selected row updates.
+func _register_help_entry(entry: MapParameterEntry) -> void:
+	# Track the entry and forward its preview and activation signals.
+	_help_entries.append(entry)
+	entry.help_preview_requested.connect(_on_entry_help_preview_requested)
+	entry.help_activation_requested.connect(_on_entry_help_activation_requested)
+
+
+## Returns the contextual help resource assigned to a supported parameter entry.
+func _get_entry_help_source(entry: MapParameterEntry) -> Resource:
+	# Select the help resource associated with the current parameter type.
+	match entry.parameter_type:
+		MapParameterEntry.ParameterType.MAP_GRID_SIZE:
+			return entry.parameter_help_data
+			
+		MapParameterEntry.ParameterType.SECRET_TYPE_COUNT_MAX:
+			if entry.secret_type_kind == RoomSecretType.Kind.NONE:
+				return null
+			
+			return GameData.room_secret_types.get_type(entry.secret_type_kind)
+	
+	return null
+
+
+## Opens temporary help for the hovered parameter entry.
 func _on_entry_help_preview_requested(entry: MapParameterEntry) -> void:
+	# Filter out processing when the shared help panel is unavailable.
 	if not is_instance_valid(secret_room_help_control):
 		return
 	
-	var room: RoomSecretType = GameData.room_secret_types.get_type(entry.secret_type_kind)
-	secret_room_help_control.request_preview(room, entry, drawer_panel, get_drawer_ui_scale())
+	# Retrieve the contextual help resource associated with the requested entry.
+	var source: Resource = _get_entry_help_source(entry)
+	secret_room_help_control.request_preview(source, entry, drawer_panel, get_drawer_ui_scale())
 
 
-## Pins or switches the description for the clicked or tapped room entry.
+## Pins or switches contextual help for the activated parameter entry.
 func _on_entry_help_activation_requested(entry: MapParameterEntry, from_touch: bool) -> void:
-	# Filter out processing if the shared help panel is unavailable.
+	# Filter out processing when the shared help panel is unavailable.
 	if not is_instance_valid(secret_room_help_control):
 		return
 	
-	# Retrieve the secret room resource associated with the activated entry.
-	var room: RoomSecretType = GameData.room_secret_types.get_type(entry.secret_type_kind)
-	
-	# Request activation and forward the originating input type
-	secret_room_help_control.request_pin(room, entry, drawer_panel, get_drawer_ui_scale(), from_touch)
+	# Retrieve the contextual help resource and forward the originating input type.
+	var source: Resource = _get_entry_help_source(entry)
+	secret_room_help_control.request_pin(source, entry, drawer_panel, get_drawer_ui_scale(), from_touch)
 
 
 ## Updates all row highlights to reflect the current active and pinned entry.
 func _on_help_active_entry_changed(entry: MapParameterEntry, pinned: bool) -> void:
-	for child: MapParameterEntry in _secret_help_entries:
+	for child: MapParameterEntry in _help_entries:
 		child.set_help_selected(child == entry, pinned and child == entry)
 
 #endregion

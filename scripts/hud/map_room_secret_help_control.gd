@@ -64,7 +64,8 @@ const SCROLL_OVERFLOW_EPSILON: float = 0.5
 
 # Currently displayed resource, its source entry, and the drawer used for positioning.
 var _mode: HelpMode = HelpMode.HIDDEN
-var _active_room: RoomSecretType
+## Resource providing the active room or parameter help description.
+var _active_help_source: Resource = null
 var _active_entry: MapParameterEntry
 var _drawer_panel: Control
 var _ui_scale: float = 1.0
@@ -194,21 +195,21 @@ func contains_viewport_point(viewport_position: Vector2) -> bool:
 	return Rect2(Vector2.ZERO, help_panel.size).has_point(local)
 
 
-## Displays temporary help unless a pinned selection is already active.
-func request_preview(room: RoomSecretType, entry: MapParameterEntry, drawer: Control, ui_scale: float) -> void:
-	# Filter out processing if help panel is already pinned or there isn't a valid help description available for the room.
-	if is_pinned() or not _is_valid_help(room):
+## Displays temporary contextual help unless a pinned selection is already active.
+func request_preview(source: Resource, entry: MapParameterEntry, drawer: Control, ui_scale: float) -> void:
+	# Skip the request if another entry is pinned or the resource has no content.
+	if is_pinned() or not _is_valid_help(source):
 		return
 	
 	# Display the help panel in preview mode.
 	_mode = HelpMode.PREVIEW
-	_select_room(room, entry, drawer, ui_scale)
+	_select_room(source, entry, drawer, ui_scale)
 
 
-## Pins the selected room, or returns an active pin to preview mode when the mouse remains over its entry.
-func request_pin(room: RoomSecretType, entry: MapParameterEntry, drawer: Control, ui_scale: float, from_touch: bool = false) -> void:
-	# Filter out processing if there isn't a valid help description available for the room.
-	if not _is_valid_help(room):
+## Pins contextual help or returns the selected entry to preview while hovered.
+func request_pin(source: Resource, entry: MapParameterEntry, drawer: Control, ui_scale: float, from_touch: bool = false) -> void:
+	# Skip the request if the resource has no displayable description.
+	if not _is_valid_help(source):
 		return
 	
 	# An activation of the pinned entry toggles the persistent state off.
@@ -233,7 +234,7 @@ func request_pin(room: RoomSecretType, entry: MapParameterEntry, drawer: Control
 	
 	# Display the help panel in pinned mode.
 	_mode = HelpMode.PINNED
-	_select_room(room, entry, drawer, ui_scale)
+	_select_room(source, entry, drawer, ui_scale)
 
 
 ## Clears the current selection and begins the panel's hide transition.
@@ -251,7 +252,7 @@ func dismiss() -> void:
 	_stop_content_and_layout_tweens()
 	header_room_name.cancel_animation()
 	header_room_icon.cancel_animation()
-	_active_room = null
+	_active_help_source = null
 	_active_entry = null
 	active_entry_changed.emit(null, false)
 	
@@ -280,7 +281,7 @@ func hide_immediate() -> void:
 	_stop_tween(_bar_tween)
 	header_room_name.cancel_animation()
 	header_room_icon.cancel_animation()
-	_active_room = null
+	_active_help_source = null
 	_active_entry = null
 	help_panel.modulate.a = 0.0
 	help_panel.hide()
@@ -349,14 +350,14 @@ func _refresh_help_state_appearance(animate: bool = true) -> void:
 
 #region Room Selection and Transitions
 
-## Stores a requested room and starts its initial display or description transition.
-func _select_room(room: RoomSecretType, entry: MapParameterEntry, drawer: Control, ui_scale: float) -> void:
+## Selects a contextual help resource and starts the content or visibility transition.
+func _select_room(source: Resource, entry: MapParameterEntry, drawer: Control, ui_scale: float) -> void:
 	# Determine whether a description must be built for the first time or replaced.
-	var first_open: bool = not help_panel.visible or _active_room == null
-	var room_changed: bool = _active_room != room
+	var first_open: bool = not help_panel.visible or _active_help_source == null
+	var source_changed: bool = _active_help_source != source
 	
 	# Store the room, entry and drawer geometry used by later layout calculations.
-	_active_room = room
+	_active_help_source = source
 	_active_entry = entry
 	_drawer_panel = drawer
 	_ui_scale = maxf(1.0, ui_scale)
@@ -369,7 +370,7 @@ func _select_room(room: RoomSecretType, entry: MapParameterEntry, drawer: Contro
 	_refresh_help_state_appearance()
 	
 	# Filter out processing if the room hasn't changed and the help panel was already opened.
-	if not room_changed and not first_open:
+	if not source_changed and not first_open:
 		return
 	
 	# Invalidate previous transitions before starting the newest request.
@@ -385,18 +386,18 @@ func _select_room(room: RoomSecretType, entry: MapParameterEntry, drawer: Contro
 	
 	# Update the header immediately and select the appropriate content transition.
 	help_panel.show()
-	header_room_name.change_text(room.get_display_name())
-	header_room_icon.change_texture(room.get_static_texture())
+	header_room_name.change_text(_get_help_display_name(source))
+	header_room_icon.change_texture(_get_help_icon(source))
 	if first_open:
 		description_contents.modulate.a = 1.0
-		_populate_description(room)
+		_populate_description(source)
 		_measure_then_layout(request_id, false, true)
 	else:
-		_switch_description_after_fade(room, request_id)
+		_switch_description_after_fade(source, request_id)
 
 
-## Replaces description blocks after the current body has faded out.
-func _switch_description_after_fade(room: RoomSecretType, request_id: int) -> void:
+## Replaces the displayed help blocks after the previous description fades out.
+func _switch_description_after_fade(source: Resource, request_id: int) -> void:
 	# Fade out existing help description contents before replacing its dynamically generated content.
 	_content_tween = create_tween()
 	_content_tween.tween_property(description_contents, "modulate:a", 0.0, transition_content_fade_out_duration)
@@ -412,7 +413,7 @@ func _switch_description_after_fade(room: RoomSecretType, request_id: int) -> vo
 	description_contents.modulate.a = 0.0
 	
 	# Build the requested room's blocks, then recalculate the layout.
-	_populate_description(room)
+	_populate_description(source)
 	_measure_then_layout(request_id, true, false)
 
 
@@ -542,20 +543,73 @@ func _cancel_pending_close() -> void:
 
 #region Help Content
 
-## Checks whether a room contains content supported by the current renderer.
-func _is_valid_help(room: RoomSecretType) -> bool:
-	return room != null and room.has_help_content()
+## Returns whether a room or parameter resource provides displayable help blocks.
+func _is_valid_help(source: Resource) -> bool:
+	# Delegate help validation to the matching resource type.
+	if source is RoomSecretType:
+		var room: RoomSecretType = source
+		return room.has_help_content()
+	
+	if source is MapParameterHelpData:
+		var parameter_help: MapParameterHelpData = source
+		return parameter_help.has_help_content()
+	
+	return false
 
 
-## Rebuilds the description controls in the order stored by the room resource.
-func _populate_description(room: RoomSecretType) -> void:
-	# Remove the previous room's generated controls before generating new blocks.
+## Returns the header title stored in the active help resource.
+func _get_help_display_name(source: Resource) -> String:
+	# Read the display name from the supported resource type.
+	if source is RoomSecretType:
+		var room: RoomSecretType = source
+		return room.display_name
+	
+	if source is MapParameterHelpData:
+		var parameter_help: MapParameterHelpData = source
+		return parameter_help.display_name
+	
+	return ""
+
+
+## Returns the header icon stored in the active help resource.
+func _get_help_icon(source: Resource) -> Texture2D:
+	# Read the static icon from the supported resource type.
+	if source is RoomSecretType:
+		var room: RoomSecretType = source
+		return room.get_static_texture()
+	
+	if source is MapParameterHelpData:
+		var parameter_help: MapParameterHelpData = source
+		return parameter_help.display_icon
+	
+	return null
+
+
+## Returns the ordered help blocks stored in a supported help resource.
+func _get_help_blocks(source: Resource) -> Array[RoomSecretHelpBlock]:
+	# Preserve the block order from the original help resource.
+	if source is RoomSecretType:
+		var room: RoomSecretType = source
+		return room.help_blocks
+	
+	if source is MapParameterHelpData:
+		var parameter_help: MapParameterHelpData = source
+		return parameter_help.help_blocks
+	
+	# Return a correctly typed empty collection for unsupported resources.
+	var empty_blocks: Array[RoomSecretHelpBlock] = []
+	return empty_blocks
+
+
+## Rebuilds the description from the ordered blocks of the active help resource.
+func _populate_description(source: Resource) -> void:
+	# Clear the previously generated content before building the new description.
 	for child: Node in description_contents.get_children():
 		description_contents.remove_child(child)
 		child.queue_free()
 	
-	# Preserve resource order while creating supported text and image blocks..
-	for block: RoomSecretHelpBlock in room.help_blocks:
+	# Render every supported content block in the resource's original order.
+	for block: RoomSecretHelpBlock in _get_help_blocks(source):
 		if block == null or not block.has_renderable_content():
 			continue
 		
@@ -909,8 +963,8 @@ func _apply_target_layout(animate_height: bool) -> void:
 
 ## Rebuilds the active description and recomputes layout after a viewport resize.
 func _on_viewport_resized() -> void:
-	# Filter out processing if the current panel mode is set to hidden or the active room reference isn't valid.
-	if _mode == HelpMode.HIDDEN or not is_instance_valid(_active_room):
+	# Filter out resizing when no help resource is currently displayed.
+	if _mode == HelpMode.HIDDEN or not is_instance_valid(_active_help_source):
 		return
 	
 	# Invalidate previous layout work and stop transitions during resizing.
@@ -928,7 +982,7 @@ func _on_viewport_resized() -> void:
 		return
 	
 	# Rebuild text and images so their wrapping matches the new width.
-	_populate_description(_active_room)
+	_populate_description(_active_help_source)
 	_measure_then_layout(request_id, false, false)
 
 #endregion

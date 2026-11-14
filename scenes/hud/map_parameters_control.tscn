@@ -4,8 +4,25 @@
 [ext_resource type="Texture2D" uid="uid://bplh4qamws0ll" path="res://assets/icons/map_parameters/MapParameters-GridSettings.png" id="2_n2mvx"]
 [ext_resource type="Texture2D" uid="uid://0m43f7n0tcbl" path="res://assets/icons/map_parameters/MapParameters-GridSettings-Close.png" id="3_lglyc"]
 [ext_resource type="Texture2D" uid="uid://ba2y50jahuvqh" path="res://assets/icons/map_parameters/third_party/kenney/fantasy_ui_borders/panel-014.png" id="4_6vuti"]
+[ext_resource type="Texture2D" uid="uid://wh63cgy0pvpo" path="res://assets/icons/map_parameters/MapParameters-GridSize-edges.png" id="4_jrj7t"]
 [ext_resource type="Script" uid="uid://c300hvn4msg8b" path="res://scripts/ui/components/smooth_scroll_container.gd" id="5_874ka"]
+[ext_resource type="Script" uid="uid://dj8l0dr06uue7" path="res://scripts/resources/room_secret_help_block.gd" id="5_cbcar"]
 [ext_resource type="Script" uid="uid://b4oig3qg3sx1k" path="res://scripts/ui/components/smooth_scroll_bar.gd" id="5_y71gk"]
+[ext_resource type="Script" uid="uid://b6c22xqsxatn5" path="res://scripts/resources/map_parameter_help_data.gd" id="6_w0xdn"]
+
+[sub_resource type="Resource" id="Resource_ewgax"]
+script = ExtResource("5_cbcar")
+block_type = 2
+content_text = "Changes the width and height of the map grid."
+content_text_title_enabled = false
+metadata/_custom_type_script = "uid://dj8l0dr06uue7"
+
+[sub_resource type="Resource" id="Resource_n2qqt"]
+script = ExtResource("6_w0xdn")
+display_name = "Map Grid Size"
+display_icon = ExtResource("4_jrj7t")
+help_blocks = Array[ExtResource("5_cbcar")]([SubResource("Resource_ewgax")])
+metadata/_custom_type_script = "uid://b6c22xqsxatn5"
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_134i6"]
 texture = ExtResource("4_6vuti")
@@ -29,6 +46,7 @@ script = ExtResource("1_dh07t")
 drawer_collapsed_width_offset = 3.0
 drawer_toggle_expand_icon = ExtResource("2_n2mvx")
 drawer_toggle_collapse_icon = ExtResource("3_lglyc")
+map_grid_size_help = SubResource("Resource_n2qqt")
 
 [node name="DrawerAnchor" type="Control" parent="." unique_id=1036039146]
 layout_mode = 1

@@ -39,6 +39,9 @@ var map_grid_size: Vector2i = Vector2i(0, 0)
 var secret_type_value_current: int = 0
 var secret_type_value_max: int = 0
 
+# Optional description assigned to parameter types without a room resource.
+var parameter_help_data: MapParameterHelpData = null
+
 # Visual state of the row while help is being previewed or selected.
 var _help_row_hovered: bool = false
 var _help_selected: bool = false
@@ -79,9 +82,12 @@ func _ready() -> void:
 	
 
 
-func initialize_map_grid_size() -> void:
+func initialize_map_grid_size(help_data: MapParameterHelpData = null) -> void:
 	# Initialize parameters.
 	parameter_type = ParameterType.MAP_GRID_SIZE
+	
+	# Store the description assigned to the map grid size help parameter.
+	parameter_help_data = help_data
 	
 	# Get initial state of variables that will be managed by this parameter entry scene.
 	_get_map_grid_size()
@@ -122,26 +128,37 @@ func initialize_secret_type_count_max(_secret_type_kind: RoomSecretType.Kind) ->
 
 #region Help Interaction
 
-## Returns whether this entry represents a secret room with displayable help.
+## Returns whether the current entry has a valid contextual help description.
 func _has_help() -> bool:
-	# Filter out processing if the parameter type isn't for a secret type or the assigned secret type is none.
-	if parameter_type != ParameterType.SECRET_TYPE_COUNT_MAX or secret_type_kind == RoomSecretType.Kind.NONE:
-		return false
+	# Validate the resource belonging to each supported parameter type.
+	match parameter_type:
+		ParameterType.MAP_GRID_SIZE:
+			return parameter_help_data != null and parameter_help_data.has_help_content()
+			
+		ParameterType.SECRET_TYPE_COUNT_MAX:
+			# Reject entries without a valid secret room identifier.
+			if secret_type_kind == RoomSecretType.Kind.NONE:
+				return false
+			
+			# Delegate content availability to the assigned room resource.
+			var room: RoomSecretType = GameData.room_secret_types.get_type(secret_type_kind)
+			return room != null and room.has_help_content()
 	
-	# Delegate help content validation to the owning room resource.
-	var room: RoomSecretType = GameData.room_secret_types.get_type(secret_type_kind)
-	return room != null and room.has_help_content()
+	return false
 
 
-## Updates the information indicator using the entry, help availability and active help estate.
+## Updates the information indicator using help availability and the active panel state.
 func _refresh_help_indicator(animate: bool = true) -> void:
-	# Hide room specific help indicators for unrelated parameter types.
-	if parameter_type != ParameterType.SECRET_TYPE_COUNT_MAX:
-		help_info_indicator.hide()
+	# Show help info indicator.
+	help_info_indicator.show()
+	
+	# Reserve the indicator width without drawing help for unsupported parameter types.
+	if parameter_type != ParameterType.MAP_GRID_SIZE and parameter_type != ParameterType.SECRET_TYPE_COUNT_MAX:
+		help_info_indicator.modulate.a = 0.0
 		return
 	
-	# Keep the indicator's layout space for every secret room entry.
-	help_info_indicator.show()
+	# Display the indicator for every parameter type that supports contextual help.
+	help_info_indicator.modulate.a = 1.0
 	
 	# Display the unavailable indicator when the secret room has no help content.
 	if not _has_help():

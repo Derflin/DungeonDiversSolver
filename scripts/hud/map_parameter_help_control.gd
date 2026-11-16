@@ -376,6 +376,10 @@ func _select_help_source(source: Resource, entry: MapParameterEntry, drawer: Con
 	# Synchronize the panel border and close button with the active help mode.
 	_refresh_help_state_appearance()
 	
+	# Continue the panel's visibility transition when switching between already displayed help sources.
+	if not first_open:
+		_ensure_panel_visible()
+	
 	# Filter out processing if the room hasn't changed and the help panel was already opened.
 	if not source_changed and not first_open:
 		return
@@ -401,6 +405,20 @@ func _select_help_source(source: Resource, entry: MapParameterEntry, drawer: Con
 		_measure_then_layout(request_id, false, true)
 	else:
 		_switch_description_after_fade(source, request_id)
+
+
+## Ensures that the help panel finishes becoming fully visible if it was stopped/killed before.
+func _ensure_panel_visible() -> void:
+	# Stop the previous visibility transition before starting a new one.
+	_stop_tween(_visibility_tween)
+	
+	# Skip the transition when the panel is already fully visible.
+	if is_equal_approx(help_panel.modulate.a, 1.0):
+		return
+	
+	# Continue revealing the panel from its current opacity.
+	_visibility_tween = create_tween()
+	_visibility_tween.tween_property(help_panel, "modulate:a", 1.0, transition_visibility_duration)
 
 
 ## Replaces the displayed help blocks after the previous description fades out.

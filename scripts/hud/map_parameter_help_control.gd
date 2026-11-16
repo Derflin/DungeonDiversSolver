@@ -388,7 +388,10 @@ func _select_help_source(source: Resource, entry: MapParameterEntry, drawer: Con
 	_transition_id += 1
 	var request_id: int = _transition_id
 	_stop_content_and_layout_tweens()
-	_stop_tween(_visibility_tween)
+	
+	# Cancel an existing hide transition when opening a new help panel.
+	if first_open:
+		_stop_tween(_visibility_tween)
 	
 	# Reject the request when the viewport cannot accommodate the minimum panel width.
 	if not _update_panel_width():
@@ -409,11 +412,12 @@ func _select_help_source(source: Resource, entry: MapParameterEntry, drawer: Con
 
 ## Ensures that the help panel finishes becoming fully visible if it was stopped/killed before.
 func _ensure_panel_visible() -> void:
-	# Stop the previous visibility transition before starting a new one.
-	_stop_tween(_visibility_tween)
-	
-	# Skip the transition when the panel is already fully visible.
+	# Filter out processing if the panel has already reached its fully visible state.
 	if is_equal_approx(help_panel.modulate.a, 1.0):
+		return
+	
+	# Preserve an existing visibility transition that is still running.
+	if _visibility_tween != null and _visibility_tween.is_running():
 		return
 	
 	# Continue revealing the panel from its current opacity.

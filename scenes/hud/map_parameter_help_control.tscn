@@ -106,6 +106,7 @@ mouse_filter = 2
 theme_override_constants/separation = 6
 
 [node name="DescriptionScrollBar" type="VScrollBar" parent="HelpPanel/MarginContainer/VBoxContainer/DescriptionRegion" unique_id=1132012562]
-custom_minimum_size = Vector2(5, 0)
+custom_minimum_size = Vector2(3, 0)
+custom_maximum_size = Vector2(3, -1)
 layout_mode = 2
 script = ExtResource("5_xwwjy")

@@ -28,6 +28,8 @@ const SCROLL_OVERFLOW_EPSILON: float = 0.5
 @export var layout_drawer_gap: float = 8.0
 ## Minimum height reserved for the description viewport, in unscaled HUD units.
 @export var layout_minimum_description_height: float = 18.0
+## Additional vertical space reserved to compensate for layout rounding when fitting description content.
+@export_range(0.0, 4.0, 0.5) var layout_extra_height: float = 2.0
 
 @export_group("Content Rendering", "content_")
 ## Width of the room icons inserted into help text, in unscaled HUD units.
@@ -1096,7 +1098,7 @@ func _get_target_height() -> float:
 		margin_height + container_spacing + header_height + separator_height + layout_minimum_description_height
 	)
 	
-	return ceilf(clampf(natural_height, min_height_1x, max_height_1x))
+	return ceilf(clampf(natural_height + layout_extra_height, min_height_1x, max_height_1x))
 
 
 ## Positions the panel beside the drawer and animates geometry when requested.

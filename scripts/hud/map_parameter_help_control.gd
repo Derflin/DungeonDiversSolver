@@ -86,6 +86,10 @@ var _bar_tween: Tween
 # Cache scrollbar visibility so range changes don't restart identical fades.
 var _scroll_bar_state_initialized: bool = false
 var _scroll_bar_required: bool = false
+# Tracks which description-layout request is allowed to finalize the scrollbar state.
+var _scroll_bar_layout_id: int = 0
+# Prevents intermediate range changes from overriding the predicted scrollbar state.
+var _scroll_bar_layout_pending: bool = false
 
 # Panel border style and transition controlling visual feedback for the active help mode.
 var _panel_style: StyleBoxFlat
@@ -255,6 +259,9 @@ func dismiss() -> void:
 	# Set the help panel mode to hidden.
 	_mode = HelpMode.HIDDEN
 	
+	# Cancel any pending scrollbar verification for a description that is closing.
+	_cancel_scroll_bar_layout()
+	
 	# Invalidate delayed content and close callbacks from the previous selection.
 	_transition_id += 1
 	_cancel_pending_close()
@@ -281,6 +288,9 @@ func dismiss() -> void:
 func hide_immediate() -> void:
 	# Set the help panel mode to hidden.
 	_mode = HelpMode.HIDDEN
+	
+	# Cancel any pending scrollbar verification for a description that is closing.
+	_cancel_scroll_bar_layout()
 	
 	# Invalidate delayed content and close callbacks from the previous selection.
 	_transition_id += 1
@@ -385,6 +395,9 @@ func _select_help_source(source: Resource, entry: MapParameterEntry, drawer: Con
 	# Filter out processing if the room hasn't changed and the help panel was already opened.
 	if not source_changed and not first_open:
 		return
+	
+	# Hold scrollbar visibility stead while the new description is rebuilt and measured.
+	_begin_scroll_bar_layout()
 	
 	# Invalidate previous transitions before starting the newest request.
 	_transition_id += 1
@@ -1007,6 +1020,9 @@ func _follow_drawer_layout() -> void:
 
 ## Schedules a single measurement worker to process the latest panel width.
 func _queue_drawer_width_reflow() -> void:
+	# Defer scroll-range decisions until the updated drawer width has been measured.
+	_begin_scroll_bar_layout()
+	
 	_drawer_width_dirty = true
 	if _drawer_reflow_running:
 		return
@@ -1078,24 +1094,30 @@ func _measure_description_content() -> void:
 				image_rect.custom_minimum_size = Vector2(ceilf(image_width), ceilf(image_height))
 
 
-## Returns the height required by the content, bounded by viewport margins.
-func _get_target_height() -> float:
-	# Gather the minimum heights of the header, separator and measured body.
+## Returns the vertical space occupied by panel margins, header, separator and container spacing.
+func _get_fixed_panel_height() -> float:
+	# Read the vertical sizes that don't depend on the active description contents.
 	var margin_height: float = panel_margin.get_theme_constant("margin_top") + panel_margin.get_theme_constant("margin_bottom")
 	var container_spacing: float = panel_vbox.get_theme_constant("separation") * 2.0
-	var content_height: float = description_contents.get_combined_minimum_size().y
 	var header_height: float = header.get_combined_minimum_size().y
 	var separator_height: float = separator.get_combined_minimum_size().y
 	
-	# Add the container's actual vertical insets and item spacing.
-	var natural_height: float = margin_height + container_spacing + header_height + separator_height + content_height
+	return margin_height + container_spacing + header_height + separator_height
+
+
+## Returns the height required by the content, bounded by viewport margins.
+func _get_target_height() -> float:
+	# Calculate the required panel height from its fixed layout and description contents.
+	var fixed_height: float = _get_fixed_panel_height()
+	var content_height: float = description_contents.get_combined_minimum_size().y
+	var natural_height: float = fixed_height + content_height
 	var viewport_available_height: float = get_viewport_rect().size.y - 2.0 * layout_viewport_margin
 	
 	# Limit the panel to the screen height left after top and bottom margins.
 	var max_height_1x: float = maxf(1.0, viewport_available_height / _ui_scale)
 	var min_height_1x: float = minf(
 		max_height_1x, 
-		margin_height + container_spacing + header_height + separator_height + layout_minimum_description_height
+		fixed_height + layout_minimum_description_height
 	)
 	
 	return ceilf(clampf(natural_height + layout_extra_height, min_height_1x, max_height_1x))
@@ -1107,9 +1129,13 @@ func _apply_target_layout(animate_height: bool) -> void:
 	if not is_instance_valid(_drawer_panel) or not is_instance_valid(_active_entry):
 		return
 	
-	# Stop the previous geometry transition before applying a new target.
+	# Stop the previous geometry transition before calculating the new target.
 	_stop_tween(_layout_tween)
 	var target_height: float = _get_target_height()
+	var layout_id: int = _scroll_bar_layout_id
+	
+	# Start the scrollbar transition using the measured content and final panel height.
+	_set_scroll_bar_required(_predict_scroll_bar_required(target_height))
 	
 	# Position the panel to the left of the visible drawer.
 	var drawer_left: float = _drawer_panel.get_global_rect().position.x
@@ -1136,7 +1162,7 @@ func _apply_target_layout(animate_height: bool) -> void:
 	else:
 		help_panel.size.y = target_height
 		help_panel.global_position.y = roundf(target_y)
-		_update_scroll_bar_state()
+		_finish_scroll_bar_layout(layout_id)
 
 
 ## Rebuilds the active description and recomputes layout after a viewport resize.
@@ -1144,6 +1170,9 @@ func _on_viewport_resized() -> void:
 	# Filter out resizing when no help resource is currently displayed.
 	if _mode == HelpMode.HIDDEN or not is_instance_valid(_active_help_source):
 		return
+	
+	# Suspend intermediate scrollbar updates while the new viewport layout is measured.
+	_begin_scroll_bar_layout()
 	
 	# Invalidate previous layout work and stop transitions during resizing.
 	_transition_id += 1
@@ -1168,6 +1197,87 @@ func _on_viewport_resized() -> void:
 
 #region Description Scrolling
 
+## Marks the start of a layout change that will recalculate the description's scrolling requirements.
+func _begin_scroll_bar_layout() -> void:
+	# Invalidate any unfinished verification belonging to the previous layout.
+	_scroll_bar_layout_id += 1
+	_scroll_bar_layout_pending = true
+
+
+## Cancels pending scrollbar verification when the help panel is being dismissed.
+func _cancel_scroll_bar_layout() -> void:
+	# Prevent a previously scheduled verification from updating a closed panel.
+	_scroll_bar_layout_id += 1
+	_scroll_bar_layout_pending = false
+
+
+## Predicts whether the measured description will exceed the viewport at the requested panel height.
+func _predict_scroll_bar_required(target_panel_height: float) -> bool:
+	# Calculate the description viewport height available after fixed panel elements are included.
+	var target_viewport_height: float = maxf(0.0, target_panel_height - _get_fixed_panel_height())
+	var content_height: float = description_contents.get_combined_minimum_size().y
+	
+	# Require scrolling only when the description exceeds the target viewport height.
+	return content_height > target_viewport_height + SCROLL_OVERFLOW_EPSILON
+
+
+## Updates the external scrollbar's opacity and input according to the required scrolling state.
+func _set_scroll_bar_required(needed: bool) -> void:
+	# Determien whether the requested state is new and calculate its target opacity.
+	var first_update: bool = not _scroll_bar_state_initialized
+	var target_opacity: float = 1.0 if needed else 0.0
+	var state_unchanged: bool = not first_update and needed == _scroll_bar_required
+	
+	# Preserve an ongoing transition to the same state without restarting its animation.
+	if state_unchanged:
+		if _bar_tween != null and _bar_tween.is_running():
+			return
+		if is_equal_approx(description_scroll_bar.modulate.a, target_opacity):
+			return
+	
+	# Store the new required state and enable input only when scrolling is available.
+	_scroll_bar_state_initialized = true
+	_scroll_bar_required = needed
+	description_scroll_bar.mouse_filter = Control.MOUSE_FILTER_STOP if needed else Control.MOUSE_FILTER_IGNORE
+	_stop_tween(_bar_tween)
+	
+	# Set initial or non-animated state immediately.
+	if first_update or transition_scroll_bar_fade_duration <= 0.0:
+		description_scroll_bar.modulate.a = target_opacity
+		return
+	
+	# Animate the scrollbar from its current opacity toward the requested state.
+	_bar_tween = create_tween()
+	_bar_tween.tween_property(description_scroll_bar, "modulate:a", target_opacity, transition_scroll_bar_fade_duration)
+
+
+## Refreshes the scrollbar from its actual scroll range only when the layout is settled.
+func _update_scroll_bar_state() -> void:
+	# Ignore unfinished layouts. hidden panels and calls before scene initialization.
+	if not is_node_ready() or _mode == HelpMode.HIDDEN or _scroll_bar_layout_pending:
+		return
+	
+	# Resolve scrolling from the internal range after all container sizes have settled.
+	var internal: VScrollBar = scroll_container.get_v_scroll_bar()
+	var needed: bool = internal.max_value > internal.page + SCROLL_OVERFLOW_EPSILON
+	_set_scroll_bar_required(needed)
+
+
+## Verifies the actual scrollbar range after the requested panel layout has settled.
+func _finish_scroll_bar_layout(layout_id: int) -> void:
+	# Allow godot to propagate final panel and container dimensions into the internal range.
+	await get_tree().process_frame
+	await get_tree().process_frame
+	
+	# Ignore callbacks from superseded layouts and panels that are no longer displayed.
+	if not is_inside_tree() or layout_id != _scroll_bar_layout_id or _mode == HelpMode.HIDDEN:
+		return
+	
+	# Resume normal range updates and correct the prediction if actual overflow differs.
+	_scroll_bar_layout_pending = false
+	_update_scroll_bar_state()
+
+
 ## Resets the description viewport and external scrollbar to the beginning.
 func _reset_scroll_to_top() -> void:
 	# Align the smooth scroll target with the beginning of the new description.
@@ -1176,36 +1286,6 @@ func _reset_scroll_to_top() -> void:
 	# Move the visible scroll view and external range position to the same value.
 	scroll_container.scroll_vertical = 0
 	description_scroll_bar.value = 0.0
-
-
-## Updates scrollbar opacity and input according to the current scroll range.
-func _update_scroll_bar_state() -> void:
-	# Filter out processing if the current node isn't ready.
-	if not is_node_ready():
-		return
-	
-	# Determine whether the content extends below the scroll viewport.
-	var internal: VScrollBar = scroll_container.get_v_scroll_bar()
-	var needed: bool = internal.max_value > internal.page + SCROLL_OVERFLOW_EPSILON
-	var first_update: bool = not _scroll_bar_state_initialized
-	
-	# Avoid restarting the opacity tween when the required state is unchanged.
-	if not first_update and needed == _scroll_bar_required:
-		return
-	_scroll_bar_state_initialized = true
-	_scroll_bar_required = needed
-	
-	# Retain the scrollbar's layout width while enabling input only on overflow.
-	description_scroll_bar.mouse_filter = Control.MOUSE_FILTER_STOP if needed else Control.MOUSE_FILTER_IGNORE
-	_stop_tween(_bar_tween)
-	
-	# Set the initial state immediately and animate subsequent visibility changes.
-	if first_update:
-		description_scroll_bar.modulate.a = 1.0 if needed else 0.0
-		return
-	
-	_bar_tween = create_tween()
-	_bar_tween.tween_property(description_scroll_bar, "modulate:a", 1.0 if needed else 0.0, transition_scroll_bar_fade_duration)
 
 #endregion
 

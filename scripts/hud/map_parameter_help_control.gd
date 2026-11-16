@@ -91,6 +91,8 @@ var _state_tween: Tween
 
 # Compiled matcher used to resolve inline references to secret and special rooms.
 var _reference_regex: RegEx
+# Compiled matcher used to find supported formatting tags in description text.
+var _formatting_regex: RegEx
 
 # Indicates that the drawer has changed the available width since the last content measurement.
 var _drawer_width_dirty: bool = false
@@ -135,8 +137,13 @@ func _ready() -> void:
 	
 	# Compile the token pattern once for each description's inline room reference.
 	_reference_regex = RegEx.new()
-	var error: Error = _reference_regex.compile("\\{(room|icon|name):(secret|special):([A-Za-z0-9_]+)\\}")
-	assert(error == OK, "MapParameterHelpControl: Could not compile help room reference pattern")
+	var reference_error: Error = _reference_regex.compile("\\{(room|icon|name):(secret|special):([A-Za-z0-9_]+)\\}")
+	assert(reference_error == OK, "MapParameterHelpControl: Could not compile help room reference pattern")
+	
+	# Compile the supported formatting tags used in help description text.
+	_formatting_regex = RegEx.new()
+	var formatting_error: Error = _formatting_regex.compile("\\[(/?)(b|i|u|s|color|bgcolor|font_size|hr|br)(?:=([^\\]]+)|\\s+([^\\]]+))?\\]")
+	assert(formatting_error == OK, "MapParameterHelpControl: Could not compile help text formatting pattern")
 	
 	# Allow the visible help panel to be dismissed by close button.
 	header_close_button.pressed.connect(dismiss)
@@ -725,54 +732,201 @@ func _add_media_caption(item: VBoxContainer, caption_text: String) -> void:
 	item.add_child(caption)
 
 
-## Renders text with room icons and names resolved from the current catalogs.
+## Renders supported formatting tags and room references in their original text order.
 func _append_text_with_room_references(label: RichTextLabel, source: String) -> void:
-	# Reset the rich-text stack and prepare to copy literal spans.
+	# Clear the previous contents and initialize the active formatting stack.
 	label.clear()
 	var cursor: int = 0
+	var open_tags: Array[String] = []
 	
-	# Process placeholders from left to right while preserving surrounding text.
-	for reference: RegExMatch in _reference_regex.search_all(source):
-		# Append span before the found reference.
-		label.add_text(source.substr(cursor, reference.get_start() - cursor))
+	# Find the next room reference or formatting tag without separating their scopes.
+	while cursor < source.length():
+		var room_match: RegExMatch = _reference_regex.search(source, cursor)
+		var format_match: RegExMatch = _formatting_regex.search(source, cursor)
 		
-		# Unpack found reference.
-		var operation: String = reference.get_string(1)
-		var catalog: String = reference.get_string(2)
-		var room_id: String = reference.get_string(3)
+		# Preserve the remaining literal text when no additional markup exists.
+		if room_match == null and format_match == null:
+			label.add_text(source.substr(cursor))
+			break
 		
-		# Retrieve the referenced room resource from its owning catalog.
-		var room: Variant = null
-		if catalog == "secret":
-			room = GameData.room_secret_types.get_type_by_id(room_id)
-		elif catalog == "special":
-			room = GameData.room_special_types.get_type_by_id(room_id)
+		# Process whichever recognized token appears next in the source string.
+		var use_room_match: bool = room_match != null and (
+			format_match == null or room_match.get_start() <= format_match.get_start()
+		)
+		var next_match: RegExMatch = room_match if use_room_match else format_match
 		
-		# Include the referenced room type data inside the label.
-		if room == null:
-			# Show a readable fallback when an identifier cannot be resolved.
-			push_warning("MapParameterHelpControl: Unresolved help reference: %s" % reference.get_string())
-			label.add_text("[unknown room: %s]" % room_id)
+		# Append literal text before the next recognized token.
+		label.add_text(source.substr(cursor, next_match.get_start() - cursor))
+		
+		# Add the referenced room contents or apply the requested text formatting.
+		if use_room_match:
+			_append_resolved_room_reference(label, next_match)
 		else:
-			# Insert the icon for references that request it.
-			if operation == "room" or operation == "icon":
-				var icon_texture: Texture2D = room.get_static_texture()
-				if icon_texture != null:
-					label.add_image(icon_texture, maxi(1, roundi(content_inline_icon_width)), 0)
-				else:
-					push_warning("MapParameterHelpControl: Help reference has no icon: %s" % room_id)
-			
-			# Add the display name only for name or combined references.
-			if operation == "room":
-				label.add_text(" " + room.get_display_name())
-			elif operation == "name":
-				label.add_text(room.get_display_name())
+			_append_help_format_tag(label, next_match, open_tags)
 		
-		# Get next cursor index.
-		cursor = reference.get_end()
+		cursor = next_match.get_end()
 	
-	# Preserve any literal text following the last placeholder.
-	label.add_text(source.substr(cursor))
+	# Close any remaining formatting scopes at the end of the description.
+	while not open_tags.is_empty():
+		open_tags.pop_back()
+		label.pop()
+
+
+## Adds the icon and display name requested by a resolved secret or special room reference.
+func _append_resolved_room_reference(label: RichTextLabel, reference: RegExMatch) -> void:
+	# Read the requested operation, owning catalog and identifier.
+	var operation: String = reference.get_string(1)
+	var catalog: String = reference.get_string(2)
+	var room_id: String = reference.get_string(3)
+	
+	# Retrieve the references room from its configured catalog.
+	var room: Variant = null
+	if catalog == "secret":
+		room = GameData.room_secret_types.get_type_by_id(room_id)
+	elif catalog == "special":
+		room = GameData.room_special_types.get_type_by_id(room_id)
+	
+	# Display the fallback text when the requested room cannot be resolved.
+	if room == null:
+		push_warning("MapParameterHelpControl: Unresolved help reference: %s" % reference.get_string())
+		label.add_text("[unknown room: %s]" % room_id)
+		return
+	
+	# Add an inline icon for icon-only and combined room references.
+	if operation == "room" or operation == "icon":
+		var icon_texture: Texture2D = room.get_static_texture()
+		if icon_texture != null:
+			label.add_image(icon_texture, maxi(1, roundi(content_inline_icon_width)), 0)
+		else:
+			push_warning("MapParameterHelpControl: Help reference has no icon: %s" % room_id)
+	
+	# Add the readable room name for name-only and combined references.
+	if operation == "room":
+		label.add_text(" " + room.get_display_name())
+	elif operation == "name":
+		label.add_text(room.get_display_name())
+
+
+## Applies one supported formatting tag to the RichTextLabel's active formatting stack.
+func _append_help_format_tag(label: RichTextLabel, token: RegExMatch, open_tags: Array[String]) -> void:
+	# Read the tag name, whether it closes a scope, and any assigned options.
+	var tag_name: String = token.get_string(2)
+	var is_closing: bool = token.get_string(1) == "/"
+	var options: String = token.get_string(3)
+	if options.is_empty():
+		options = token.get_string(4)
+	options = options.strip_edges()
+	
+	# Close a formatting scope only when it matches the most recently opened tag.
+	if is_closing:
+		if not options.is_empty() or open_tags.is_empty() or open_tags.back() != tag_name:
+			label.add_text(token.get_string())
+			return
+		
+		open_tags.pop_back()
+		label.pop()
+		return
+	
+	# Insert standalone line breaks and horizontal rules without opening a scope.
+	if tag_name == "br":
+		if options.is_empty():
+			label.add_text("\n")
+		else:
+			label.add_text(token.get_string())
+		return
+	
+	if tag_name == "hr":
+		_append_help_horizontal_rule(label, options)
+		return
+	
+	# Apply text formatting using the RichTextLabel's manual formatting API.
+	match tag_name:
+		"b":
+			if not options.is_empty():
+				label.add_text(token.get_string())
+				return
+			label.push_bold()
+		"i":
+			if not options.is_empty():
+				label.add_text(token.get_string())
+				return
+			label.push_italics()
+		"u":
+			if not options.is_empty():
+				label.add_text(token.get_string())
+				return
+			label.push_underline()
+		"s":
+			if not options.is_empty():
+				label.add_text(token.get_string())
+				return
+			label.push_strikethrough()
+		"color":
+			if not Color.html_is_valid(options):
+				label.add_text(token.get_string())
+				return
+			label.push_color(Color.html(options))
+		"bgcolor":
+			if not Color.html_is_valid(options):
+				label.add_text(token.get_string())
+				return
+			label.push_bgcolor(Color.html(options))
+		"font_size":
+			if not options.is_valid_int() or options.to_int() <= 0:
+				label.add_text(token.get_string())
+				return
+			label.push_font_size(options.to_int())
+		_:
+			label.add_text(token.get_string())
+			return
+	
+	# Track the scope so a later closing tag restores the previous formatting.
+	open_tags.append(tag_name)
+
+
+## Adds a horizontal rule with optional width, height, color and alignment properties.
+func _append_help_horizontal_rule(label: RichTextLabel, options: String) -> void:
+	# Initialize the rule using RichTextLabel's default horizontal rule dimensions.
+	var rule_width: int = 100
+	var rule_height: int = 2
+	var rule_color: Color = Color.WHITE
+	var rule_alignment: HorizontalAlignment = HORIZONTAL_ALIGNMENT_CENTER
+	var width_is_percent: bool = true
+	var height_is_percent: bool = false
+	
+	# Read optional horizontal-rule properties from space-separated assignments.
+	for option: String in options.split(" ", false):
+		var parts: PackedStringArray = option.split("=", false, 1)
+		if parts.size() != 2:
+			continue
+		
+		var property_name: String = parts[0]
+		var property_value: String = parts[1]
+		match property_name:
+			"width":
+				width_is_percent = property_value.ends_with("%")
+				var width_text: String = property_value.trim_suffix("%")
+				if width_text.is_valid_int():
+					rule_width = maxi(1, width_text.to_int())
+			"height":
+				height_is_percent = property_value.ends_with("%")
+				var height_text: String = property_value.trim_suffix("%")
+				if height_text.is_valid_int():
+					rule_height = maxi(1, height_text.to_int())
+			"color":
+				if Color.html_is_valid(property_value):
+					rule_color = Color.html(property_value)
+			"align":
+				match property_value:
+					"left", "l":
+						rule_alignment = HORIZONTAL_ALIGNMENT_LEFT
+					"center", "c":
+						rule_alignment = HORIZONTAL_ALIGNMENT_CENTER
+					"right", "r":
+						rule_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	
+	# Insert a separator that becomes part of the formatted text's measured height.
+	label.add_hr(rule_width, rule_height, rule_color, rule_alignment, width_is_percent, height_is_percent)
 
 #endregion
 

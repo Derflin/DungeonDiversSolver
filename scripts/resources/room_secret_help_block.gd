@@ -17,6 +17,12 @@ enum BlockType {
 
 @export_group("Content", "content_")
 ## Description text displayed by RULE and TIP block types.
+## Supports [b], [i], [u], [s], [color=#HEX], [bgcolor=#HEX], [font_size=N], [br] and [hr] formatting tags.
+## Horizontal-rule options: [hr width=80% height=1 color=#B99A53 align=center].
+## Room references use {operation:catalog:room_id} and are resolved when rendered.
+## Operations: room (icon and name), icon (icon only), name (name only).
+## Catalogs: secret, special. Room IDs must exist in their corresponding catalogs.
+## Example: [u]{name:secret:ROOM_ID}[/u] or {room:special:ROOM_ID}.
 @export_multiline var content_text: String = ""
 ## Enables the display for the title label above the specified text for the RULE and TIP block types.
 @export var content_text_title_enabled: bool = true

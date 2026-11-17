@@ -13,7 +13,7 @@ config_version=5
 config/name="Dungeon Divers Solver"
 run/main_scene="uid://cj2o6bu7lko4k"
 config/features=PackedStringArray("4.7", "Forward Plus")
-config/icon="uid://bj6h6blraau3f"
+config/icon="uid://cbdidh8418r01"
 
 [autoload]
 

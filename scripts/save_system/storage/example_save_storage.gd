@@ -88,10 +88,10 @@ func _discover_example(example_id: String) -> void:
 		push_warning("ExampleSaveStorage: example \"%s\" is missing %s." % [example_id, METADATA_FILE_NAME])
 		return
 	
-	# Validate if the example directory contains the thumbnail file.
-	if not FileAccess.file_exists(thumbnail_path):
-		push_warning("ExampleSaveStorage: example \"%s\" is missing %s." % [example_id, THUMBNAIL_FILE_NAME])
-		return
+	# Check whether the thumbnail is available as an imported texture.
+	var thumbnail_exists := ResourceLoader.exists(thumbnail_path, "Texture2D")
+	if not thumbnail_exists:
+		push_warning("ExampleSaveStorage: example \"%s\" does not have a valid thumbnail named %s." % [example_id, THUMBNAIL_FILE_NAME])
 	
 	# Read metadata file contents.
 	var metadata := _read_metadata_file(example_id, metadata_path)
@@ -108,13 +108,6 @@ func _discover_example(example_id: String) -> void:
 	if metadata.save_version != _save_version:
 		push_warning("ExampleSaveStorage: example \"%s\" uses save version %d, but version %d is required." % [example_id, metadata.save_version, _save_version])
 		return
-	
-	# Check if thumbnail exists.
-	var thumbnail_exists: bool = false
-	if ResourceLoader.exists(thumbnail_path, "Texture2D"):
-		thumbnail_exists = true
-	else:
-		push_warning("ExampleSaveStorage: example \"%s\" does not have a valid thumbnail." % example_id)
 	
 	# Save example save details to the internal fields.
 	_save_path_by_id[example_id] = save_path

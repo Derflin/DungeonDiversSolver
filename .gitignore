@@ -5,3 +5,7 @@
 # Temporary files
 *.tmp
 *.TMP
+
+# Local exported builds
+/builds/*
+!/builds/.gdignore

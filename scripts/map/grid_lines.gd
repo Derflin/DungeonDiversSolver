@@ -4,6 +4,12 @@ extends Node2D
 const GRID_LINE_WIDTH = 1
 const GRID_OUTER_CELL_COUNT = 2
 
+enum CellType {
+	CELL_NONE = 0,
+	CELL_INTERNAL = 1,
+	CELL_EXTERNAL = 2,
+}
+
 
 @export var grid_parent_node: GridSpace
 
@@ -18,34 +24,115 @@ var grid_offset: Vector2 = Vector2(0.5, 0.5)
 
 
 func _draw() -> void:
-	if GameSettings.map_grid_size.x <= 0 or GameSettings.map_grid_size.y <= 0:
+	var map_size := GameSettings.map_grid_size
+	if map_size.x <= 0 or map_size.y <= 0:
 		return
-		
+	
 	_draw_square_segments()
-	
-	
+
+
+## Draws each horizontal and vertical line once per adjacent cell contribution.
 func _draw_square_segments() -> void:
-	for grid_x in range(-GRID_OUTER_CELL_COUNT, GameSettings.map_grid_size.x + GRID_OUTER_CELL_COUNT):
-		for grid_y in range(-GRID_OUTER_CELL_COUNT, GameSettings.map_grid_size.y + GRID_OUTER_CELL_COUNT):
-			var rect_from = _grid_point_to_local(Vector2i(grid_x, grid_y))
-			var rect_to = _grid_point_to_local(Vector2i(grid_x + 1, grid_y + 1))
-			var rect_size = rect_to - rect_from
-			var color = external_line_color if grid_x < 0 or grid_x >= GameSettings.map_grid_size.x or grid_y < 0 or grid_y >= GameSettings.map_grid_size.y else internal_line_color			
-			_draw_square_segment(Rect2(rect_from, rect_size), color)
+	var map_size := GameSettings.map_grid_size
+	var min_x := -GRID_OUTER_CELL_COUNT
+	var min_y := -GRID_OUTER_CELL_COUNT
+	var max_x := map_size.x + GRID_OUTER_CELL_COUNT
+	var max_y := map_size.y + GRID_OUTER_CELL_COUNT
 	
+	# Draw all vertical line runs.
+	for grid_x in range(min_x, max_x + 1):
+		_draw_edge_runs(true, grid_x, min_y, max_y, map_size, min_x, min_y, max_x, max_y)
 	
+	# Draw all horizontal line runs.
+	for grid_y in range(min_y, max_y + 1):
+		_draw_edge_runs(false, grid_y, min_x, max_x, map_size, min_x, min_y, max_x, max_y)
+
+
+## Draws a horizontal/vertical line for the provided segment group by grouping them together based on the style that should be applied to them and their location on map.
+func _draw_edge_runs(vertical: bool, line_index: int, segment_start: int, segment_end: int, map_size: Vector2i, min_x: int, min_y: int, max_x: int, max_y: int) -> void:
+	# Initialize variables to hold the details about the currently grouped segments by populating them with current segment.
+	var run_start := segment_start
+	var run_style := _get_edge_layers(vertical, line_index, segment_start, map_size, min_x, min_y, max_x, max_y)
+	
+	# Process each existing segment after the already initialized one and include the exclusive end segment position to finallzie processing.
+	for current_segment in range(segment_start + 1, segment_end + 1):
+		var new_style := Vector2i(-1, -1)
+		
+		# Get style for the current segment if currently selected segment exists.
+		if current_segment < segment_end:
+			new_style = _get_edge_layers(vertical, line_index, current_segment, map_size, min_x, min_y, max_x, max_y)
+		
+		# Draw a line for the currently saved run and set current segment as the new run start if the style for the current segment is different then the one saved for the saved run.
+		if new_style != run_style:
+			_draw_edge_run(vertical, line_index, run_start, current_segment, run_style)
+			run_start = current_segment
+			run_style = new_style
+
+
+## Returns a style indicator for the provided current segment based on it and it's neighbour types.
+func _get_edge_layers(vertical: bool, line_index: int, segment: int, map_size: Vector2i, min_x: int, min_y: int, max_x: int, max_y: int) -> Vector2i:
+	# Initialize state variables for keeping the current segment and it's neighbour types.
+	var previous := CellType.CELL_NONE
+	var next := CellType.CELL_NONE
+	
+	# Get current segment and it's neighbour types based on if current segment is for a horizontal or vertical segment and it's position.
+	if vertical:
+		if line_index > min_x:
+			previous = _get_cell_type(line_index - 1, segment, map_size)
+		if line_index < max_x:
+			next = _get_cell_type(line_index, segment, map_size)
+	else:
+		if line_index > min_y:
+			previous = _get_cell_type(segment, line_index - 1, map_size)
+		if line_index < max_y:
+			next = _get_cell_type(segment, line_index, map_size)
+	
+	# Return prepared style indicator consisting of collected segment types.
+	return Vector2i(int(previous), int(next))
+
+
+## Returns the segment type based on it's position on the map.
+func _get_cell_type(grid_x: int, grid_y: int, map_size: Vector2i) -> CellType:
+	if grid_x >= 0 and grid_x < map_size.x and grid_y >= 0 and grid_y < map_size.y:
+		return CellType.CELL_INTERNAL
+	
+	return CellType.CELL_EXTERNAL
+
+
+## Draws a line between the provided [param from_segment] start and provided [param to_segment] end points in the grid lines segments coordinates.
+## Uses provided [param vertical] flag to define the orientation of the line and provided [param line_index] to define a second axis for the provided segment indexes.
+## Uses provided [param layers] to check the neighbouring square segments types to define what colors should be used for them.
+func _draw_edge_run(vertical: bool, line_index: int, from_segment: int, to_segment: int, layers: Vector2i) -> void:
+	# Calculate start and end points for the line.
+	var line_from: Vector2
+	var line_to: Vector2
+	if vertical:
+		line_from = _grid_point_to_local(Vector2i(line_index, from_segment))
+		line_to = _grid_point_to_local(Vector2i(line_index, to_segment))
+	else:
+		line_from = _grid_point_to_local(Vector2i(from_segment, line_index))
+		line_to = _grid_point_to_local(Vector2i(to_segment, line_index))
+	
+	# Draw line one time for each layer if it does contain some specific cell type in it.
+	if layers.x as CellType != CellType.CELL_NONE:
+		draw_line(line_from, line_to, _get_cell_color(layers.x as CellType), GRID_LINE_WIDTH)
+	if layers.y as CellType != CellType.CELL_NONE:
+		draw_line(line_from, line_to, _get_cell_color(layers.y as CellType), GRID_LINE_WIDTH)
+
+
+## Returns a color that is assigned for the provided [param cell_type].
+func _get_cell_color(cell_type: CellType) -> Color:
+	return internal_line_color if cell_type == CellType.CELL_INTERNAL else external_line_color
+
+
 func _grid_point_to_local(grid_point: Vector2i) -> Vector2:
 	# grid_room_size + 2 * GRID_LINE_WIDTH - GRID LINE WIDTH -> Square size + border from each side
 	return Vector2(
 		grid_point.x * (GameSettings.map_grid_room_size.x + GRID_LINE_WIDTH) + grid_offset.x,
 		grid_point.y * (GameSettings.map_grid_room_size.y + GRID_LINE_WIDTH) + grid_offset.y,
 	)
-	
-	
-func _draw_square_segment(rect_coords: Rect2, color: Color) -> void:
-	draw_rect(rect_coords, color, false, 1.0)
-	
-	
+
+
 func get_grid_size() -> Vector2:
 	return Vector2(
 		(GameSettings.map_grid_size.x + 2 * GRID_OUTER_CELL_COUNT) * (GameSettings.map_grid_room_size.x + GRID_LINE_WIDTH) + GRID_LINE_WIDTH,

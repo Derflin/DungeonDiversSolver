@@ -49,6 +49,8 @@ var _help_pinned: bool = false
 
 # Prevents a touchscreen's emulated cursor from creating a hover-only preview.
 var _allow_mouse_hover: bool = true
+# Tracks whether the physical mouse cursor is inside the application window.
+var _mouse_inside_window: bool = true
 
 # Touch gesture currently being checked for activation of this entry.
 var _touch_index: int = -1
@@ -79,7 +81,9 @@ func _ready() -> void:
 	entry_count_label.mouse_filter = Control.MOUSE_FILTER_PASS
 	entry_description_label.mouse_filter = Control.MOUSE_FILTER_PASS
 	
-	
+	# Connect window mouse enter/exit signals to manage hover interactions.
+	get_window().mouse_entered.connect(_on_window_mouse_entered)
+	get_window().mouse_exited.connect(_on_window_mouse_exited)
 
 
 func initialize_map_grid_size(help_data: MapParameterHelpData = null) -> void:
@@ -184,7 +188,7 @@ func _get_help_region_rect() -> Rect2:
 ## Keeps the hover highlight and help preview synchronized with one input region.
 func _process(_delta: float) -> void:
 	# Non-secret entries and touch-only interaction don't create mouse previews.
-	if not _has_help() or not _allow_mouse_hover:
+	if not _has_help() or not _allow_mouse_hover or not _mouse_inside_window:
 		if _help_row_hovered:
 			_help_row_hovered = false
 			queue_redraw()
@@ -329,11 +333,18 @@ func _contains_visible_viewport_point(target: Control, viewport_position: Vector
 	if not is_instance_valid(target) or not target.is_visible_in_tree():
 		return false
 	
-	# Begin with the control's visible rectangle in the shared HUD canvas.
-	var visible_rect: Rect2 = target.get_global_rect()
-	var ancestor: Node = target.get_parent()
+	# Reject pointer positions outside the visible viewport area.
+	var viewport_rect: Rect2 = get_viewport().get_visible_rect()
+	if not viewport_rect.has_point(viewport_position):
+		return false
+	
+	# Begin with the control's visible rectangle in the shared HUD canvas clipped to the viewport.
+	var visible_rect: Rect2 = target.get_global_rect().intersection(viewport_rect)
+	if not visible_rect.has_area():
+		return false
 	
 	# Controls clipped by an ancestor cannot receive input outside that area.
+	var ancestor: Node = target.get_parent()
 	while ancestor != null:
 		if ancestor is Control:
 			var parent_control: Control = ancestor
@@ -364,6 +375,22 @@ func contains_help_trigger_viewport_point(viewport_position: Vector2) -> bool:
 	# Check whether viewport position lies inside the interactive help area.
 	var local_position: Vector2 = make_canvas_position_local(viewport_position)
 	return _get_help_region_rect().has_point(local_position)
+
+
+## Restores mouse hover processing when the cursor enters the application window.
+func _on_window_mouse_entered() -> void:
+	_mouse_inside_window = true
+
+
+## Clears the current hover state when the cursor leaves the application window.
+func _on_window_mouse_exited() -> void:
+	# Disable mouse hover processing while the cursor is outside the window.
+	_mouse_inside_window = false
+	
+	# Clear the existing hover highlight if it was active.
+	if _help_row_hovered:
+		_help_row_hovered = false
+		queue_redraw()
 
 #endregion
 

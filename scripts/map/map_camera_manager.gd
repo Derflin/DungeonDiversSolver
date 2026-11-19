@@ -4,44 +4,47 @@ extends Node2D
 const MAP_CAMERA_INPUT_ALLOW_GROUP: StringName = &"allow_map_camera_input"
 const MAP_CAMERA_VIEW_OBSTACLES_GROUP: StringName = &"map_camera_view_obstacles"
 
+enum CameraViewMode { FIT, CUSTOM }
+
 
 @export_group("Initial View")
-@export_range(0.0, 100.0, 1.0)
-var fit_padding = 32.0
-@export_range(0.01, 10.0, 0.01)
-var minimum_zoom = 0.25
-@export_range(0.01, 20.0, 0.01)
-var maximum_zoom = 8.0
+@export_range(0.0, 100.0, 1.0) var fit_padding = 32.0
+
+@export_group("Relative Zoom Limits")
+@export_range(1.0, 10.0, 0.05) var maximum_zoom_relative_to_fit: float = 3.0
 
 @export_group("Zoom Controls")
-@export_range(1.01, 2.0, 0.01)
-var zoom_factor = 1.25
+@export_range(1.01, 2.0, 0.01) var zoom_factor = 1.25
 @export var zoom_toward_mouse = true
-@export_range(0.0, 200.0, 1.0)
-var zoom_focus_margin = 20.0
-@export_range(0.1, 1.0, 0.05)
-var minimum_visible_fraction_per_axis := 0.5
+@export_range(0.0, 200.0, 1.0) var zoom_focus_margin = 20.0
+@export_range(0.1, 1.0, 0.05) var minimum_visible_fraction_per_axis := 0.5
 
 @export_group("Camera Panning")
 ## Distance in screen pixels before a click becomes a drag.
-@export_range(0.0, 20.0, 1.0)
-var pan_drag_threshold = 4.0
+@export_range(0.0, 20.0, 1.0) var pan_drag_threshold = 4.0
 
 
 var grid_rect: Rect2 = Rect2(0, 0, 0, 0)
 var _pan_candidate = false
 var _is_panning = false
 var _pan_start_screen_position = Vector2.ZERO
-var _minimum_zoom: float
-var _maximum_zoom: float
+
+var _view_mode: CameraViewMode = CameraViewMode.FIT
+var _fitted_zoom: float = 1.0
+var _relative_zoom: float = 1.0
+
+var _last_viewport_center: Vector2 = Vector2.ZERO
+var _last_safe_rect: Rect2 = Rect2()
+var _has_view_snapshot: bool = false
+var _resize_pending: bool = false 
 
 
 @onready var map_camera: MapCamera = $MapCamera
 
 
 func _ready() -> void:
-	_minimum_zoom = minimum_zoom
-	_maximum_zoom = maximum_zoom
+	# Recalculate camera framing when the logical viewport dimensions change.
+	get_viewport().size_changed.connect(_on_viewport_size_changed)
 
 
 func set_grid_rect(_grid_rect: Rect2) -> void:
@@ -53,6 +56,7 @@ func fit_map_to_view(instant: bool = false) -> void:
 
 
 ## Adjust camera position to be set and centered at the provided [param center_position] point.
+## Centers the camera on a map point without resetting the user's current zoom ratio.
 func center_camera_at_position(center_position: Vector2) -> void:
 	# Get the viewport area not covered by HUD blocking controls.
 	var free_rect := _get_available_map_view_rect()
@@ -60,20 +64,21 @@ func center_camera_at_position(center_position: Vector2) -> void:
 		free_rect = get_viewport().get_visible_rect()
 	
 	# Get camera position centered around the center position adjusted to be centered around the free rect area.
-	var camera_position := _get_position_for_safe_center(center_position, free_rect, map_camera.get_camera_zoom().x)
+	var new_position := _get_position_for_safe_center(center_position, free_rect, map_camera.get_camera_zoom().x)
+	
+	# Set the camera view mode to custom to ensure that it's not set to fit mode.
+	_view_mode = CameraViewMode.CUSTOM
 	
 	# Adjust the camera position to be centered on the calculated position.
-	map_camera.set_camera_position(camera_position)
+	map_camera.set_camera_position(_get_clamped_camera_position(new_position, map_camera.get_camera_zoom().x))
 
 
 ## Adjusts camera zoom and position in order to fit the entire grid rectangle and display it's center in the available view rect center.
 ## Used the provided [param instant] flag to determine if changing the camera state should be instant or animated.
+## Activates FIT mode so subsequent viewport resizing keeps the map fitted.
 func _fit_map_to_view(instant: bool = false) -> void:
-	# Get current map rect.
-	var map_rect = grid_rect
-	
-	# Filter out processing if the map rect size is less then 0 in any axis.
-	if map_rect.size.x <= 0.0 or map_rect.size.y <= 0.0:
+	# Filter out processing if the grid rect size is less then 0 in any axis.
+	if grid_rect.size.x <= 0.0 or grid_rect.size.y <= 0.0:
 		push_warning("Cannot fit a map with an empty size.")
 		return
 	
@@ -83,27 +88,25 @@ func _fit_map_to_view(instant: bool = false) -> void:
 		push_warning("MapCameraManager: No unobstructed viewport area remains after accounting for HUD blocking controls.")
 		free_rect = get_viewport().get_visible_rect()
 	
-	# Apply the fit padding to the available area.
-	var padding := maxf(fit_padding, 0.0)
-	var available_size := free_rect.size - Vector2.ONE * padding * 2.0
-	
 	# Calculate the zoom required to fit both map dimensions.
-	var fitted_zoom := minf(available_size.x / map_rect.size.x, available_size.y / map_rect.size.y)
-	fitted_zoom = clampf(
-		fitted_zoom,
-		_minimum_zoom,
-		_maximum_zoom,
-	)
+	var new_fit_zoom := _calculate_fitted_zoom(free_rect)
+	if new_fit_zoom <= 0.0:
+		push_warning("MapCameraManager: Cannot fit map to an empty view area.")
+		return
 	
-	# Preserve the calculated fitted zoom as the minimum zoom.
-	minimum_zoom = fitted_zoom
+	# Save the current state for the fit view mode.
+	_fitted_zoom = new_fit_zoom
+	_relative_zoom = 1.0
+	_view_mode = CameraViewMode.FIT
 	
 	# Calculate the adjusted camera position according to the available free area.
-	var centered_position := _get_position_for_safe_center(map_rect.get_center(), free_rect, fitted_zoom)
+	var center_position := _get_position_for_safe_center(grid_rect.get_center(), free_rect, _fitted_zoom)
 	
-	# Update the camera zoom and position.
-	map_camera.set_camera_zoom(fitted_zoom, instant)
-	map_camera.set_camera_position(centered_position, instant)
+	# Update camera state including zoom and position.
+	map_camera.set_camera_state(center_position, _fitted_zoom, instant)
+	
+	# Save the calculated available free area.
+	_remember_view_geometry(free_rect)
 
 
 ## Checks the nodes assigned inside the MAP_CAMERA_VIEW_OBSTACLES_GROUP group and reduces the viewport rects over their rects.
@@ -287,9 +290,13 @@ func _handle_zoom_input(event: InputEvent, multiplier: float) -> void:
 
 
 func _zoom_at_screen_position(requested_zoom: float, screen_position: Vector2) -> void:
+	# Filter out processing if the last saved fitted zoom is invalid. 
+	if _fitted_zoom <= 0.0:
+		return
+	
 	# Retrieve the currently requested zoom and apply existing zoom restrictions.
 	var old_zoom := map_camera.get_camera_zoom().x
-	var new_zoom := clampf(requested_zoom, minimum_zoom, maximum_zoom)
+	var new_zoom := clampf(requested_zoom, _fitted_zoom, _fitted_zoom * maximum_zoom_relative_to_fit)
 	if is_equal_approx(old_zoom, new_zoom):
 		return
 	
@@ -300,9 +307,15 @@ func _zoom_at_screen_position(requested_zoom: float, screen_position: Vector2) -
 	# Calculate the exact anchor destination at the final zoom.
 	var viewport_center := get_viewport().get_visible_rect().get_center()
 	var requested_position := zoom_target + (viewport_center - anchor_screen) / new_zoom
-	
-	# Clamp the destination before starting the animation.
 	var constrained_position := _get_clamped_camera_position(requested_position, new_zoom)
+	
+	# Set the camera view mode to custom to ensure that it's not set to fit mode.
+	_view_mode = CameraViewMode.CUSTOM
+	
+	# Save the calculated zoom as the new relative zoom.
+	_relative_zoom = new_zoom / _fitted_zoom
+	
+	# Adjust the camera zoom with anchored position.
 	map_camera.set_camera_zoom_anchored(new_zoom, zoom_target, anchor_screen, constrained_position)
 
 
@@ -459,6 +472,9 @@ func _handle_pan_input(event: InputEvent) -> bool:
 			
 		var camera_movement = event.relative / map_camera.get_camera_zoom().x
 		
+		# Set the camera view mode to custom to ensure that it's not set to fit mode.
+		_view_mode = CameraViewMode.CUSTOM
+		
 		# Subtraction makes the map follow the mouse:
 		# drag right -> map appers to move right.
 		map_camera.set_camera_position(map_camera.get_camera_position() - camera_movement)
@@ -469,3 +485,99 @@ func _handle_pan_input(event: InputEvent) -> bool:
 		return true
 		
 	return false	
+
+
+## Returns the zoom that fits the whole map into the available viewport rectangle.
+func _calculate_fitted_zoom(free_rect: Rect2) -> float:
+	# Filter out processing and return 0 if the grid rect size is less then 0 in any axis.
+	if grid_rect.size.x <= 0.0 or grid_rect.size.y <= 0.0:
+		return 0.0
+	
+	# Calculate available area from the provided free rect and padding parameters.
+	var padding := maxf(fit_padding, 0.0)
+	var available_size := free_rect.size - Vector2.ONE * padding * 2.0
+	
+	# Filter out processing and return 0 if the calculated available area size is less then 0 in any axis.
+	if available_size.x <= 0.0 or available_size.y <= 0.0:
+		return 0.0
+	
+	return minf(available_size.x / grid_rect.size.x, available_size.y / grid_rect.size.y)
+
+
+## Saves the geometry associated with the camera's previous requested view.
+func _remember_view_geometry(free_rect: Rect2) -> void:
+	_last_viewport_center = get_viewport().get_visible_rect().get_center()
+	_last_safe_rect = free_rect
+	_has_view_snapshot = true
+
+
+## Schedules a single resize update instead of starting an animation for each resize event.
+func _on_viewport_size_changed() -> void:
+	# Filter out processing if there is already pending resize.
+	if _resize_pending:
+		return
+	
+	# Set the resize pending flag.
+	_resize_pending = true
+	
+	# Queue viewport resize.
+	_apply_viewport_resize.call_deferred()
+
+
+## Applies a responsive fit or preserves the custom view after HUD layout has updated.
+func _apply_viewport_resize() -> void:
+	# Wait for layout to update before measuring the unobstructed map area.
+	await get_tree().process_frame
+	
+	# Unset the resize pending flag.
+	_resize_pending = false
+	
+	# Filter out processing if the grid rect size is less then 0 in any axis.
+	if grid_rect.size.x <= 0.0 or grid_rect.size.y <= 0.0:
+		return
+	
+	# Get the viewport area not covered by HUD blocking controls.
+	var free_rect := _get_available_map_view_rect()
+	if not free_rect.has_area():
+		free_rect = get_viewport().get_visible_rect()
+	
+	# Calculate the zoom required to fit both map dimensions.
+	var new_fit_zoom := _calculate_fitted_zoom(free_rect)
+	if new_fit_zoom <= 0.0:
+		return
+	
+	# Use the normal fitted view function call if no previous view was established.
+	if not _has_view_snapshot:
+		_fit_map_to_view(true)
+		return
+	
+	# Get the current zoom and camera focus position.
+	var old_zoom := maxf(map_camera.get_camera_zoom().x, 0.00001)
+	var old_focus_world := map_camera.get_camera_position() + (_last_safe_rect.get_center() - _last_viewport_center) / old_zoom
+	
+	# Save the calculated fit zoom for the fit view mode.
+	_fitted_zoom = new_fit_zoom
+	
+	# Calculate the new camera zoom and position based on the current view mode.
+	var new_zoom: float
+	var new_position: Vector2
+	match _view_mode:
+		CameraViewMode.FIT:
+			_relative_zoom = 1.0
+			new_zoom = _fitted_zoom
+			new_position = _get_position_for_safe_center(grid_rect.get_center(), free_rect, new_zoom)
+			
+		CameraViewMode.CUSTOM:
+			_relative_zoom = clampf(_relative_zoom, 1.0, maximum_zoom_relative_to_fit)
+			new_zoom = _fitted_zoom * _relative_zoom
+			new_position = _get_position_for_safe_center(old_focus_world, free_rect, new_zoom)
+			new_position = _get_clamped_camera_position(new_position, new_zoom)
+			
+		_:
+			return
+	
+	# Update camera state including zoom and position.
+	map_camera.set_camera_state(new_position, new_zoom, true)
+	
+	# Save the calculated available free area.
+	_remember_view_geometry(free_rect)

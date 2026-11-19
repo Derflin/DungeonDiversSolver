@@ -184,8 +184,6 @@ grid_space_node_reference = NodePath("..")
 [node name="MapCameraManager" type="Node2D" parent="." unique_id=1102045684]
 script = ExtResource("16_134i6")
 fit_padding = -18.0
-minimum_zoom = 1.75
-maximum_zoom = 5.0
 
 [node name="MapCamera" type="Camera2D" parent="MapCameraManager" unique_id=888741653]
 position_smoothing_speed = 10.0

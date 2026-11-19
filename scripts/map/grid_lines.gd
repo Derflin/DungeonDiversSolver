@@ -59,6 +59,17 @@ func _draw() -> void:
 	_draw_square_segments()
 
 
+## Checks whether grid lines should use antialiasing based on the current rendering method.
+## Uses per-line antialiasing when MSAA 2D is unavailable.
+func _should_antialias_grid_lines() -> bool:
+	# Preserve the manually configured antialiasing setting.
+	if render_antialiasing_enabled:
+		return true
+	
+	# Enable antialiasing for the compatibility renderer.
+	return RenderingServer.get_current_rendering_method() == "gl_compatibility"
+
+
 ## Returns how much one local map unit occupies on screen along each axis.
 func _get_effective_screen_scale() -> Vector2:
 	var transform_to_screen := get_viewport().get_stretch_transform() * get_global_transform_with_canvas()
@@ -172,9 +183,9 @@ func _draw_edge_run(vertical: bool, line_index: int, from_segment: int, to_segme
 	
 	# Draw line one time for each layer if it does contain some specific cell type in it.
 	if layers.x as CellType != CellType.CELL_NONE:
-		draw_line(line_from, line_to, _get_cell_color(layers.x as CellType), draw_width, render_antialiasing_enabled)
+		draw_line(line_from, line_to, _get_cell_color(layers.x as CellType), draw_width, _should_antialias_grid_lines())
 	if layers.y as CellType != CellType.CELL_NONE:
-		draw_line(line_from, line_to, _get_cell_color(layers.y as CellType), draw_width, render_antialiasing_enabled)
+		draw_line(line_from, line_to, _get_cell_color(layers.y as CellType), draw_width, _should_antialias_grid_lines())
 
 
 ## Returns a color that is assigned for the provided [param cell_type].

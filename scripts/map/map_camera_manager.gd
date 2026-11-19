@@ -77,7 +77,7 @@ func center_camera_at_position(center_position: Vector2) -> void:
 ## Used the provided [param instant] flag to determine if changing the camera state should be instant or animated.
 ## Activates FIT mode so subsequent viewport resizing keeps the map fitted.
 func _fit_map_to_view(instant: bool = false) -> void:
-	# Filter out processing if the grid rect size is less then 0 in any axis.
+	# Filter out processing if the grid rect size is less then or equal 0 in any axis.
 	if grid_rect.size.x <= 0.0 or grid_rect.size.y <= 0.0:
 		push_warning("Cannot fit a map with an empty size.")
 		return
@@ -489,7 +489,7 @@ func _handle_pan_input(event: InputEvent) -> bool:
 
 ## Returns the zoom that fits the whole map into the available viewport rectangle.
 func _calculate_fitted_zoom(free_rect: Rect2) -> float:
-	# Filter out processing and return 0 if the grid rect size is less then 0 in any axis.
+	# Filter out processing and return 0 if the grid rect size is less then or equal 0 in any axis.
 	if grid_rect.size.x <= 0.0 or grid_rect.size.y <= 0.0:
 		return 0.0
 	
@@ -497,7 +497,7 @@ func _calculate_fitted_zoom(free_rect: Rect2) -> float:
 	var padding := maxf(fit_padding, 0.0)
 	var available_size := free_rect.size - Vector2.ONE * padding * 2.0
 	
-	# Filter out processing and return 0 if the calculated available area size is less then 0 in any axis.
+	# Filter out processing and return 0 if the calculated available area size is less then or equal 0 in any axis.
 	if available_size.x <= 0.0 or available_size.y <= 0.0:
 		return 0.0
 	
@@ -532,7 +532,7 @@ func _apply_viewport_resize() -> void:
 	# Unset the resize pending flag.
 	_resize_pending = false
 	
-	# Filter out processing if the grid rect size is less then 0 in any axis.
+	# Filter out processing if the grid rect size is less then or equal 0 in any axis.
 	if grid_rect.size.x <= 0.0 or grid_rect.size.y <= 0.0:
 		return
 	

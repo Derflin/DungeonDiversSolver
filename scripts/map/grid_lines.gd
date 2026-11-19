@@ -19,16 +19,61 @@ enum CellType {
 @export_group("External Lines", "external_")
 @export var external_line_color: Color = Color.from_rgba8(115, 39, 44, 40)
 
+@export_group("Line Rendering", "render_")
+@export_range(0.1, 2.0, 0.05) var render_minimum_screen_line_width: float = 1.0
+@export_range(0.01, 0.25, 0.01) var render_maximum_line_to_cell_ratio: float = 0.1
+@export var render_antialiasing_enabled: bool = true
+
 
 var grid_offset: Vector2 = Vector2(0.5, 0.5)
 
+var _previous_screen_scale: Vector2 = Vector2.ZERO
+var _vertical_line_width: float = GRID_LINE_WIDTH
+var _horizontal_line_width: float = GRID_LINE_WIDTH
 
+
+## Keeps track of the effective screen scale of the grid lines and queues redraw it it changes to adjust the grid lines width.
+func _process(_delta: float) -> void:
+	# Get current effective screen scale that affects the grid lines.
+	var screen_scale := _get_effective_screen_scale()
+	
+	# Save the current screen scale and queue grid lines redraw if the screen scale changed from the last time it was saved.
+	if not screen_scale.is_equal_approx(_previous_screen_scale):
+		_previous_screen_scale = screen_scale
+		queue_redraw()
+
+
+# Calculates the line widths for the grid and draws line segments for it.
 func _draw() -> void:
+	# Get current map size and filter out processing if the map size is less then or equal 0 in any axis.
 	var map_size := GameSettings.map_grid_size
 	if map_size.x <= 0 or map_size.y <= 0:
 		return
 	
+	# Calculate line widths to use for vertical and horizontal lines.
+	var screen_scale := _get_effective_screen_scale()
+	_vertical_line_width = _calculate_line_width(screen_scale.x, GameSettings.map_grid_room_size.x)
+	_horizontal_line_width = _calculate_line_width(screen_scale.y, GameSettings.map_grid_room_size.y)
+	
+	# Draw lines for each column and row segments.
 	_draw_square_segments()
+
+
+## Returns how much one local map unit occupies on screen along each axis.
+func _get_effective_screen_scale() -> Vector2:
+	var transform_to_screen := get_viewport().get_stretch_transform() * get_global_transform_with_canvas()
+	return Vector2(transform_to_screen.x.length(), transform_to_screen.y.length())
+
+
+## Calculates and returns a line width that should be used for the grid taking into account the base provided [param room_size] and the provided [param screen_scale].
+## Ensures that the calculated line width won't be bigger then the set maximum line to cell ratio to ensure that it won't overlap the room cell.
+func _calculate_line_width(screen_scale: float, room_size: float) -> float:
+	var scale := maxf(screen_scale, 0.00001)
+	var cell_step_screen := (room_size + GRID_LINE_WIDTH) * scale
+	var original_line_screen := GRID_LINE_WIDTH * scale
+	var requested_line_screen := maxf(original_line_screen, render_minimum_screen_line_width)
+	var maximum_line_screen := cell_step_screen * render_maximum_line_to_cell_ratio
+	return minf(requested_line_screen, maximum_line_screen) / scale
 
 
 ## Draws each horizontal and vertical line once per adjacent cell contribution.
@@ -114,10 +159,11 @@ func _draw_edge_run(vertical: bool, line_index: int, from_segment: int, to_segme
 		line_to = _grid_point_to_local(Vector2i(to_segment, line_index))
 	
 	# Draw line one time for each layer if it does contain some specific cell type in it.
+	var draw_width := _vertical_line_width if vertical else _horizontal_line_width
 	if layers.x as CellType != CellType.CELL_NONE:
-		draw_line(line_from, line_to, _get_cell_color(layers.x as CellType), GRID_LINE_WIDTH)
+		draw_line(line_from, line_to, _get_cell_color(layers.x as CellType), draw_width, render_antialiasing_enabled)
 	if layers.y as CellType != CellType.CELL_NONE:
-		draw_line(line_from, line_to, _get_cell_color(layers.y as CellType), GRID_LINE_WIDTH)
+		draw_line(line_from, line_to, _get_cell_color(layers.y as CellType), draw_width, render_antialiasing_enabled)
 
 
 ## Returns a color that is assigned for the provided [param cell_type].

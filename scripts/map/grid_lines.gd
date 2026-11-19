@@ -158,8 +158,19 @@ func _draw_edge_run(vertical: bool, line_index: int, from_segment: int, to_segme
 		line_from = _grid_point_to_local(Vector2i(from_segment, line_index))
 		line_to = _grid_point_to_local(Vector2i(to_segment, line_index))
 	
-	# Draw line one time for each layer if it does contain some specific cell type in it.
+	# Get line width that will be used for drawing lin,
 	var draw_width := _vertical_line_width if vertical else _horizontal_line_width
+	
+	# Extend the line ends to fill gaps at the grid intersections.
+	var line_extension := draw_width * 0.5
+	if vertical:
+		line_from.y -= line_extension
+		line_to.y += line_extension
+	else:
+		line_from.x -= line_extension
+		line_to.x += line_extension
+	
+	# Draw line one time for each layer if it does contain some specific cell type in it.
 	if layers.x as CellType != CellType.CELL_NONE:
 		draw_line(line_from, line_to, _get_cell_color(layers.x as CellType), draw_width, render_antialiasing_enabled)
 	if layers.y as CellType != CellType.CELL_NONE:

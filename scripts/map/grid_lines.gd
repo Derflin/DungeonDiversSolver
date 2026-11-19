@@ -22,7 +22,7 @@ enum CellType {
 @export_group("Line Rendering", "render_")
 @export_range(0.1, 2.0, 0.05) var render_minimum_screen_line_width: float = 1.0
 @export_range(0.01, 0.25, 0.01) var render_maximum_line_to_cell_ratio: float = 0.1
-@export var render_antialiasing_enabled: bool = true
+@export var render_antialiasing_enabled: bool = false
 
 
 var grid_offset: Vector2 = Vector2(0.5, 0.5)

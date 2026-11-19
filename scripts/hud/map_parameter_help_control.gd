@@ -341,13 +341,14 @@ func _get_help_state_border_color(pinned: bool) -> Color:
 func _refresh_help_state_appearance(animate: bool = true) -> void:
 	# Read the current pin state and determine the displayed border and button opacity.
 	var pinned: bool = _mode == HelpMode.PINNED
+	var help_open: bool = _mode != HelpMode.HIDDEN
 	var target_border_color: Color = _get_help_state_border_color(pinned)
-	var target_button_opacity: float = 1.0 if pinned else 0.0
+	var target_button_opacity: float = 1.0 if help_open else 0.0
 	
-	# Keep the button in the header layout while disabling interaction outside pinned mode.
-	header_close_button.disabled = not pinned
-	header_close_button.mouse_filter = Control.MOUSE_FILTER_STOP if pinned else Control.MOUSE_FILTER_IGNORE
-	if not pinned:
+	# Allow closing the help panel in both preview and pinned modes.
+	header_close_button.disabled = not help_open
+	header_close_button.mouse_filter = Control.MOUSE_FILTER_STOP if help_open else Control.MOUSE_FILTER_IGNORE
+	if not help_open:
 		header_close_button.release_focus()
 	
 	# Stop the previous appearance transition without resetting its current values.

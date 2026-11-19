@@ -36,7 +36,7 @@ var _minimum_zoom: float
 var _maximum_zoom: float
 
 
-@onready var map_camera: Camera2D = $MapCamera
+@onready var map_camera: MapCamera = $MapCamera
 
 
 func _ready() -> void:
@@ -287,78 +287,70 @@ func _handle_zoom_input(event: InputEvent, multiplier: float) -> void:
 
 
 func _zoom_at_screen_position(requested_zoom: float, screen_position: Vector2) -> void:
-	# Retrieve the current requested zoom.
-	var old_zoom = map_camera.get_camera_zoom().x
-	
-	# Calculate the new zoom within the existing limits.
-	var new_zoom = clampf(
-		requested_zoom,
-		minimum_zoom,
-		maximum_zoom,
-	)
-	
+	# Retrieve the currently requested zoom and apply existing zoom restrictions.
+	var old_zoom := map_camera.get_camera_zoom().x
+	var new_zoom := clampf(requested_zoom, minimum_zoom, maximum_zoom)
 	if is_equal_approx(old_zoom, new_zoom):
 		return
 	
-	# Find the world space point that should remain stationary.
-	var zoom_target = _get_constrained_zoom_target(screen_position)
-	
-	# Find where that point currently appears on screen.
+	# Calculate the world-space point and its current on-screen position.
+	var zoom_target := _get_constrained_zoom_target(screen_position)
 	var anchor_screen: Vector2 = get_global_transform_with_canvas() * zoom_target
 	
-	# Request anchored zooming from map camera.
-	map_camera.set_camera_zoom_anchored(new_zoom, zoom_target, anchor_screen)
+	# Calculate the exact anchor destination at the final zoom.
+	var viewport_center := get_viewport().get_visible_rect().get_center()
+	var requested_position := zoom_target + (viewport_center - anchor_screen) / new_zoom
 	
-	# Preserve the map visibility restrictions.
-	_clamp_camera_to_minimum_visibility()
-	
-	
+	# Clamp the destination before starting the animation.
+	var constrained_position := _get_clamped_camera_position(requested_position, new_zoom)
+	map_camera.set_camera_zoom_anchored(new_zoom, zoom_target, anchor_screen, constrained_position)
+
+
 func _clamp_camera_to_minimum_visibility() -> void:
-	# Get current map rect.
-	var map_rect = grid_rect
-	
-	# Filter out processing if the map rect size is less then 0 in any axis.
+	# Keep panning within the same map visibility restrictions as zooming.
+	var requested_position := map_camera.get_camera_position()
+	var constrained_position := _get_clamped_camera_position(requested_position, map_camera.get_camera_zoom().x)
+	if requested_position.distance_squared_to(constrained_position) > 0.0000001:
+		map_camera.set_camera_position(constrained_position)
+
+
+## Restricts a requested camera position without changing the current camera animation.
+## This helper can be used by normal panning and mouse-anchored zooming.
+func _get_clamped_camera_position(requested_position: Vector2, requested_zoom: float) -> Vector2:
+	# Get map rectangle and return the requested_position if it's size is zero.
+	var map_rect := grid_rect
 	if map_rect.size.x <= 0.0 or map_rect.size.y <= 0.0:
-		return
+		return requested_position
 	
-	# Calculate the currently available viewport rectangle.
+	# Get the viewport area not covered by HUD blocking controls.
 	var usable_rect := _get_available_map_view_rect()
 	if not usable_rect.has_area():
 		usable_rect = get_viewport().get_visible_rect()
 	
-	# Get current camera zoom.
-	var camera_zoom: Vector2 = map_camera.get_camera_zoom()
-	
-	# Convert the available rectangle dimensions to world units.
+	# Convert the unobstructed view area to world units at the requested zoom.
+	var camera_zoom := maxf(requested_zoom, 0.00001)
 	var visible_world_size := usable_rect.size / camera_zoom
-	
-	# Determine whether the available's area center appears in world space relative to the camera.
 	var viewport_center := get_viewport().get_visible_rect().get_center()
 	var safe_center_offset := (usable_rect.get_center() - viewport_center) / camera_zoom
-	var safe_center_world: Vector2 = map_camera.get_camera_position() + safe_center_offset
+	var safe_center_world := requested_position + safe_center_offset
 	
-	# Apply the existing overlap restriction horizontally.
+	# Apply the same minimum visbility fraction on both axes.
 	safe_center_world.x = _clamp_axis_for_overlap(
 		safe_center_world.x,
 		map_rect.position.x,
 		map_rect.end.x,
 		visible_world_size.x,
-		minimum_visible_fraction_per_axis
+		minimum_visible_fraction_per_axis,
 	)
-	
-	# Apply the existing overlap restriction vertically.
 	safe_center_world.y = _clamp_axis_for_overlap(
 		safe_center_world.y,
 		map_rect.position.y,
 		map_rect.end.y,
 		visible_world_size.y,
-		minimum_visible_fraction_per_axis
+		minimum_visible_fraction_per_axis,
 	)
 	
-	# Convert the corrected available area center back into an actual camera position.
-	var clamped_position := safe_center_world - safe_center_offset
-	if map_camera.get_camera_position().distance_squared_to(clamped_position) > 0.000001:
-		map_camera.set_camera_position(clamped_position)
+	return safe_center_world - safe_center_offset
 
 
 func _clamp_axis_for_overlap(requested_position: float, map_minimum: float, map_maximum: float, visible_length: float, required_fraction: float) -> float:

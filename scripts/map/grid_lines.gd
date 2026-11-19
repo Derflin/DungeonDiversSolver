@@ -24,12 +24,19 @@ enum CellType {
 @export_range(0.01, 0.25, 0.01) var render_maximum_line_to_cell_ratio: float = 0.1
 @export var render_antialiasing_enabled: bool = false
 
+@export_group("Small Cell Fading", "small_cells_")
+@export var small_cells_fade_enabled: bool = true
+@export_range(2.0, 20.0, 0.5) var small_cells_fade_start_screen_size: float = 8.0
+@export_range(1.0, 10.0, 0.5) var small_cells_fade_end_screen_size: float = 3.0
+
 
 var grid_offset: Vector2 = Vector2(0.5, 0.5)
 
 var _previous_screen_scale: Vector2 = Vector2.ZERO
 var _vertical_line_width: float = GRID_LINE_WIDTH
 var _horizontal_line_width: float = GRID_LINE_WIDTH
+
+var _small_cell_opacity_multiplier: float = 1.0
 
 
 ## Keeps track of the effective screen scale of the grid lines and queues redraw it it changes to adjust the grid lines width.
@@ -54,6 +61,13 @@ func _draw() -> void:
 	var screen_scale := _get_effective_screen_scale()
 	_vertical_line_width = _calculate_line_width(screen_scale.x, GameSettings.map_grid_room_size.x)
 	_horizontal_line_width = _calculate_line_width(screen_scale.y, GameSettings.map_grid_room_size.y)
+	
+	# Measure the smallest visible grid cell dimension in screen pixels.
+	var min_cell_screen_size := minf(
+		(GameSettings.map_grid_room_size.x + GRID_LINE_WIDTH) * screen_scale.x,
+		(GameSettings.map_grid_room_size.y + GRID_LINE_WIDTH) * screen_scale.y,
+	)
+	_small_cell_opacity_multiplier = _get_small_cell_opacity_multiplier(min_cell_screen_size)
 	
 	# Draw lines for each column and row segments.
 	_draw_square_segments()
@@ -190,7 +204,28 @@ func _draw_edge_run(vertical: bool, line_index: int, from_segment: int, to_segme
 
 ## Returns a color that is assigned for the provided [param cell_type].
 func _get_cell_color(cell_type: CellType) -> Color:
-	return internal_line_color if cell_type == CellType.CELL_INTERNAL else external_line_color
+	# Get the color based on the cell type.
+	var color := internal_line_color if cell_type == CellType.CELL_INTERNAL else external_line_color
+	
+	# Apply small cell opacity multiplier to opacity.
+	color.a *= _small_cell_opacity_multiplier
+	
+	return color
+
+
+## Returns opacity multiplier that should be applied to the line color opacity if cells become too small to display correctly with grid lines.
+## Returns 0 for extremely small cells and 1 when individual cells are clearly visible.
+func _get_small_cell_opacity_multiplier(cell_screen_size: float) -> float:
+	# Filter out processing if small cell opacity multiplier is disabled.
+	if not small_cells_fade_enabled:
+		return 1.0
+	
+	# Fade smoothly as the smallest dimension of a grid cell approaches the screen limit.
+	return smoothstep(
+		small_cells_fade_end_screen_size,
+		small_cells_fade_start_screen_size,
+		cell_screen_size,
+	)
 
 
 func _grid_point_to_local(grid_point: Vector2i) -> Vector2:

@@ -289,6 +289,7 @@ func _handle_zoom_input(event: InputEvent, multiplier: float) -> void:
 	)
 
 
+## Requests a mouse-anchored zoom when possible, and a smoothly constrained zoom near map limits.
 func _zoom_at_screen_position(requested_zoom: float, screen_position: Vector2) -> void:
 	# Filter out processing if the last saved fitted zoom is invalid. 
 	if _fitted_zoom <= 0.0:
@@ -300,22 +301,32 @@ func _zoom_at_screen_position(requested_zoom: float, screen_position: Vector2) -
 	if is_equal_approx(old_zoom, new_zoom):
 		return
 	
-	# Calculate the world-space point and its current on-screen position.
-	var zoom_target := _get_constrained_zoom_target(screen_position)
+	## Treat reaching the minimum zoom as an intentional return to the fitted view.
+	## Don't try to keep the a distant mouse anchor while showing the entire map.
+	#if is_equal_approx(new_zoom, _fitted_zoom):
+	#	_fit_map_to_view(false)
+	#	return
+	
+	# Resolve the current world point that should remain under the cursor.
+	var zoom_target: Vector2 = _get_constrained_zoom_target(screen_position)
 	var anchor_screen: Vector2 = get_global_transform_with_canvas() * zoom_target
+	var viewport_center: Vector2 = get_viewport().get_visible_rect().get_center()
 	
-	# Calculate the exact anchor destination at the final zoom.
-	var viewport_center := get_viewport().get_visible_rect().get_center()
-	var requested_position := zoom_target + (viewport_center - anchor_screen) / new_zoom
-	var constrained_position := _get_clamped_camera_position(requested_position, new_zoom)
+	# Calculate the exact anchor destination and its boundary-constrained alternative.
+	var requested_position: Vector2 = zoom_target + (viewport_center - anchor_screen) / new_zoom
+	var constrained_position: Vector2 = _get_clamped_camera_position(requested_position, new_zoom)
 	
-	# Set the camera view mode to custom to ensure that it's not set to fit mode.
+	# Update view state using the final requested relative zoom.
 	_view_mode = CameraViewMode.CUSTOM
-	
-	# Save the calculated zoom as the new relative zoom.
 	_relative_zoom = new_zoom / _fitted_zoom
 	
-	# Adjust the camera zoom with anchored position.
+	# Animate the final state normally if the anchor would move the map beyond its limits.
+	var correction_screen_distance: float = requested_position.distance_to(constrained_position) * new_zoom
+	if correction_screen_distance > 0.25:
+		map_camera.set_camera_state(constrained_position, new_zoom)
+		return
+	
+	# Keep exact mouse anchoring when the requested destination is unrestricted.
 	map_camera.set_camera_zoom_anchored(new_zoom, zoom_target, anchor_screen, constrained_position)
 
 

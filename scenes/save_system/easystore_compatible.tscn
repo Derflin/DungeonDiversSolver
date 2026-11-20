@@ -1,0 +1,42 @@
+[gd_scene format=3 uid="uid://cyrka5h4kfv5o"]
+
+[ext_resource type="Script" uid="uid://cuhmhphchqjon" path="res://addons/easystore/easystore.gd" id="1_crf3b"]
+[ext_resource type="Script" uid="uid://ca3sdifuq2286" path="res://addons/easystore/core/store_events.gd" id="2_mb6sa"]
+[ext_resource type="Script" uid="uid://cnvbp0dlfggis" path="res://addons/easystore/subsystems/slot_manager.gd" id="3_eu3gi"]
+[ext_resource type="Script" uid="uid://c5ge0xaxsb5kk" path="res://addons/easystore/subsystems/section_cache.gd" id="4_vhn00"]
+[ext_resource type="Script" uid="uid://cihad7hdb116b" path="res://addons/easystore/subsystems/autosave_timer.gd" id="5_t1cac"]
+[ext_resource type="Script" uid="uid://c4gvl8rk338wn" path="res://addons/easystore/subsystems/migration_manager.gd" id="6_r8s40"]
+[ext_resource type="Script" uid="uid://d1nig4rcormnd" path="res://addons/easystore/subsystems/sync_manager.gd" id="7_ka7pd"]
+[ext_resource type="Script" uid="uid://b1db53ehtgelk" path="res://scripts/save_system/storage/web_compatible_async_worker.gd" id="8_lmur4"]
+[ext_resource type="Script" uid="uid://0jfbqs7j6tdb" path="res://addons/easystore/debug/store_logger.gd" id="9_gfgur"]
+[ext_resource type="Script" uid="uid://hlmoedisbnov" path="res://addons/easystore/debug/store_debugger.gd" id="10_pmw2v"]
+
+[node name="EasyStoreCompatible" type="Node" unique_id=2110579824]
+script = ExtResource("1_crf3b")
+
+[node name="StoreEvents" type="Node" parent="." unique_id=1369644432]
+script = ExtResource("2_mb6sa")
+
+[node name="SlotManager" type="Node" parent="." unique_id=588166075]
+script = ExtResource("3_eu3gi")
+
+[node name="SectionCache" type="Node" parent="." unique_id=1680770451]
+script = ExtResource("4_vhn00")
+
+[node name="AutosaveTimer" type="Node" parent="." unique_id=2034288103]
+script = ExtResource("5_t1cac")
+
+[node name="MigrationManager" type="Node" parent="." unique_id=200486696]
+script = ExtResource("6_r8s40")
+
+[node name="SyncManager" type="Node" parent="." unique_id=1772931839]
+script = ExtResource("7_ka7pd")
+
+[node name="AsyncWorker" type="Node" parent="." unique_id=667889449]
+script = ExtResource("8_lmur4")
+
+[node name="StoreLogger" type="Node" parent="." unique_id=569398062]
+script = ExtResource("9_gfgur")
+
+[node name="StoreDebugger" type="Node" parent="." unique_id=2064591452]
+script = ExtResource("10_pmw2v")

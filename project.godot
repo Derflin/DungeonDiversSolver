@@ -20,7 +20,7 @@ config/icon="uid://cbdidh8418r01"
 GameData="*uid://cot6yfii4sagm"
 GameSettings="*uid://dd85xhhp48e3y"
 GameState="*uid://c8tk1ptw1h27o"
-EasyStore="*res://addons/easystore/easystore.tscn"
+EasyStore="*uid://cyrka5h4kfv5o"
 SaveManager="*uid://d1jxbbot4kwno"
 
 [display]

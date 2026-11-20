@@ -346,10 +346,13 @@ func _zoom_at_screen_position(requested_zoom: float, screen_position: Vector2) -
 	map_camera.set_camera_zoom_anchored(new_zoom, zoom_target, anchor_screen, constrained_position)
 
 
-func _clamp_camera_to_minimum_visibility() -> void:
+## Restricts the camera target position to keep the usable viewing area's center within the map boundaries.
+func _clamp_camera_to_map_bounds() -> void:
 	# Keep panning within the same map visibility restrictions as zooming.
 	var requested_position := map_camera.get_camera_position()
 	var constrained_position := _get_clamped_camera_position(requested_position, map_camera.get_camera_zoom().x)
+	
+	# Update the camera position only if the requested position exceeds the limits.
 	if requested_position.distance_squared_to(constrained_position) > 0.0000001:
 		map_camera.set_camera_position(constrained_position)
 
@@ -369,59 +372,19 @@ func _get_clamped_camera_position(requested_position: Vector2, requested_zoom: f
 	
 	# Convert the unobstructed view area to world units at the requested zoom.
 	var camera_zoom := maxf(requested_zoom, 0.00001)
-	var visible_world_size := usable_rect.size / camera_zoom
 	var viewport_center := get_viewport().get_visible_rect().get_center()
 	var safe_center_offset := (usable_rect.get_center() - viewport_center) / camera_zoom
-	var safe_center_world := requested_position + safe_center_offset
 	
-	# Apply the same minimum visbility fraction on both axes.
-	safe_center_world.x = _clamp_axis_for_overlap(
-		safe_center_world.x,
-		map_rect.position.x,
-		map_rect.end.x,
-		visible_world_size.x,
-		minimum_visible_fraction_per_axis,
-	)
-	safe_center_world.y = _clamp_axis_for_overlap(
-		safe_center_world.y,
-		map_rect.position.y,
-		map_rect.end.y,
-		visible_world_size.y,
-		minimum_visible_fraction_per_axis,
+	# Determine which world-space position appears at the center of the usable area.
+	var requested_safe_center := requested_position + safe_center_offset
+	
+	# Restrict the usable area's center to remain inside the map boundaries.
+	var clamped_safe_center := Vector2(
+		clampf(requested_safe_center.x, map_rect.position.x, grid_rect.end.x),
+		clampf(requested_safe_center.y, map_rect.position.y, grid_rect.end.y),
 	)
 	
-	return safe_center_world - safe_center_offset
-
-
-## Limits the camera center so that the requested fraction of the map remains visible.
-## If the available view cannot show that much map, keep the full view overlapping the map.
-func _clamp_axis_for_overlap(requested_position: float, map_minimum: float, map_maximum: float, visible_length: float, required_fraction: float) -> float:
-	# Return the requested position for invalid map or viewport dimensions.
-	var map_length: float = map_maximum - map_minimum
-	if map_length <= 0.0 or visible_length <= 0.0:
-		return requested_position
-	
-	# Require a fraction of the map or its entire visible length if the viewport is smaller then that fraction.
-	var required_overlap: float = minf(
-		map_length * clampf(required_fraction, 0.0, 1.0),
-		visible_length,
-	)
-	var half_visible_length: float = visible_length * 0.5
-	
-	# Find the earliest and latest centers that preserve the required overlap.
-	var minimum_camera_position: float = map_minimum + required_overlap - half_visible_length
-	var maximum_camera_position: float = map_maximum - required_overlap + half_visible_length
-	
-	# Handle any invalid camera position interval.
-	if minimum_camera_position > maximum_camera_position:
-		return (map_minimum + map_maximum) * 0.5
-	
-	# Allpy the minimum visibility restriction to this axis only.
-	return clampf(
-		requested_position,
-		minimum_camera_position,
-		maximum_camera_position,
-	)
+	return clamped_safe_center - safe_center_offset
 
 
 func _get_constrained_zoom_target(screen_position: Vector2) -> Vector2:

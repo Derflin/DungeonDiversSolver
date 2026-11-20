@@ -13,7 +13,7 @@ const SAVE_EXTENSION: String = ".sav"
 const METADATA_EXTENSION: String = ".meta.json"
 const THUMBNAIL_EXTENSION: String = ".webp"
 
-const THUMBNAIL_MAX_SIZE := Vector2i(320, 180)
+const THUMBNAIL_MAX_SIZE := Vector2i(960, 540)
 
 const GAME_STATE_SECTION: String = "game_state"
 
@@ -458,7 +458,7 @@ func _write_thumbnail(slot: int, source_image: Image) -> String:
 	
 	# Get thumbnail file path and save it.
 	var path := _get_thumbnail_path(slot)
-	var error := image.save_webp(path, true, 0.85)
+	var error := image.save_webp(path, true, 0.95)
 	
 	# Filter out processsing if during saving the thumbnail any issues occurred.
 	if error != OK:

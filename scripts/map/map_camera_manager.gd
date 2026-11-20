@@ -366,24 +366,30 @@ func _get_clamped_camera_position(requested_position: Vector2, requested_zoom: f
 	return safe_center_world - safe_center_offset
 
 
+## Limits the camera center so that the requested fraction of the map remains visible.
+## If the available view cannot show that much map, keep the full view overlapping the map.
 func _clamp_axis_for_overlap(requested_position: float, map_minimum: float, map_maximum: float, visible_length: float, required_fraction: float) -> float:
-	var map_length = map_maximum - map_minimum
+	# Return the requested position for invalid map or viewport dimensions.
+	var map_length: float = map_maximum - map_minimum
+	if map_length <= 0.0 or visible_length <= 0.0:
+		return requested_position
 	
-	var required_overlap = visible_length * clampf(required_fraction, 0.0, 1.0)
+	# Require a fraction of the map or its entire visible length if the viewport is smaller then that fraction.
+	var required_overlap: float = minf(
+		map_length * clampf(required_fraction, 0.0, 1.0),
+		visible_length,
+	)
+	var half_visible_length: float = visible_length * 0.5
 	
-	# The map is too small to satisfy the requested overlap.
-	# Centering it is the least surprising fallback.
-	if map_length < required_overlap:
-		return (map_minimum + map_maximum) / 2.0
-		
-	var half_visible_length = visible_length / 2.0
+	# Find the earliest and latest centers that preserve the required overlap.
+	var minimum_camera_position: float = map_minimum + required_overlap - half_visible_length
+	var maximum_camera_position: float = map_maximum - required_overlap + half_visible_length
 	
-	var minimum_camera_position = map_minimum + required_overlap - half_visible_length
-	var maximum_camera_position = map_maximum - required_overlap + half_visible_length
-	
+	# Handle any invalid camera position interval.
 	if minimum_camera_position > maximum_camera_position:
-		return (map_minimum + map_maximum) / 2.0
-		
+		return (map_minimum + map_maximum) * 0.5
+	
+	# Allpy the minimum visibility restriction to this axis only.
 	return clampf(
 		requested_position,
 		minimum_camera_position,
@@ -470,16 +476,16 @@ func _handle_pan_input(event: InputEvent) -> bool:
 				
 			_is_panning = true
 			
-		var camera_movement = event.relative / map_camera.get_camera_zoom().x
+		var camera_movement := (event as InputEventMouseMotion).relative / map_camera.get_camera_zoom().x
 		
 		# Set the camera view mode to custom to ensure that it's not set to fit mode.
 		_view_mode = CameraViewMode.CUSTOM
 		
 		# Subtraction makes the map follow the mouse:
 		# drag right -> map appers to move right.
-		map_camera.set_camera_position(map_camera.get_camera_position() - camera_movement)
-		
-		_clamp_camera_to_minimum_visibility()
+		var requested_position := map_camera.get_camera_position() - camera_movement
+		var constrained_position := _get_clamped_camera_position(requested_position, map_camera.get_camera_zoom().x)
+		map_camera.set_camera_position(constrained_position)
 		
 		get_viewport().set_input_as_handled()
 		return true

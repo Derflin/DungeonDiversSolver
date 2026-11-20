@@ -93,12 +93,12 @@ func _get_effective_screen_scale() -> Vector2:
 ## Calculates and returns a line width that should be used for the grid taking into account the base provided [param room_size] and the provided [param screen_scale].
 ## Ensures that the calculated line width won't be bigger then the set maximum line to cell ratio to ensure that it won't overlap the room cell.
 func _calculate_line_width(screen_scale: float, room_size: float) -> float:
-	var scale := maxf(screen_scale, 0.00001)
-	var cell_step_screen := (room_size + GRID_LINE_WIDTH) * scale
-	var original_line_screen := GRID_LINE_WIDTH * scale
+	var local_scale := maxf(screen_scale, 0.00001)
+	var cell_step_screen := (room_size + GRID_LINE_WIDTH) * local_scale
+	var original_line_screen := GRID_LINE_WIDTH * local_scale
 	var requested_line_screen := maxf(original_line_screen, render_minimum_screen_line_width)
 	var maximum_line_screen := cell_step_screen * render_maximum_line_to_cell_ratio
-	return minf(requested_line_screen, maximum_line_screen) / scale
+	return minf(requested_line_screen, maximum_line_screen) / local_scale
 
 
 ## Draws each horizontal and vertical line once per adjacent cell contribution.

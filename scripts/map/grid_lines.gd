@@ -29,6 +29,11 @@ enum CellType {
 @export_range(2.0, 20.0, 0.5) var small_cells_fade_start_screen_size: float = 8.0
 @export_range(1.0, 10.0, 0.5) var small_cells_fade_end_screen_size: float = 3.0
 
+@export_group("Web Grid Shader", "web_shader_")
+@export var web_shader: Shader
+@export var web_shader_force_preview: bool = false
+@export_range(0.25, 2.0, 0.05) var web_shader_edge_softness_pixels: float = 0.7
+
 
 var grid_offset: Vector2 = Vector2(0.5, 0.5)
 
@@ -37,6 +42,29 @@ var _vertical_line_width: float = GRID_LINE_WIDTH
 var _horizontal_line_width: float = GRID_LINE_WIDTH
 
 var _small_cell_opacity_multiplier: float = 1.0
+
+var _web_grid_material: ShaderMaterial
+var _use_web_shader: bool = false
+
+
+## Initializes the grid rendering method based on the current platform and configured shader.
+func _ready() -> void:
+	# Use the custom shader for web builds, or when explicitly enabled.
+	_use_web_shader = OS.has_feature("web") or web_shader_force_preview
+	
+	# Disable the shader renderer if its resource hasn't been assigned.
+	if _use_web_shader and web_shader == null:
+		push_warning("GridLines: Web grid shader resource is missing. Using the regular renderer.")
+		_use_web_shader = false
+	
+	# Keep the standard grid renderer without a custom material on desktop.
+	if not _use_web_shader:
+		return
+	
+	# Create an independent shader material for rendering the grid.
+	_web_grid_material = ShaderMaterial.new()
+	_web_grid_material.shader = web_shader
+	material = _web_grid_material
 
 
 ## Keeps track of the effective screen scale of the grid lines and queues redraw it it changes to adjust the grid lines width.
@@ -69,8 +97,13 @@ func _draw() -> void:
 	)
 	_small_cell_opacity_multiplier = _get_small_cell_opacity_multiplier(min_cell_screen_size)
 	
-	# Draw lines for each column and row segments.
-	_draw_square_segments()
+	# Select the appropriate drawing method based on the active renderer.
+	if _use_web_shader:
+		# Draw grid and it's lines using the web shader.
+		_draw_web_shader_grid(map_size, screen_scale)
+	else:
+		# Draw grid lines for each column and row segments.
+		_draw_square_segments()
 
 
 ## Checks whether grid lines should use antialiasing based on the current rendering method.
@@ -99,6 +132,47 @@ func _calculate_line_width(screen_scale: float, room_size: float) -> float:
 	var requested_line_screen := maxf(original_line_screen, render_minimum_screen_line_width)
 	var maximum_line_screen := cell_step_screen * render_maximum_line_to_cell_ratio
 	return minf(requested_line_screen, maximum_line_screen) / local_scale
+
+
+## Draws the complete map grid using the web shader instead of individual line segments.
+func _draw_web_shader_grid(map_size: Vector2i, screen_scale: Vector2) -> void:
+	# Calculate the physical cell spacing in grid local coordinates.
+	var cell_step := Vector2(GameSettings.map_grid_room_size) + Vector2.ONE * GRID_LINE_WIDTH
+	
+	# Prepare the colors while preserving the existing small cell fading behaviour.
+	var internal_color := internal_line_color
+	var external_color := external_line_color
+	internal_color.a *= _small_cell_opacity_multiplier
+	external_color.a *= _small_cell_opacity_multiplier
+	
+	# Update shader settings using the same data as the regular grid renderer.
+	_web_grid_material.set_shader_parameter("map_cells", Vector2(map_size))
+	_web_grid_material.set_shader_parameter("cell_step", cell_step)
+	_web_grid_material.set_shader_parameter("grid_offset", grid_offset)
+	_web_grid_material.set_shader_parameter("outer_cells", float(GRID_OUTER_CELL_COUNT))
+	_web_grid_material.set_shader_parameter("internal_color", internal_color)
+	_web_grid_material.set_shader_parameter("external_color", external_color)
+	_web_grid_material.set_shader_parameter("vertical_width", _vertical_line_width)
+	_web_grid_material.set_shader_parameter("horizontal_width", _horizontal_line_width)
+	_web_grid_material.set_shader_parameter("edge_softness_pixels", web_shader_edge_softness_pixels)
+	
+	# Calculate the area covered by the grid including its outer cells.
+	var min_corner := _grid_point_to_local(Vector2i(-GRID_OUTER_CELL_COUNT, -GRID_OUTER_CELL_COUNT))
+	var max_corner := _grid_point_to_local(map_size + Vector2i(GRID_OUTER_CELL_COUNT, GRID_OUTER_CELL_COUNT))
+	
+	# Include some extra space around the outermost strokes and their soft edges.
+	var minimum_scale := maxf(minf(screen_scale.x, screen_scale.y), 0.00001)
+	var padding := maxf(
+		8.0,
+		maxf(_vertical_line_width, _horizontal_line_width) * 0.5 + web_shader_edge_softness_pixels / minimum_scale
+	)
+	
+	# Render one rectangle containing the complete shader generated grid.
+	var grid_rect := Rect2(
+		min_corner - Vector2.ONE * padding,
+		max_corner - min_corner + Vector2.ONE * padding * 2.0,
+	)
+	draw_rect(grid_rect, Color.WHITE, true)
 
 
 ## Draws each horizontal and vertical line once per adjacent cell contribution.

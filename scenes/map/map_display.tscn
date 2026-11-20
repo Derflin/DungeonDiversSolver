@@ -5,6 +5,7 @@
 [ext_resource type="Script" uid="uid://m7m3resnhnq0" path="res://scripts/map/grid_space.gd" id="2_vij0f"]
 [ext_resource type="Script" uid="uid://d0a2gab5b665" path="res://scripts/map/map_camera.gd" id="4_1umrj"]
 [ext_resource type="Script" uid="uid://b58j6wyehrxbb" path="res://scripts/map/grid_interaction_overlay.gd" id="4_ilqgx"]
+[ext_resource type="Shader" uid="uid://ccd3pj0xk2lpi" path="res://shaders/map/grid_aa_compat.gdshader" id="4_nm57m"]
 [ext_resource type="Texture2D" uid="uid://g3krt8efxnw4" path="res://assets/icons/cursor/DungeonSolvers-RoomCursor-All.png" id="5_ilqgx"]
 [ext_resource type="Texture2D" uid="uid://c7rltc1fvjp6u" path="res://assets/icons/cursor/RoomSelectionCursor.png" id="6_tt585"]
 [ext_resource type="Script" uid="uid://b74gmnio5bhjr" path="res://scripts/map/room_editor_menu.gd" id="7_s1iqf"]
@@ -102,6 +103,7 @@ script = ExtResource("2_f4qe3")
 grid_parent_node = NodePath("../..")
 internal_line_color = Color(0.78431374, 0.5647059, 0.43137255, 0.15686275)
 external_line_color = Color(0.4509804, 0.15294118, 0.17254902, 0.15686275)
+web_shader = ExtResource("4_nm57m")
 
 [node name="Rooms" type="Node2D" parent="GridSpace" unique_id=439474740]
 

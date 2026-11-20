@@ -12,6 +12,8 @@ enum CameraViewMode { FIT, CUSTOM }
 
 @export_group("Relative Zoom Limits")
 @export_range(1.0, 10.0, 0.05) var maximum_zoom_relative_to_fit: float = 3.0
+## Target size of a single room cell at maximum zoom, in logical viewport pixels.
+@export_range(32.0, 256.0, 4.0) var maximum_room_cell_screen_size: float = 60.0
 
 @export_group("Zoom Controls")
 @export_range(1.01, 2.0, 0.01) var zoom_factor = 1.25
@@ -289,6 +291,20 @@ func _handle_zoom_input(event: InputEvent, multiplier: float) -> void:
 	)
 
 
+## Returns the maximum zoom based on the relative zoom limit and on the maximum room cell screen size to ensure proper visibility.
+func _get_maximum_camera_zoom() -> float:
+	# Calculate maximum zoom limit based on the fitted zoom and the set relative zoom limit.
+	var relative_limit: float = _fitted_zoom * maximum_zoom_relative_to_fit
+	
+	# Calculate maximum zoom limit based on the room cell size and set expected maximum room cell screen size.
+	var room_size := GameSettings.map_grid_room_size
+	var largest_room_side: float = maxf(1.0, maxf(float(room_size.x), float(room_size.y)))
+	var room_size_limit: float = maximum_room_cell_screen_size / largest_room_side
+	
+	# Retur a maximum zoom limit that would require a bigger zoom based on the calculated limits.
+	return maxf(relative_limit, room_size_limit)
+
+
 ## Requests a mouse-anchored zoom when possible, and a smoothly constrained zoom near map limits.
 func _zoom_at_screen_position(requested_zoom: float, screen_position: Vector2) -> void:
 	# Filter out processing if the last saved fitted zoom is invalid. 
@@ -297,7 +313,7 @@ func _zoom_at_screen_position(requested_zoom: float, screen_position: Vector2) -
 	
 	# Retrieve the currently requested zoom and apply existing zoom restrictions.
 	var old_zoom := map_camera.get_camera_zoom().x
-	var new_zoom := clampf(requested_zoom, _fitted_zoom, _fitted_zoom * maximum_zoom_relative_to_fit)
+	var new_zoom := clampf(requested_zoom, _fitted_zoom, _get_maximum_camera_zoom())
 	if is_equal_approx(old_zoom, new_zoom):
 		return
 	
@@ -585,7 +601,8 @@ func _apply_viewport_resize() -> void:
 			new_position = _get_position_for_safe_center(grid_rect.get_center(), free_rect, new_zoom)
 			
 		CameraViewMode.CUSTOM:
-			_relative_zoom = clampf(_relative_zoom, 1.0, maximum_zoom_relative_to_fit)
+			var maximum_relative_zoom: float = _get_maximum_camera_zoom() / _fitted_zoom
+			_relative_zoom = clampf(_relative_zoom, 1.0, maximum_relative_zoom)
 			new_zoom = _fitted_zoom * _relative_zoom
 			new_position = _get_position_for_safe_center(old_focus_world, free_rect, new_zoom)
 			new_position = _get_clamped_camera_position(new_position, new_zoom)

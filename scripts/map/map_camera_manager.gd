@@ -3,6 +3,7 @@ extends Node2D
 
 const MAP_CAMERA_INPUT_ALLOW_GROUP: StringName = &"allow_map_camera_input"
 const MAP_CAMERA_VIEW_OBSTACLES_GROUP: StringName = &"map_camera_view_obstacles"
+const MAP_CAMERA_DRAWER_RESERVATION_GROUP: StringName = &"map_camera_drawer_reservation"
 
 enum CameraViewMode { FIT, CUSTOM }
 
@@ -24,6 +25,12 @@ enum CameraViewMode { FIT, CUSTOM }
 @export_group("Camera Panning")
 ## Distance in screen pixels before a click becomes a drag.
 @export_range(0.0, 20.0, 1.0) var pan_drag_threshold = 4.0
+
+@export_group("HUD Safe Area")
+## Prefers a map view that remains horizontally centered in the viewport.
+@export var keep_map_horizontally_centered: bool = true
+## Horizontal spacing between the map safe area and the collapsed drawer.
+@export_range(0.0, 64.0, 1.0) var drawer_safe_area_spacing: float = 12.0
 
 
 var grid_rect: Rect2 = Rect2(0, 0, 0, 0)
@@ -119,6 +126,23 @@ func _get_available_map_view_rect() -> Rect2:
 	var obstacles: Array[Rect2] = []
 	var x_boundaries: Array[float] = [viewport_rect.position.x, viewport_rect.end.x]
 	
+	# Find the parameter drawer used for the side layout reservation.
+	var drawer := get_tree().get_first_node_in_group(MAP_CAMERA_DRAWER_RESERVATION_GROUP) as MapParametersControl
+	if is_instance_valid(drawer) and drawer.is_visible_in_tree():
+		# Get the space occupied by the collapsed drawer and its outer spacing.
+		var reserved_width := clampf(drawer.get_layout_reserved_width() + drawer_safe_area_spacing, 0.0, viewport_rect.size.x)
+		
+		if reserved_width > 0.0:
+			# Reserve a full-height strip along the right edge of the viewport.
+			var drawer_rect := Rect2(
+				Vector2(viewport_rect.end.x - reserved_width, viewport_rect.position.y),
+				Vector2(reserved_width, viewport_rect.size.y),
+			)
+			
+			# Include the reserved area in the camera's obstacle search.
+			obstacles.append(drawer_rect)
+			x_boundaries.append(drawer_rect.position.x)
+	
 	# Collect all nodes elements assigned to the view obstacle group.
 	for node in get_tree().get_nodes_in_group(MAP_CAMERA_VIEW_OBSTACLES_GROUP):
 		# Filter out processing if the node isn't a control node.
@@ -170,6 +194,7 @@ func _get_available_map_view_rect() -> Rect2:
 	# Calculate the remaining space after excluding the obstacles rects from the viewport rect.
 	x_boundaries.sort()
 	var best_rect := Rect2()
+	var best_centered_rect := Rect2()
 	var preferred_center := viewport_rect.get_center()
 	for left_index in range(x_boundaries.size() - 1):
 		var left_x := x_boundaries[left_index]
@@ -194,6 +219,7 @@ func _get_available_map_view_rect() -> Rect2:
 				if blocked_band.x > next_free_y:
 					var upper_gap := Rect2(left_x, next_free_y, right_x - left_x, blocked_band.x - next_free_y)
 					best_rect = _choose_better_free_rect(best_rect, upper_gap, preferred_center)
+					best_centered_rect = _choose_centered_free_rect(best_centered_rect, upper_gap, preferred_center)
 				
 				next_free_y = maxf(next_free_y, blocked_band.y)
 				
@@ -204,8 +230,36 @@ func _get_available_map_view_rect() -> Rect2:
 			if next_free_y < viewport_rect.end.y:
 				var lower_gap := Rect2(left_x, next_free_y, right_x - left_x, viewport_rect.end.y - next_free_y)
 				best_rect = _choose_better_free_rect(best_rect, lower_gap, preferred_center)
+				best_centered_rect = _choose_centered_free_rect(best_centered_rect, lower_gap, preferred_center)
 	
+	# Prefer a horizontally centered view when a usable centered area exists.
+	if keep_map_horizontally_centered and best_centered_rect.has_area():
+		return best_centered_rect
+	
+	# Use the largest unobstructed view when no centered area is available.
 	return best_rect
+
+
+## Returns the larger centered view rectangle from [param current] and [param candidate].
+## Centers the candidate horizontally on [param preferred_center] when space permits.
+func _choose_centered_free_rect(current: Rect2, candidate: Rect2, preferred_center: Vector2) -> Rect2:
+	# Ignore empty rectangles.
+	if not candidate.has_area():
+		return current
+	
+	# Find the horizontal space available on both sides of the viewport center.
+	var half_width := minf(preferred_center.x - candidate.position.x, candidate.end.x - preferred_center.x)
+	if half_width <= 0.0:
+		return current
+	
+	# Restrict the candidate to a horizontally centered rectangle.
+	var centered_candidate := Rect2(
+		Vector2(preferred_center.x - half_width, candidate.position.y),
+		Vector2(half_width * 2.0, candidate.size.y),
+	)
+	
+	# Keep the best centered rectangle found so far.
+	return _choose_better_free_rect(current, centered_candidate, preferred_center)
 
 
 ## Compares which of the provided [param current] and [param candidate] rects is better in terms of space.

@@ -44,6 +44,7 @@ allow_map_camera_input=""
 blocks_map_result_tooltips=""
 map_camera_view_obstacles=""
 hud_transition_wait=""
+map_camera_drawer_reservation=""
 
 [gui]
 

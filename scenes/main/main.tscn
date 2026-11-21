@@ -35,10 +35,11 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="MapSolverControl" parent="HudLayer/HudRoot" unique_id=195301154 instance=ExtResource("3_k2fmo")]
+[node name="MapSolverControl" parent="HudLayer/HudRoot" unique_id=195301154 node_paths=PackedStringArray("map_parameters_control") instance=ExtResource("3_k2fmo")]
 layout_mode = 1
+map_parameters_control = NodePath("../MapParametersControl")
 
-[node name="MapParametersControl" parent="HudLayer/HudRoot" unique_id=1239913164 node_paths=PackedStringArray("map_parameter_help_control") instance=ExtResource("2_iuonh")]
+[node name="MapParametersControl" parent="HudLayer/HudRoot" unique_id=1239913164 node_paths=PackedStringArray("map_parameter_help_control") groups=["map_camera_drawer_reservation"] instance=ExtResource("2_iuonh")]
 z_index = 5
 layout_mode = 1
 map_parameter_help_control = NodePath("../MapParameterHelpControl")

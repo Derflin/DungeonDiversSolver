@@ -29,6 +29,12 @@ const MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS = {
 ## Largest status panel scale used when the maximum scale is enabled.
 @export_range(0.1, 10.0, 0.05) var status_max_scale: float = 2.0
 
+@export_group("Map Parameters Control Position Restrictions")
+## Parameter drawer used to reserve horizontal space for the top menu.
+@export var map_parameters_control: MapParametersControl
+## Minimum horizontal space between the top menu and the drawer.
+@export_range(0.0, 64.0, 1.0) var menu_drawer_spacing: float = 12.0
+
 
 var _menu_effective_ui_scale: float = 1.0
 var _status_effective_ui_scale: float = 1.0
@@ -71,6 +77,11 @@ func _ready() -> void:
 	
 	# Attach signal listener when the map solver state changes
 	GameState.map_solver_state_changed.connect(_on_game_state_map_solver_state_changed)
+	
+	# Refresh the menu when the parameter drawer dimensions change.
+	if is_instance_valid(map_parameters_control):
+		if not map_parameters_control.drawer_layout_changed.is_connected(_on_drawer_layout_changed):
+			map_parameters_control.drawer_layout_changed.connect(_on_drawer_layout_changed)
 
 
 func _setup_menu_dropdowns() -> void:
@@ -174,11 +185,20 @@ func _position_status_root() -> void:
 
 ## Calculates a uniform top menu scale from the provided [param total_size_1x] and available layout space.
 func _calculate_menu_scale(total_size_1x: Vector2) -> float:
-	# Calculate the top menu coverage limits.
-	var coverage := Vector2(menu_max_width_coverage, menu_max_height_coverage)
+	# Calculate the visible collapsed drawer width and the required gap.
+	var reserved_side_width: float = 0.0
+	if is_instance_valid(map_parameters_control):
+		reserved_side_width = map_parameters_control.get_layout_reserved_width() + menu_drawer_spacing
 	
-	# Return the scale that fits the menu inside both layout limits.
-	return UIScaleCalculator.calculate_scale(total_size_1x, size, coverage, menu_max_scale_enabled, menu_max_scale)
+	# Restrict the menu to a region centered within the viewport.
+	# Reserve the same width on the left to keep the top menu centered.
+	var centered_available_width := maxf(0.0, size.x - reserved_side_width * 2.0)
+	
+	# Apply the menu's configured viewport coverage restrictions.
+	var available_size := Vector2(minf(size.x * menu_max_width_coverage, centered_available_width), size.y * menu_max_height_coverage)
+	
+	# Calculate the scale using the shared scaling utility.
+	return UIScaleCalculator.calculate_scale(total_size_1x, available_size, Vector2.ONE, menu_max_scale_enabled, menu_max_scale)
 
 
 ## Calculates a uniform status scale from the provided [param total_size_1x] and available layout space.
@@ -238,6 +258,11 @@ func _on_game_state_map_solver_state_changed() -> void:
 func _on_cancel_button_pressed() -> void:
 	# Emit signal that map solver state was triggered to reset
 	GameState.map_solver_state_change_triggered.emit(GameState.MapSolverState.NONE, RoomSecretType.Kind.NONE)
+
+
+## Schedules a menu layout refresh after the drawer dimensions change.
+func _on_drawer_layout_changed() -> void:
+	call_deferred("_refresh_menu_layout")
 
 
 #region HUD Transition Wait Group

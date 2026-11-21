@@ -2,6 +2,9 @@ class_name MapParametersControl
 extends Control
 
 
+signal drawer_layout_changed
+
+
 @export_group("Drawer Layout", "drawer_")
 @export var drawer_width_offset: float = 0.0
 @export var drawer_collapsed_width_offset: float = 0.0
@@ -348,6 +351,9 @@ func _refresh_drawer_layout() -> void:
 	# Initialize drawer state to be instantly set according to the parameters.
 	_set_drawer_open(_drawer_open, true)
 	
+	# Notify other controls that the drawer layout has been updated.
+	drawer_layout_changed.emit()
+	
 	# Refresh the help panel after either drawer state settles at the current HUD scale.
 	if is_instance_valid(map_parameter_help_control) and map_parameter_help_control.is_open():
 		map_parameter_help_control.call_deferred("refresh_layout", get_drawer_ui_scale())
@@ -553,6 +559,20 @@ func has_pending_hud_transition() -> bool:
 
 
 #region Parameter Help
+
+## Returns the horizontal space occupied by the collapsed drawer.
+## Includes the visible panel content and the drawer toggle strip at the current scale.
+func get_layout_reserved_width() -> float:
+	# Return no reservation before the drawer nodes are initialized.
+	if not is_node_ready():
+		return 0.0
+	
+	# Get the widest component that remains visible with the drawer closed.
+	var collapsed_width := maxf(_drawer_collapsed_visible_width, drawer_strip.size.x)
+	
+	# Convert the drawer width to the surrounding HUD coordinate space.
+	return maxf(0.0, collapsed_width * _drawer_effective_ui_scale)
+
 
 ## Returns the current scale used to render the drawer and its parameter entries.
 func get_drawer_ui_scale() -> float:

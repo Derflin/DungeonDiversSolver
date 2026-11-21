@@ -76,8 +76,9 @@ func initialize(save_version: int = 1) -> void:
 #region Saving
 
 ## Save a provided [param game_state] along with it's [param custom_metadata] and [param thumbnail] image to the provided [param slot] number.
+## Used the provided [param preserve_existing_thumbnail] flag to define if it should preserve the existing thumbnail from the already existing save metadata.
 ## Returns a bool value representing whether the save was successful or not.
-func save_slot(slot: int, game_state: Dictionary, custom_metadata: Dictionary = {}, thumbnail: Image = null) -> bool:
+func save_slot(slot: int, game_state: Dictionary, custom_metadata: Dictionary = {}, thumbnail: Image = null, preserve_existing_thumbnail: bool = true) -> bool:
 	# Filter out processing if save storage wasn't initialized.
 	if not _initialized:
 		push_error("EasyStoreStorage: save_section() called before initialize().")
@@ -93,7 +94,7 @@ func save_slot(slot: int, game_state: Dictionary, custom_metadata: Dictionary = 
 	
 	# Preserve existing thumbnail path.
 	var existing_metadata := get_metadata(slot)
-	if existing_metadata != null:
+	if existing_metadata != null and preserve_existing_thumbnail:
 		thumbnail_path = existing_metadata.thumbnail_path
 	
 	# Save thumbnail and retrieve it's path if it was provided.
@@ -116,6 +117,10 @@ func save_slot(slot: int, game_state: Dictionary, custom_metadata: Dictionary = 
 	var result: Array = await _wait_for_save_completion(slot)
 	var success: bool = result[1]
 	if success:
+		# Remove the previous thumbnail when the new save doesn't contain one.
+		if thumbnail == null and not preserve_existing_thumbnail:
+			_delete_thumbnail(slot)
+		
 		# Refresh slots manually to make sure that that they are loaded in correctly in our save storage.
 		refresh_slots()
 	

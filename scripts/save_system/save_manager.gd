@@ -392,6 +392,97 @@ func load_example_save(example_id: String) -> bool:
 #endregion
 
 
+#region Portable Save Transfer
+
+## Returns the saved game data and metadata for the provided [param entry] without restoring the game state.
+func prepare_portable_export(entry: SaveBrowserEntry) -> Dictionary:
+	# Validate the requested entry and current storage operation state.
+	if _is_busy or entry == null or not entry.exists or entry.is_new_save():
+		return {}
+	if entry.is_user_save() and not has_user_save(entry.slot):
+		return {}
+	if entry.is_example() and not has_example_save(entry.example_id):
+		return {}
+	
+	# Mark save manager as busy.
+	_is_busy = true
+	
+	# Load the save contents without applying them to the current game.
+	var game_state: Dictionary = {}
+	if entry.is_user_save():
+		game_state = await _user_save_storage.load_slot(entry.slot)
+	elif entry.is_example():
+		game_state = _example_save_storage.load_example(entry.example_id)
+	
+	# Unmark save manager as busy and filter out further processing if the loaded game state is empty.
+	if game_state.is_empty():
+		_is_busy = false
+		return {}
+	
+	# Gather the optional thumbnail for the selected save.
+	var thumbnail: Image = null
+	var texture := get_thumbnail_texture(entry)
+	if texture != null:
+		thumbnail = texture.get_image()
+	
+	# Prepare a result dictionary with parsed game data for export.
+	var payload := {
+		"game_state": game_state,
+		"display_name": entry.display_name,
+		"description": entry.description,
+		"game_metadata": entry.game_metadata.duplicate(true),
+		"thumbnail": thumbnail,
+		"save_version": SAVE_VERSION,
+	}
+	
+	# Unmark save manager as busy.
+	_is_busy = false
+	
+	return payload
+
+
+## Imports the provided [param payload] as a user save in the specified [param slot].
+## Returns whether EasyStore completed the save operation successfully.
+func import_portable_user_save(slot: int, payload: Dictionary) -> bool:
+	# Validate the destination and incoming save data.
+	if _is_busy or slot < FIRST_SLOT:
+		return false
+	if int(payload.get("save_version", -1)) != SAVE_VERSION:
+		return false
+	var game_state: Variant = payload.get("game_state", null)
+	if not game_state is Dictionary or game_state.is_empty():
+		return false
+	
+	# Prepare user save metadata from the portable file.
+	var display_name := str(payload.get("display_name", "")).strip_edges()
+	if display_name.is_empty():
+		display_name = "Save %d" % slot
+	var metadata := {
+		"display_name": display_name,
+		"description": str(payload.get("description", "")),
+		"game_metadata": payload.get("game_metadata", []),
+	}
+	var thumbnail: Image = payload.get("thumbnail", null)
+	
+	# Mark save manager as busy.
+	_is_busy = true
+	
+	# Write the imported save into the selected user slot.
+	var success := await _user_save_storage.save_slot(slot, game_state, metadata, thumbnail, false)
+	if success:
+		_thumbnail_cache.erase("slot:%d" % slot)
+		refresh_user_saves()
+	
+	# Unmark save manager as busy.
+	_is_busy = false
+	
+	if not success:
+		_emit_operation_error(&"import", slot, "The portable save could not be imported.")
+	return success
+
+#endregion
+
+
 #region Deleting
 
 ## Tries to delete the saved game state for the provided [param slot] number along with all of it's related data.

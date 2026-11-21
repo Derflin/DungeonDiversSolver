@@ -9,7 +9,7 @@ enum LayoutPriority { NONE, SOLVER_MENU, PARAMETERS_DRAWER }
 @export_group("Layout Coordination")
 @export var layout_priority: LayoutPriority = LayoutPriority.NONE
 ## Minimum gap between the prioritized control and the other HUD control.
-@export_range(0.0, 64.0, 1.0) var layout_spacing: float = 12.0
+@export_range(0.0, 64.0, 1.0) var layout_spacing: float = 0.0
 
 @export_group("HUD Controls")
 @export var map_solver_control: MapSolverControl

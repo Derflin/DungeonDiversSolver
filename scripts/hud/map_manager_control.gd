@@ -13,15 +13,17 @@ const MAX_TRANSITION_WAIT_MS: int = 1500
 @export var save_manager_control: SaveManagerControl
 
 @export_group("Menu Layout", "menu_")
-@export_range(0, 1, 0.01)
-var menu_max_width_coverage: float = 0.8
-@export_range(1, 4, 1)
-var menu_preferred_ui_scale: int = 2
-@export_range(1, 4, 1)
-var menu_minimum_ui_scale: int = 2
+## Maximum portion of the available width occupied by the menu.
+@export_range(0.01, 1.0, 0.01) var menu_max_width_coverage: float = 0.8
+## Maximum portion of the available height occupied by the menu.
+@export_range(0.01, 1.0, 0.01) var menu_max_height_coverage: float = 1.0
+## Enables the preferred maximum menu scale.
+@export var menu_max_scale_enabled: bool = true
+## Largest menu scale used when the maximum scale is enabled.
+@export_range(0.1, 10.0, 0.05) var menu_max_scale: float = 2.0
 
 
-var _menu_effective_ui_scale: int = 1
+var _menu_effective_ui_scale: float = 1.0
 
 
 @onready var menu_root: Control = $MenuAnchor/MenuRoot
@@ -79,22 +81,13 @@ func _get_natural_menu_size() -> Vector2:
 	return menu_contents.get_combined_minimum_size()
 
 
-## Calculates and returns menu scale based on the provided unscaled size and checking the available scales set in the class parameters.
-func _calculate_ui_scale(total_size_1x: Vector2) -> int:
-	# Calculate menu size.
-	var available_size := size
-	available_size.x *= menu_max_width_coverage
+## Calculates a uniform menu scale from the provided [param total_size_1x] and the available layout area.
+func _calculate_ui_scale(total_size_1x: Vector2) -> float:
+	# Calculate the menu coverage limits inside the parent control.
+	var coverage := Vector2(menu_max_width_coverage, menu_max_height_coverage)
 	
-	# Get menu minimum ui scale.
-	var menu_minimum_scale := mini(menu_minimum_ui_scale, menu_preferred_ui_scale)
-	
-	# Check which biggest ui scale would fit the calculated menu size after scaling it up.
-	for scale_candidate in range(menu_preferred_ui_scale, menu_minimum_scale - 1, -1):
-		if total_size_1x.x * scale_candidate <= available_size.x and total_size_1x.y * scale_candidate <= available_size.y:
-			return scale_candidate
-	
-	# Return fallback ui scale value.
-	return menu_minimum_scale
+	# Return the scale that fits the menu inside both layout limits.
+	return UIScaleCalculator.calculate_scale(total_size_1x, size, coverage, menu_max_scale_enabled, menu_max_scale)
 
 
 ## Positions menu root by adjusting it's position to ensure that it will be fully displayed according to the menu node anchor position.

@@ -10,16 +10,28 @@ const MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS = {
 
 
 @export_group("Menu Layout", "menu_")
-@export_range(0, 1, 0.01)
-var menu_max_width_coverage: float = 0.8
-@export_range(1, 4, 1)
-var menu_preferred_ui_scale: int = 2
-@export_range(1, 4, 1)
-var menu_minimum_ui_scale: int = 2
+## Maximum portion of the available width occupied by the menu.
+@export_range(0.01, 1.0, 0.01) var menu_max_width_coverage: float = 0.8
+## Maximum portion of the available height occupied by the menu.
+@export_range(0.01, 1.0, 0.01) var menu_max_height_coverage: float = 1.0
+## Enables the preferred maximum menu scale.
+@export var menu_max_scale_enabled: bool = true
+## Largest menu scale used when the maximum scale is enabled.
+@export_range(0.1, 10.0, 0.05) var menu_max_scale: float = 2.0
+
+@export_group("Status Layout", "status_")
+## Maximum portion of the available width occupied by the status panel.
+@export_range(0.01, 1.0, 0.01) var status_max_width_coverage: float = 0.8
+## Maximum portion of the available height occupied by the status panel.
+@export_range(0.01, 1.0, 0.01) var status_max_height_coverage: float = 1.0
+## Enables the preferred maximum status panel scale.
+@export var status_max_scale_enabled: bool = true
+## Largest status panel scale used when the maximum scale is enabled.
+@export_range(0.1, 10.0, 0.05) var status_max_scale: float = 2.0
 
 
-var _menu_effective_ui_scale: int = 1
-var _status_effective_ui_scale: int = 1
+var _menu_effective_ui_scale: float = 1.0
+var _status_effective_ui_scale: float = 1.0
 var _menu_dropdowns: Dictionary[MenuDropdown, GameState.MapSolverState]
 
 
@@ -126,8 +138,8 @@ func _refresh_menu_layout() -> void:
 	var natural_status_panel_size := _get_natural_status_size()
 	
 	# Calculate effective menu scale
-	_menu_effective_ui_scale = _calculate_ui_scale(natural_menu_panel_size)
-	_status_effective_ui_scale = _calculate_ui_scale(natural_status_panel_size)
+	_menu_effective_ui_scale = _calculate_menu_scale(natural_menu_panel_size)
+	_status_effective_ui_scale = _calculate_status_scale(natural_status_panel_size)
 	
 	# Set calculated effective menu scale
 	menu_root.scale = Vector2.ONE * float(_menu_effective_ui_scale)
@@ -160,21 +172,22 @@ func _position_status_root() -> void:
 	)
 
 
-func _calculate_ui_scale(total_size_1x: Vector2) -> int:
-	# Calculate menu size
-	var available_size := size
-	available_size.x *= menu_max_width_coverage
+## Calculates a uniform top menu scale from the provided [param total_size_1x] and available layout space.
+func _calculate_menu_scale(total_size_1x: Vector2) -> float:
+	# Calculate the top menu coverage limits.
+	var coverage := Vector2(menu_max_width_coverage, menu_max_height_coverage)
 	
-	# Get menu minimum ui scale
-	var menu_minimum_scale := mini(menu_minimum_ui_scale, menu_preferred_ui_scale)
+	# Return the scale that fits the menu inside both layout limits.
+	return UIScaleCalculator.calculate_scale(total_size_1x, size, coverage, menu_max_scale_enabled, menu_max_scale)
+
+
+## Calculates a uniform status scale from the provided [param total_size_1x] and available layout space.
+func _calculate_status_scale(total_size_1x: Vector2) -> float:
+	# Calculate the status panel coverage limits.
+	var coverage := Vector2(status_max_width_coverage, status_max_height_coverage)
 	
-	# Check which biggest ui scale would fit the calculated menu size after scaling it up
-	for scale_candidate in range(menu_preferred_ui_scale, menu_minimum_scale - 1, -1):
-		if total_size_1x.x * scale_candidate <= available_size.x and total_size_1x.y * scale_candidate <= available_size.y:
-			return scale_candidate
-	
-	# Return fallback ui scale value
-	return menu_minimum_scale
+	# Return the scale that fits the status panel inside both layout limits.
+	return UIScaleCalculator.calculate_scale(total_size_1x, size, coverage, status_max_scale_enabled, status_max_scale)
 
 
 func _get_natural_menu_size() -> Vector2:

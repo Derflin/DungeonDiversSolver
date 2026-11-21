@@ -7,10 +7,14 @@ extends Control
 @export var drawer_collapsed_width_offset: float = 0.0
 @export var drawer_slide_duration: float = 0.2
 @export var drawer_screen_vertical_margin: float = 8.0
-@export_range(1, 4, 1)
-var drawer_preferred_ui_scale: int = 2
-@export_range(1, 4, 1)
-var drawer_minimum_ui_scale: int = 2
+## Maximum portion of the available width occupied by the drawer.
+@export_range(0.01, 1.0, 0.01) var drawer_max_width_coverage: float = 1.0
+## Maximum portion of the available height occupied by the drawer.
+@export_range(0.01, 1.0, 0.01) var drawer_max_height_coverage: float = 1.0
+## Enables the preferred maximum drawer scale.
+@export var drawer_max_scale_enabled: bool = true
+## Largest drawer scale used when the maximum scale is enabled.
+@export_range(0.1, 10.0, 0.05) var drawer_max_scale: float = 2.0
 
 @export_group("Drawer Toggle Button", "drawer_toggle_")
 @export var drawer_toggle_expand_icon: Texture2D
@@ -28,7 +32,7 @@ var _map_parameter_entry = preload("res://scenes/hud/map_parameter_entry.tscn")
 var _drawer_open: bool = false
 var _drawer_tween: Tween
 var _drawer_collapsed_visible_width: float = 0.0
-var _drawer_effective_ui_scale: int = 1
+var _drawer_effective_ui_scale: float = 1.0
 
 # Secret room entries connected to help signals and active row highlighting.
 var _help_entries: Array[MapParameterEntry] = []
@@ -312,13 +316,16 @@ func _refresh_drawer_layout() -> void:
 	# Calculate total_height.
 	var natural_panel_size := _get_natural_drawer_size()
 	var strip_size := drawer_strip.get_combined_minimum_size()
-	var natural_total_height := natural_panel_size.y + strip_size.y
+	var natural_total_size := Vector2(
+		maxf(natural_panel_size.x, strip_size.x),
+		natural_panel_size.y + strip_size.y,
+	)
 	
 	# Update drawer collapsed visible width.
 	_drawer_collapsed_visible_width = _calculate_collapsed_visible_width()
 	
 	# Calculate effective drawer scale.
-	_drawer_effective_ui_scale = _calculate_ui_scale(natural_total_height)
+	_drawer_effective_ui_scale = _calculate_ui_scale(natural_total_size)
 	
 	# Apply scroll fallback if the height too big to fit into base drawer scale.
 	_apply_scroll_fallback(natural_panel_size, strip_size)
@@ -345,20 +352,19 @@ func _on_control_resized() -> void:
 	call_deferred("_refresh_drawer_layout")
 
 
-func _calculate_ui_scale(total_height_1x: float) -> int:
-	# Calculate drawer height.
-	var available_height := size.y - drawer_screen_vertical_margin * 2.0
+## Calculates a uniform drawer scale from the provided [param total_size_1x] and available layout space.
+func _calculate_ui_scale(total_size_1x: Vector2) -> float:
+	# Reserve the vertical margins before calculating the available drawer area.
+	var available_size := Vector2(
+		size.x,
+		maxf(0.0, size.y - drawer_screen_vertical_margin * 2.0),
+	)
 	
-	# Get drawer minimum ui scale.
-	var drawer_minimum_scale := mini(drawer_minimum_ui_scale, drawer_preferred_ui_scale)
+	# Calculate the drawer coverage limits and fit the content inside them.
+	var coverage := Vector2(drawer_max_width_coverage, drawer_max_height_coverage)
 	
-	# Check which biggest ui scale would fit the calculated drawer height after scaling it up.
-	for scale_candidate in range(drawer_preferred_ui_scale, drawer_minimum_scale - 1, -1):
-		if total_height_1x * scale_candidate <= available_height:
-			return scale_candidate
-	
-	# Return fallback ui scale value.
-	return drawer_minimum_scale
+	# Return the scale that fits the drawer inside both layout limits.
+	return UIScaleCalculator.calculate_scale(total_size_1x, available_size, coverage, drawer_max_scale_enabled, drawer_max_scale)
 
 
 func _get_natural_drawer_size() -> Vector2:

@@ -314,7 +314,7 @@ func hide_immediate() -> void:
 func refresh_layout(ui_scale: float = -1.0) -> void:
 	# Synchronize with drawer scaling that may have changed after a viewport resize.
 	if ui_scale > 0.0:
-		_ui_scale = maxf(1.0, ui_scale)
+		_ui_scale = maxf(0.01, ui_scale)
 		help_panel.scale = Vector2.ONE * _ui_scale
 	
 	# Recalculate the description width and height at the new scale.
@@ -380,7 +380,7 @@ func _select_help_source(source: Resource, entry: MapParameterEntry, drawer: Con
 	_active_help_source = source
 	_active_entry = entry
 	_drawer_panel = drawer
-	_ui_scale = maxf(1.0, ui_scale)
+	_ui_scale = maxf(0.01, ui_scale)
 	_cancel_pending_close()
 	
 	# Emit signal that hint panel active entry was changed.

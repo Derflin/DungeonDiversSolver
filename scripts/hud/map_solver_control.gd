@@ -2,6 +2,9 @@ class_name MapSolverControl
 extends Control
 
 
+signal menu_layout_changed
+
+
 const MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS = {
 	GameState.MapSolverState.PLACEMENT_HINT: "Hint Placement",
 	GameState.MapSolverState.WEIGHT_HINT: "Hint Weight",
@@ -30,6 +33,8 @@ const MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS = {
 @export_range(0.1, 10.0, 0.05) var status_max_scale: float = 2.0
 
 @export_group("Map Parameters Control Position Restrictions")
+## Enables horizontal space reservation for the parameter drawer.
+@export var menu_reserve_drawer_width: bool = false
 ## Parameter drawer used to reserve horizontal space for the top menu.
 @export var map_parameters_control: MapParametersControl
 ## Minimum horizontal space between the top menu and the drawer.
@@ -79,7 +84,7 @@ func _ready() -> void:
 	GameState.map_solver_state_changed.connect(_on_game_state_map_solver_state_changed)
 	
 	# Refresh the menu when the parameter drawer dimensions change.
-	if is_instance_valid(map_parameters_control):
+	if menu_reserve_drawer_width and is_instance_valid(map_parameters_control):
 		if not map_parameters_control.drawer_layout_changed.is_connected(_on_drawer_layout_changed):
 			map_parameters_control.drawer_layout_changed.connect(_on_drawer_layout_changed)
 
@@ -116,6 +121,20 @@ func _populate_menu_dropdown(menu_dropdown_instance: MenuDropdown) -> void:
 		menu_dropdown_instance.add_option(secret_room_type_kind as int, secret_room_type.get_display_name(), secret_room_type.get_static_texture())
 
 
+## Returns the viewport height occupied by the top solver menu.
+## Includes the menu contents after applying their layout scale.
+func get_menu_reserved_bottom() -> float:
+	# Ignore controls that are not initialized or visible.
+	if not is_node_ready() or not menu_contents.is_visible_in_tree():
+		return 0.0
+	
+	# Calculate the bottom edge of the menu in viewport coordinates.
+	var menu_transform := menu_contents.get_global_transform_with_canvas()
+	var menu_bottom := menu_transform * Vector2(menu_contents.size.x, menu_contents.size.y)
+	
+	return clampf(menu_bottom.y, 0.0, size.y)
+
+
 func _on_menu_dropdown_button_toggled(toggle_on: bool, menu_dropdown_instance: MenuDropdown, menu_dropdown_state: GameState.MapSolverState) -> void:
 	# Update button text
 	if toggle_on:
@@ -146,7 +165,6 @@ func _refresh_menu_layout() -> void:
 	
 	# Calculate total height
 	var natural_menu_panel_size := _get_natural_menu_size()
-	var natural_status_panel_size := _get_natural_status_size()
 	
 	# Calculate effective menu scale
 	_menu_effective_ui_scale = _calculate_menu_scale(natural_menu_panel_size)
@@ -159,6 +177,9 @@ func _refresh_menu_layout() -> void:
 	# Position menu root based on the menu scale
 	_position_menu_root()
 	_position_status_root()
+	
+	# Notify dependent controls that the menu layout has been updated.
+	menu_layout_changed.emit()
 
 
 func _position_menu_root() -> void:
@@ -262,6 +283,10 @@ func _on_cancel_button_pressed() -> void:
 
 ## Schedules a menu layout refresh after the drawer dimensions change.
 func _on_drawer_layout_changed() -> void:
+	# Ignore drawer dimensions when horizontal reservation is disabled.
+	if not menu_reserve_drawer_width:
+		return
+	
 	call_deferred("_refresh_menu_layout")
 
 

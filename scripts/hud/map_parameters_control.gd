@@ -31,6 +31,15 @@ signal drawer_layout_changed
 ## Description resource displayed when the grid size map parameter entry requests help.
 @export var map_grid_size_help: MapParameterHelpData
 
+@export_group("Map Solver Control Position Restrictions")
+## Enables vertical space reservation below the solver menu.
+@export var drawer_respect_solver_top: bool = false
+## Solver control used to determine the available space below the top menu.
+@export var map_solver_control: MapSolverControl
+## Vertical spacing between the solver menu and the parameter drawer.
+@export_range(0.0, 64.0, 1.0)
+var drawer_solver_top_spacing: float = 12.0
+
 
 var _map_parameter_entry = preload("res://scenes/hud/map_parameter_entry.tscn")
 
@@ -79,6 +88,11 @@ func _ready() -> void:
 	
 	# Attach signal listener when other submenu opens, to close this submenu if opened.
 	GameState.map_solver_submenu_opened.connect(_on_other_menu_submenu_opened)
+	
+	# Refresh drawer layout when the solver menu dimensions change.
+	if drawer_respect_solver_top and is_instance_valid(map_solver_control):
+		if not map_solver_control.menu_layout_changed.is_connected(_on_solver_menu_layout_changed):
+			map_solver_control.menu_layout_changed.connect(_on_solver_menu_layout_changed)
 
 #endregion
 
@@ -363,13 +377,22 @@ func _on_control_resized() -> void:
 	call_deferred("_refresh_drawer_layout")
 
 
+## Schedules a drawer layout refresh when the solver menu changes size.
+func _on_solver_menu_layout_changed() -> void:
+	# Ignore solver dimensions when top reservation is disabled.
+	if not drawer_respect_solver_top:
+		return
+	
+	call_deferred("_refresh_drawer_layout")
+
+
 ## Calculates a drawer scale from its unscaled [param total_size_1x] and available space.
 ## Limits horizontal size while retaining readable entry heights through vertical scrolling.
 func _calculate_ui_scale(total_size_1x: Vector2) -> float:
 	# Reserve the drawer's vertical screen margins.
 	var available_size := Vector2(
 		size.x,
-		maxf(0.0, size.y - drawer_screen_vertical_margin * 2.0),
+		maxf(1.0, size.y - _get_reserved_top_height() - drawer_screen_vertical_margin * 2.0),
 	)
 	
 	# Prepare the drawer coverage and minimum readable scale.
@@ -436,7 +459,7 @@ func _get_natural_drawer_size() -> Vector2:
 ## Uses the provided [param strip_size] to define the dimensions of the drawer's toggle strip.
 func _apply_scroll_fallback(natural_panel_size: Vector2, strip_size: Vector2) -> void:
 	# Calculate the available drawer height in unscaled coordinates.
-	var allowed_height := maxf(0.0, size.y - drawer_screen_vertical_margin * 2.0) * drawer_max_height_coverage
+	var allowed_height := maxf(1.0, size.y - _get_reserved_top_height() - drawer_screen_vertical_margin * 2.0) * drawer_max_height_coverage
 	var available_height_1x := allowed_height / maxf(_drawer_effective_ui_scale, 0.01)
 	
 	# Reserve the toggle strip height.
@@ -478,15 +501,20 @@ func _position_drawer_scroll_bar() -> void:
 	drawer_scroll_bar.size.y = drawer_panel.size.y
 
 
+## Positions the parameter drawer within its available vertical area.
 func _position_drawer_root() -> void:
-	# Calculate total height of drawer_root.
-	var scale_factor := float(_drawer_effective_ui_scale)
+	# Calculate the dimensions of the scaled drawer.
+	var scale_factor := _drawer_effective_ui_scale
 	var total_height := drawer_panel.size.y + drawer_strip.size.y
 	
-	# Adjust drawer root position.
+	# Calculate the vertical center of the remaining viewport area.
+	var reserved_top_height := _get_reserved_top_height()
+	var vertical_center_offset := reserved_top_height * 0.5
+	
+	# Position the drawer relative to its right-center anchor.
 	drawer_root.position = Vector2(
 		-drawer_panel.size.x * scale_factor,
-		-total_height * scale_factor * 0.5,
+		-total_height * scale_factor * 0.5 + vertical_center_offset,
 	)
 
 
@@ -522,6 +550,17 @@ func _calculate_collapsed_visible_width() -> float:
 	
 	# Return calculated collapsed width with added drawer collapsed width offset to it.
 	return collapsed_width + drawer_collapsed_width_offset
+
+
+## Returns the vertical space reserved above the parameter drawer.
+func _get_reserved_top_height() -> float:
+	# Ignore the reservation when it's disabled or unavailable.
+	if not drawer_respect_solver_top or not is_instance_valid(map_solver_control):
+		return 0.0
+	
+	# Reserve space for the solver menu and the configured spacing.
+	return clampf(map_solver_control.get_menu_reserved_bottom() + drawer_solver_top_spacing, 0.0, size.y)
+
 
 #endregion
 

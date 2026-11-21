@@ -54,6 +54,9 @@ var _resize_pending: bool = false
 func _ready() -> void:
 	# Recalculate camera framing when the logical viewport dimensions change.
 	get_viewport().size_changed.connect(_on_viewport_size_changed)
+	
+	# Connect drawer layout changes after the hud instances enter the scene tree.
+	call_deferred("_connect_drawer_layout_signal")
 
 
 func set_grid_rect(_grid_rect: Rect2) -> void:
@@ -559,6 +562,18 @@ func _remember_view_geometry(free_rect: Rect2) -> void:
 	_last_viewport_center = get_viewport().get_visible_rect().get_center()
 	_last_safe_rect = free_rect
 	_has_view_snapshot = true
+
+
+## Connects drawer layout updates to the camera's view refresh.
+func _connect_drawer_layout_signal() -> void:
+	# Find the drawer that supplies the camera's side reservation.
+	var drawer := get_tree().get_first_node_in_group(MAP_CAMERA_DRAWER_RESERVATION_GROUP) as MapParametersControl
+	if not is_instance_valid(drawer):
+		return
+	
+	# Recalculate camera framing when the collapsed drawer dimensions change.
+	if not drawer.drawer_layout_changed.is_connected(_on_viewport_size_changed):
+		drawer.drawer_layout_changed.connect(_on_viewport_size_changed)
 
 
 ## Schedules a single resize update instead of starting an animation for each resize event.

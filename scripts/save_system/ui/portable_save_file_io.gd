@@ -2,7 +2,7 @@ class_name PortableSaveFileIO
 extends Node
 
 
-signal import_file_selected(buffer: PackedByteArray)
+signal import_file_selected(buffer: PackedByteArray, file_name: String)
 signal file_error(message: String)
 
 
@@ -75,7 +75,7 @@ func _on_desktop_import_selected(path: String) -> void:
 		file_error.emit("Selected save file is empty or too large.")
 		return
 	
-	import_file_selected.emit(file.get_buffer(file.get_length()))
+	import_file_selected.emit(file.get_buffer(file.get_length()), path.get_file())
 
 
 ## Writes the prepared export data to the selected [param path].
@@ -115,7 +115,7 @@ func _request_web_import() -> void:
 				}
 				try {
 					const bytes = new Uint8Array(await file.arrayBuffer());
-					window.dd_portable_save_file_callback(bytes);
+					window.dd_portable_save_file_callback(bytes, file.name);
 				} catch (error) {
 					window.dd_portable_save_file_callback(new Uint8Array());
 				}
@@ -136,4 +136,4 @@ func _on_web_file_selected(args: Array) -> void:
 		file_error.emit("Selected save file could not be read.")
 		return
 	
-	import_file_selected.emit(data)
+	import_file_selected.emit(data, str(args[1]) if args.size() > 1 else "Imported Save.ddsave")

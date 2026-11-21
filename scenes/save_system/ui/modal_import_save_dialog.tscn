@@ -1,0 +1,151 @@
+[gd_scene format=3 uid="uid://bpeu0vqyfy3el"]
+
+[ext_resource type="Theme" uid="uid://cby524paqvken" path="res://themes/save_manager_theme.tres" id="1_u5q6p"]
+[ext_resource type="Script" uid="uid://blenqyln0o5gw" path="res://scripts/save_system/ui/modal_import_save_dialog.gd" id="2_jlr85"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_u5q6p"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0.101960786, 0.101960786, 0.101960786, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 5
+
+[sub_resource type="ButtonGroup" id="ButtonGroup_ygwui"]
+
+[node name="ModalImportSaveDialog" type="Control" unique_id=12071597 groups=["blocks_map_result_tooltips", "blocks_radial_menu_input"]]
+process_mode = 3
+visible = false
+z_index = 900
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_u5q6p")
+script = ExtResource("2_jlr85")
+
+[node name="BackgroundBlocker" type="ColorRect" parent="." unique_id=368199582]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.24313726)
+
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=461029936]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="DialogPanel" type="PanelContainer" parent="CenterContainer" unique_id=467080920]
+custom_minimum_size = Vector2(530, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_u5q6p")
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/DialogPanel" unique_id=90506849]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 16
+
+[node name="ContentsContainer" type="VBoxContainer" parent="CenterContainer/DialogPanel/MarginContainer" unique_id=1118363391]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TitleLabel" type="Label" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer" unique_id=158588901]
+layout_mode = 2
+text = "Import Save"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DescriptionLabel" type="Label" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer" unique_id=1492359467]
+layout_mode = 2
+text = "Select a portable save file and a destination user slot."
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="FileRow" type="HBoxContainer" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer" unique_id=331407914]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="ChooseFileButton" type="Button" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer/FileRow" unique_id=857986063]
+layout_mode = 2
+theme_type_variation = &"SaveNavigationButton"
+text = "Choose File..."
+
+[node name="FileNameLabel" type="Label" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer/FileRow" unique_id=736978632]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "No file selected"
+clip_text = true
+
+[node name="FileMessageLabel" type="Label" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer" unique_id=720545366]
+layout_mode = 2
+text = "Select a portable save file."
+autowrap_mode = 3
+
+[node name="DestinationOptions" type="VBoxContainer" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer" unique_id=876961881]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="FirstEmptyRadio" type="CheckBox" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer/DestinationOptions" unique_id=997035364]
+layout_mode = 2
+button_pressed = true
+button_group = SubResource("ButtonGroup_ygwui")
+text = "First available user slot"
+
+[node name="SpecificSlotRadio" type="CheckBox" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer/DestinationOptions" unique_id=1822296709]
+layout_mode = 2
+button_group = SubResource("ButtonGroup_ygwui")
+text = "Choose a user slot"
+
+[node name="SpecificSlotRow" type="HBoxContainer" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer/DestinationOptions" unique_id=825674386]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SlotLabel" type="Label" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer/DestinationOptions/SpecificSlotRow" unique_id=2031804919]
+layout_mode = 2
+text = "Slot number:"
+
+[node name="SlotNumber" type="SpinBox" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer/DestinationOptions/SpecificSlotRow" unique_id=382936575]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+min_value = 1.0
+max_value = 100000.0
+value = 1.0
+rounded = true
+
+[node name="SlotStatusLabel" type="Label" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer" unique_id=1366222701]
+layout_mode = 2
+text = "Slot 1 is empty."
+autowrap_mode = 3
+
+[node name="Buttons" type="HBoxContainer" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer" unique_id=498232319]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="CancelButton" type="Button" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer/Buttons" unique_id=1990451480]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme_type_variation = &"SaveDangerButton"
+text = "Cancel"
+
+[node name="ImportButton" type="Button" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer/Buttons" unique_id=1511393068]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+theme_type_variation = &"SavePrimaryButton"
+disabled = true
+text = "Import"

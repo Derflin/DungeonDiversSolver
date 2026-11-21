@@ -5,6 +5,7 @@
 [ext_resource type="Script" uid="uid://dajs142gr5t7f" path="res://scripts/main/main.gd" id="1_yyfjg"]
 [ext_resource type="PackedScene" uid="uid://q8745vdh26mn" path="res://scenes/hud/map_parameters_control.tscn" id="2_iuonh"]
 [ext_resource type="PackedScene" uid="uid://b65s6cwmlyn4f" path="res://scenes/hud/map_solver_control.tscn" id="3_k2fmo"]
+[ext_resource type="Script" uid="uid://bd1j1t2mtq8k8" path="res://scripts/hud/hud_layout_coordinator.gd" id="4_a8run"]
 [ext_resource type="PackedScene" uid="uid://dbher8pgko3e0" path="res://scenes/hud/map_manager_control.tscn" id="5_ow5a4"]
 [ext_resource type="PackedScene" uid="uid://cn0aoor0wyoo2" path="res://scenes/hud/map_parameter_help_control.tscn" id="6_b1x3f"]
 [ext_resource type="PackedScene" uid="uid://8bk1yrjo8s7q" path="res://scenes/save_system/ui/save_manager_control.tscn" id="6_hujxm"]
@@ -26,7 +27,7 @@ script = ExtResource("1_yyfjg")
 [node name="HudLayer" type="CanvasLayer" parent="." unique_id=2132097352]
 layer = 10
 
-[node name="HudRoot" type="Control" parent="HudLayer" unique_id=1142900938]
+[node name="HudRoot" type="Control" parent="HudLayer" unique_id=1142900938 node_paths=PackedStringArray("map_solver_control", "map_parameters_control")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -34,17 +35,18 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+script = ExtResource("4_a8run")
+layout_priority = 2
+map_solver_control = NodePath("MapSolverControl")
+map_parameters_control = NodePath("MapParametersControl")
 
-[node name="MapSolverControl" parent="HudLayer/HudRoot" unique_id=195301154 node_paths=PackedStringArray("map_parameters_control") instance=ExtResource("3_k2fmo")]
+[node name="MapSolverControl" parent="HudLayer/HudRoot" unique_id=195301154 instance=ExtResource("3_k2fmo")]
 layout_mode = 1
-menu_reserve_drawer_width = true
-map_parameters_control = NodePath("../MapParametersControl")
 
-[node name="MapParametersControl" parent="HudLayer/HudRoot" unique_id=1239913164 node_paths=PackedStringArray("map_parameter_help_control", "map_solver_control") groups=["map_camera_drawer_reservation"] instance=ExtResource("2_iuonh")]
+[node name="MapParametersControl" parent="HudLayer/HudRoot" unique_id=1239913164 node_paths=PackedStringArray("map_parameter_help_control") groups=["map_camera_drawer_reservation"] instance=ExtResource("2_iuonh")]
 z_index = 5
 layout_mode = 1
 map_parameter_help_control = NodePath("../MapParameterHelpControl")
-map_solver_control = NodePath("../MapSolverControl")
 
 [node name="MapParameterHelpControl" parent="HudLayer/HudRoot" unique_id=429819148 instance=ExtResource("6_b1x3f")]
 layout_mode = 1

@@ -22,27 +22,9 @@ const MAP_SOLVER_STATE_MODE_DISPLAY_TEXTS = {
 ## Largest menu scale used when the maximum scale is enabled.
 @export_range(0.1, 10.0, 0.05) var menu_max_scale: float = 2.0
 
-@export_group("Status Layout", "status_")
-## Maximum portion of the available width occupied by the status panel.
-@export_range(0.01, 1.0, 0.01) var status_max_width_coverage: float = 0.8
-## Maximum portion of the available height occupied by the status panel.
-@export_range(0.01, 1.0, 0.01) var status_max_height_coverage: float = 1.0
-## Enables the preferred maximum status panel scale.
-@export var status_max_scale_enabled: bool = true
-## Largest status panel scale used when the maximum scale is enabled.
-@export_range(0.1, 10.0, 0.05) var status_max_scale: float = 2.0
-
-@export_group("Map Parameters Control Position Restrictions")
-## Enables horizontal space reservation for the parameter drawer.
-@export var menu_reserve_drawer_width: bool = false
-## Parameter drawer used to reserve horizontal space for the top menu.
-@export var map_parameters_control: MapParametersControl
-## Minimum horizontal space between the top menu and the drawer.
-@export_range(0.0, 64.0, 1.0) var menu_drawer_spacing: float = 12.0
-
 
 var _menu_effective_ui_scale: float = 1.0
-var _status_effective_ui_scale: float = 1.0
+var _layout_reserved_side_width: float = 0.0
 var _menu_dropdowns: Dictionary[MenuDropdown, GameState.MapSolverState]
 
 
@@ -82,11 +64,6 @@ func _ready() -> void:
 	
 	# Attach signal listener when the map solver state changes
 	GameState.map_solver_state_changed.connect(_on_game_state_map_solver_state_changed)
-	
-	# Refresh the menu when the parameter drawer dimensions change.
-	if menu_reserve_drawer_width and is_instance_valid(map_parameters_control):
-		if not map_parameters_control.drawer_layout_changed.is_connected(_on_drawer_layout_changed):
-			map_parameters_control.drawer_layout_changed.connect(_on_drawer_layout_changed)
 
 
 func _setup_menu_dropdowns() -> void:
@@ -119,20 +96,6 @@ func _populate_menu_dropdown(menu_dropdown_instance: MenuDropdown) -> void:
 		var secret_room_type := GameData.room_secret_types.get_type(secret_room_type_kind)
 		
 		menu_dropdown_instance.add_option(secret_room_type_kind as int, secret_room_type.get_display_name(), secret_room_type.get_static_texture())
-
-
-## Returns the viewport height occupied by the top solver menu.
-## Includes the menu contents after applying their layout scale.
-func get_menu_reserved_bottom() -> float:
-	# Ignore controls that are not initialized or visible.
-	if not is_node_ready() or not menu_contents.is_visible_in_tree():
-		return 0.0
-	
-	# Calculate the bottom edge of the menu in viewport coordinates.
-	var menu_transform := menu_contents.get_global_transform_with_canvas()
-	var menu_bottom := menu_transform * Vector2(menu_contents.size.x, menu_contents.size.y)
-	
-	return clampf(menu_bottom.y, 0.0, size.y)
 
 
 func _on_menu_dropdown_button_toggled(toggle_on: bool, menu_dropdown_instance: MenuDropdown, menu_dropdown_state: GameState.MapSolverState) -> void:
@@ -168,11 +131,10 @@ func _refresh_menu_layout() -> void:
 	
 	# Calculate effective menu scale
 	_menu_effective_ui_scale = _calculate_menu_scale(natural_menu_panel_size)
-	_status_effective_ui_scale = _menu_effective_ui_scale
 	
 	# Set calculated effective menu scale
 	menu_root.scale = Vector2.ONE * float(_menu_effective_ui_scale)
-	status_root.scale = Vector2.ONE * float(_status_effective_ui_scale)
+	status_root.scale = Vector2.ONE * float(_menu_effective_ui_scale)
 	
 	# Position menu root based on the menu scale
 	_position_menu_root()
@@ -195,7 +157,7 @@ func _position_menu_root() -> void:
 
 func _position_status_root() -> void:
 	# Prepare scale factor
-	var scale_factor := float(_status_effective_ui_scale)
+	var scale_factor := float(_menu_effective_ui_scale)
 
 	# Adjust status root position
 	status_root.position = Vector2(
@@ -206,37 +168,20 @@ func _position_status_root() -> void:
 
 ## Calculates a uniform top menu scale from the provided [param total_size_1x] and available layout space.
 func _calculate_menu_scale(total_size_1x: Vector2) -> float:
-	# Calculate the visible collapsed drawer width and the required gap.
-	var reserved_side_width: float = 0.0
-	if is_instance_valid(map_parameters_control):
-		reserved_side_width = map_parameters_control.get_layout_reserved_width() + menu_drawer_spacing
+	# Mirror the reserved right-side space to keep the menu centered.
+	var centered_available_width := maxf(0.0, size.x - _layout_reserved_side_width * 2.0)
 	
-	# Restrict the menu to a region centered within the viewport.
-	# Reserve the same width on the left to keep the top menu centered.
-	var centered_available_width := maxf(0.0, size.x - reserved_side_width * 2.0)
+	# Apply the menu's viewport coverage limits.
+	var available_size := Vector2(
+		minf(size.x * menu_max_width_coverage, centered_available_width),
+		size.y * menu_max_height_coverage,
+	)
 	
-	# Apply the menu's configured viewport coverage restrictions.
-	var available_size := Vector2(minf(size.x * menu_max_width_coverage, centered_available_width), size.y * menu_max_height_coverage)
-	
-	# Calculate the scale using the shared scaling utility.
 	return UIScaleCalculator.calculate_scale(total_size_1x, available_size, Vector2.ONE, menu_max_scale_enabled, menu_max_scale)
-
-
-## Calculates a uniform status scale from the provided [param total_size_1x] and available layout space.
-func _calculate_status_scale(total_size_1x: Vector2) -> float:
-	# Calculate the status panel coverage limits.
-	var coverage := Vector2(status_max_width_coverage, status_max_height_coverage)
-	
-	# Return the scale that fits the status panel inside both layout limits.
-	return UIScaleCalculator.calculate_scale(total_size_1x, size, coverage, status_max_scale_enabled, status_max_scale)
 
 
 func _get_natural_menu_size() -> Vector2:
 	return menu_contents.get_combined_minimum_size()
-
-
-func _get_natural_status_size() -> Vector2:
-	return status_contents.get_combined_minimum_size()
 
 
 func _on_control_resized() -> void:
@@ -281,13 +226,31 @@ func _on_cancel_button_pressed() -> void:
 	GameState.map_solver_state_change_triggered.emit(GameState.MapSolverState.NONE, RoomSecretType.Kind.NONE)
 
 
-## Schedules a menu layout refresh after the drawer dimensions change.
-func _on_drawer_layout_changed() -> void:
-	# Ignore drawer dimensions when horizontal reservation is disabled.
-	if not menu_reserve_drawer_width:
+#region Meny Layout
+
+## Sets equal horizontal reservations on both sides of the centered solver menu.
+## A zero reservation allows the menu to use its normal viewport coverage limits.
+func set_layout_reserved_side_width(width: float) -> void:
+	var new_width := maxf(0.0, width)
+	if is_equal_approx(_layout_reserved_side_width, new_width):
 		return
 	
+	_layout_reserved_side_width = new_width
 	call_deferred("_refresh_menu_layout")
+
+
+## Returns the viewport height occupied by the top solver menu.
+## Includes the menu contents after applying their layout scale.
+func get_menu_reserved_bottom() -> float:
+	if not is_node_ready() or not menu_contents.is_visible_in_tree():
+		return 0.0
+	
+	var menu_transform := menu_contents.get_global_transform_with_canvas()
+	var menu_bottom := menu_transform * Vector2(menu_contents.size.x, menu_contents.size.y)
+	
+	return clampf(menu_bottom.y, 0.0, size.y)
+
+#endregion
 
 
 #region HUD Transition Wait Group

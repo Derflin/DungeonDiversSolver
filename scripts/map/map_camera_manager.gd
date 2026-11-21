@@ -133,7 +133,7 @@ func _get_available_map_view_rect() -> Rect2:
 	var drawer := get_tree().get_first_node_in_group(MAP_CAMERA_DRAWER_RESERVATION_GROUP) as MapParametersControl
 	if is_instance_valid(drawer) and drawer.is_visible_in_tree():
 		# Get the space occupied by the collapsed drawer and its outer spacing.
-		var reserved_width := clampf(drawer.get_layout_reserved_width() + drawer_safe_area_spacing, 0.0, viewport_rect.size.x)
+		var reserved_width := clampf(drawer.get_collapsed_drawer_width() + drawer_safe_area_spacing, 0.0, viewport_rect.size.x)
 		
 		if reserved_width > 0.0:
 			# Reserve a full-height strip along the right edge of the viewport.

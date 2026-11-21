@@ -15,6 +15,8 @@ extends Control
 @export var drawer_max_scale_enabled: bool = true
 ## Largest drawer scale used when the maximum scale is enabled.
 @export_range(0.1, 10.0, 0.05) var drawer_max_scale: float = 2.0
+## Minimum displayed height of a map parameter entry before vertical scrolling is used.
+@export_range(8.0, 96.0, 1.0) var drawer_minimum_entry_height: float = 30.0
 
 @export_group("Drawer Toggle Button", "drawer_toggle_")
 @export var drawer_toggle_expand_icon: Texture2D
@@ -65,6 +67,9 @@ func _ready() -> void:
 	
 	# Attach node resized signal to handle resizing and refreshing drawer layout and call it.
 	resized.connect(_on_control_resized)
+	
+	# Refresh drawer layout when the application window changes size.
+	get_window().size_changed.connect(_on_control_resized)
 	
 	# Refresh drawer layout after initializing all the map parameter entries.
 	call_deferred("_refresh_drawer_layout")
@@ -352,19 +357,49 @@ func _on_control_resized() -> void:
 	call_deferred("_refresh_drawer_layout")
 
 
-## Calculates a uniform drawer scale from the provided [param total_size_1x] and available layout space.
+## Calculates a drawer scale from its unscaled [param total_size_1x] and available space.
+## Limits horizontal size while retaining readable entry heights through vertical scrolling.
 func _calculate_ui_scale(total_size_1x: Vector2) -> float:
-	# Reserve the vertical margins before calculating the available drawer area.
+	# Reserve the drawer's vertical screen margins.
 	var available_size := Vector2(
 		size.x,
 		maxf(0.0, size.y - drawer_screen_vertical_margin * 2.0),
 	)
 	
-	# Calculate the drawer coverage limits and fit the content inside them.
-	var coverage := Vector2(drawer_max_width_coverage, drawer_max_height_coverage)
+	# Prepare the drawer coverage and minimum readable scale.
+	var coverage := Vector2(
+		drawer_max_width_coverage,
+		drawer_max_height_coverage,
+	)
+	var minimum_scale := _calculate_minimum_entry_scale()
 	
-	# Return the scale that fits the drawer inside both layout limits.
-	return UIScaleCalculator.calculate_scale(total_size_1x, available_size, coverage, drawer_max_scale_enabled, drawer_max_scale)
+	# Calculate the effective scale using the shared utility.
+	return UIScaleCalculator.calculate_scale(
+		total_size_1x,
+		available_size,
+		coverage,
+		drawer_max_scale_enabled,
+		drawer_max_scale,
+		minimum_scale,
+	)
+
+
+## Calculates the minimum drawer scale required to maintain the displayed height of parameter entries in screen pixels.
+func _calculate_minimum_entry_scale() -> float:
+	# Calculate the screen scaling applied to the drawer at its natural scale.
+	var screen_transform := get_viewport().get_screen_transform() * drawer_root.get_global_transform_with_canvas()
+	var screen_scale := maxf(0.001, screen_transform.get_scale().y)
+	
+	# Calculate the required scale for each parameter entry.
+	var required_scale := 0.01
+	for container: VBoxContainer in [map_grid_settings_container, map_secret_settings_container]:
+		for child in container.get_children():
+			if not child is MapParameterEntry:
+				continue
+			var entry_height := maxf(1.0, (child as MapParameterEntry).get_combined_minimum_size().y)
+			required_scale = maxf(required_scale, drawer_minimum_entry_height / (entry_height * screen_scale))
+	
+	return required_scale
 
 
 func _get_natural_drawer_size() -> Vector2:
@@ -390,30 +425,29 @@ func _get_natural_drawer_size() -> Vector2:
 	return drawer_panel.get_combined_minimum_size()
 
 
+## Adjusts the drawer panel height to fit the available vertical space.
+## Enables content scrolling when [param natural_panel_size] exceeds the available height.
+## Uses the provided [param strip_size] to define the dimensions of the drawer's toggle strip.
 func _apply_scroll_fallback(natural_panel_size: Vector2, strip_size: Vector2) -> void:
-	# Calculate max_panel_height.
-	var available_height_1x := (size.y - drawer_screen_vertical_margin * 2.0) / float(_drawer_effective_ui_scale)
-	var max_panel_height := available_height_1x - strip_size.y
+	# Calculate the available drawer height in unscaled coordinates.
+	var allowed_height := maxf(0.0, size.y - drawer_screen_vertical_margin * 2.0) * drawer_max_height_coverage
+	var available_height_1x := allowed_height / maxf(_drawer_effective_ui_scale, 0.01)
 	
-	# If content fits inside max_panel_height, then don't enable scroll behaviour.
-	if natural_panel_size.y <= max_panel_height:
-		scroll_container.custom_minimum_size.y = drawer_contents.get_combined_minimum_size().y
-		
-		drawer_panel.reset_size()
-		return
+	# Reserve the toggle strip height.
+	var max_panel_height := maxf(1.0, available_height_1x - strip_size.y)
 	
-	# Calculate scroll height based on the overflowed size.
-	var overflow := natural_panel_size.y - max_panel_height
-	var current_scroll_height := scroll_container.custom_minimum_size.y
+	# Restrict the visible panel height to the available space.
+	var visible_panel_height := minf(natural_panel_size.y, max_panel_height)
 	
-	# Apply minimum size equal to panel height minus overflow.
-	scroll_container.custom_minimum_size.y = maxf(1.0, current_scroll_height - overflow)
+	# Calculate the panel height occupied by margins and decorations.
+	var content_height := drawer_contents.get_combined_minimum_size().y
+	var panel_extra_height := maxf(0.0, natural_panel_size.y - content_height)
 	
-	# Set drawer_panel size to fit max_panel_height.
-	drawer_panel.size = Vector2(
-		natural_panel_size.x,
-		max_panel_height,
-	)
+	# Assign the visible scroll area independently of the full content height.
+	scroll_container.custom_minimum_size.y = maxf(1.0, visible_panel_height - panel_extra_height)
+	
+	# Apply the final panel dimensions.
+	drawer_panel.size = Vector2(natural_panel_size.x, visible_panel_height)
 
 
 func _position_drawer_strip() -> void:

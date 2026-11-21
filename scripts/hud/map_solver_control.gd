@@ -139,7 +139,7 @@ func _refresh_menu_layout() -> void:
 	
 	# Calculate effective menu scale
 	_menu_effective_ui_scale = _calculate_menu_scale(natural_menu_panel_size)
-	_status_effective_ui_scale = _calculate_status_scale(natural_status_panel_size)
+	_status_effective_ui_scale = _menu_effective_ui_scale
 	
 	# Set calculated effective menu scale
 	menu_root.scale = Vector2.ONE * float(_menu_effective_ui_scale)
@@ -230,6 +230,9 @@ func _on_game_state_map_solver_state_changed() -> void:
 			selected_secret_room_type.get_display_name(),
 		)
 		solver_status_panel.show_status_panel(cur_map_solver_result.get_status_message())
+	
+	# Refresh the layout after updating the solver panels.
+	call_deferred("_refresh_menu_layout")
 
 
 func _on_cancel_button_pressed() -> void:

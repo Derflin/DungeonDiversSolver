@@ -70,9 +70,6 @@ var _new_save_target_slot: int = -1
 var _has_explicit_new_save_target: bool = false
 
 var _transfer_file_io: PortableSaveFileIO
-var _import_destination_dialog: Window
-var _import_destination_option: OptionButton
-var _export_ready_dialog: ConfirmationDialog
 var _pending_import_payload: Dictionary = {}
 var _pending_export_buffer: PackedByteArray = PackedByteArray()
 var _pending_export_name: String = ""
@@ -104,6 +101,7 @@ var _pending_export_name: String = ""
 @onready var save_details: SaveDetails = $OuterMargin/MainPanel/MainContents/Content/SaveDetails
 @onready var status_label: ScrambleLabel = $OuterMargin/MainPanel/MainContents/StatusLabel
 @onready var confirmation_dialog: ModalConfirmationDialog = $ModalConfirmationDialog
+@onready var import_save_dialog: ModalImportSaveDialog = $ModalImportSaveDialog
 
 
 func _ready() -> void:
@@ -2133,95 +2131,54 @@ func _perform_load(entry: SaveBrowserEntry) -> void:
 
 #region Portable Save Transfer
 
-## Initializes the file picker, export confirmation and import destination window.
+## Initializes the portable file picker and connects the import dialog controls.
 func _setup_portable_save_transfer() -> void:
-	# Set up the transfer menu actions.
+	# Populate the transfer menu actions.
 	var popup := transfer_button.get_popup()
 	popup.clear()
 	popup.add_item("Import Save...", TRANSFER_IMPORT_ID)
 	popup.add_item("Export Selected Save...", TRANSFER_EXPORT_ID)
 	popup.id_pressed.connect(_on_transfer_menu_item_pressed)
 	
-	# Create the platform-specific file picker.
+	# Initialize the platform file picker and connect its results.
 	_transfer_file_io = PortableSaveFileIO.new()
 	add_child(_transfer_file_io)
 	_transfer_file_io.import_file_selected.connect(_on_transfer_import_file_selected)
 	_transfer_file_io.file_error.connect(_on_transfer_file_error)
 	
-	# Create the destination selection window and its content layout.
-	_import_destination_dialog = Window.new()
-	_import_destination_dialog.process_mode = Node.PROCESS_MODE_ALWAYS
-	_import_destination_dialog.title = "Import Save"
-	_import_destination_dialog.size = Vector2i(460, 190)
-	_import_destination_dialog.min_size = Vector2i(400, 180)
-	_import_destination_dialog.unresizable = true
-	_import_destination_dialog.exclusive = true
-	_import_destination_dialog.transient = true
-	add_child(_import_destination_dialog)
+	# Connect the import modal's file and destination actions.
+	import_save_dialog.file_requested.connect(_on_import_file_requested)
+	import_save_dialog.import_requested.connect(_on_import_dialog_requested)
+	import_save_dialog.cancelled.connect(_on_import_destination_canceled)
 
-	var destination_margin := MarginContainer.new()
-	_import_destination_dialog.add_child(destination_margin)
-	destination_margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	for side in ["left", "top", "right", "bottom"]:
-		destination_margin.add_theme_constant_override("margin_" + side, 14)
-
-	var destination_content := VBoxContainer.new()
-	destination_margin.add_child(destination_content)
-	var destination_label := Label.new()
-	destination_label.text = "Select the destination user save slot."
-	destination_content.add_child(destination_label)
-
-	_import_destination_option = OptionButton.new()
-	_import_destination_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	destination_content.add_child(_import_destination_option)
-
-	# Place the action buttons beneath the destination selector.
-	var destination_spacer := Control.new()
-	destination_spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	destination_content.add_child(destination_spacer)
-	var destination_actions := HBoxContainer.new()
-	destination_actions.alignment = BoxContainer.ALIGNMENT_END
-	destination_content.add_child(destination_actions)
-
-	var cancel_button := Button.new()
-	cancel_button.text = "Cancel"
-	destination_actions.add_child(cancel_button)
-	cancel_button.pressed.connect(_cancel_portable_import_dialog)
-	var import_button := Button.new()
-	import_button.text = "Import"
-	destination_actions.add_child(import_button)
-	import_button.pressed.connect(_accept_portable_import_dialog)
-	_import_destination_dialog.close_requested.connect(_cancel_portable_import_dialog)
-	
-	# Create the export confirmation dialog.
-	_export_ready_dialog = ConfirmationDialog.new()
-	_export_ready_dialog.process_mode = Node.PROCESS_MODE_ALWAYS
-	_export_ready_dialog.title = "Export Ready"
-	_export_ready_dialog.dialog_text = "The selected save is ready to export."
-	_export_ready_dialog.ok_button_text = "Export"
-	add_child(_export_ready_dialog)
-	_export_ready_dialog.confirmed.connect(_on_export_ready_confirmed)
-	_export_ready_dialog.canceled.connect(_on_export_ready_canceled)
-
-
-## Handles the selected transfer action identified by [param item_id].
+## Handles the transfer action selected by [param item_id].
 func _on_transfer_menu_item_pressed(item_id: int) -> void:
-	if _is_busy or _is_transitioning or _confirmation_pending or SaveManager.is_busy():
+	if _is_busy or _confirmation_pending or SaveManager.is_busy():
 		return
 	
 	match item_id:
 		TRANSFER_IMPORT_ID:
-			_transfer_file_io.request_import()
+			# Open the destination dialog before requesting a file.
+			_pending_import_payload.clear()
+			import_save_dialog.open_dialog(SaveManager.get_first_empty_user_slot())
 		TRANSFER_EXPORT_ID:
+			# Export the selected existing user save or example save.
+			if _is_transitioning:
+				return
 			if _selected_entry != null and _selected_entry.exists and not _selected_entry.is_new_save():
 				_prepare_portable_export(_selected_entry)
 
 
-## Prepares a portable archive for the provided [param entry] and opens its export dialog.
+## Requests a portable save file from the platform file picker.
+func _on_import_file_requested() -> void:
+	_transfer_file_io.request_import()
+
+
+## Prepares a portable archive for [param entry] and requests export confirmation.
 func _prepare_portable_export(entry: SaveBrowserEntry) -> void:
 	_set_busy(true, "Preparing export...")
 	
-	# Load and package the saved data without restoring the current map.
+	# Load the save data without restoring the current map.
 	var payload: Dictionary = await SaveManager.prepare_portable_export(entry)
 	if payload.is_empty():
 		_set_busy(false, "Export failed.")
@@ -2231,17 +2188,27 @@ func _prepare_portable_export(entry: SaveBrowserEntry) -> void:
 		_set_busy(false, str(archive.get("error", "Export failed.")))
 		return
 	
-	# Store the completed archive until the user confirms the export.
+	# Retain the archive until the user confirms its export.
 	_pending_export_buffer = archive["buffer"]
 	var safe_name := entry.display_name.validate_filename()
 	if safe_name.is_empty():
 		safe_name = "Save"
 	_pending_export_name = safe_name + PortableSaveService.SAVE_EXTENSION
 	_set_busy(false, "Export ready.")
-	_export_ready_dialog.popup_centered()
+	
+	# Confirm exporting the prepared file using the themed modal.
+	var confirmed := await _request_confirmation(
+		"Export Save",
+		"The selected save is ready to export.",
+		"Export", "Cancel",
+	)
+	if confirmed:
+		_on_export_ready_confirmed()
+	else:
+		_on_export_ready_canceled()
 
 
-## Starts exporting the prepared archive after user confirmation.
+## Writes the previously prepared archive through the platform file service.
 func _on_export_ready_confirmed() -> void:
 	if _pending_export_buffer.is_empty():
 		return
@@ -2251,58 +2218,45 @@ func _on_export_ready_confirmed() -> void:
 	_set_status("Export requested.")
 
 
-## Clears the prepared archive when export is cancelled.
+## Clears the prepared archive after export cancellation.
 func _on_export_ready_canceled() -> void:
 	_pending_export_buffer = PackedByteArray()
 	_pending_export_name = ""
 	_restore_default_status()
 
 
-## Validates the selected [param data] and displays available import destinations.
-func _on_transfer_import_file_selected(data: PackedByteArray) -> void:
+## Validates [param data] and displays [param file_name] in the import modal.
+func _on_transfer_import_file_selected(data: PackedByteArray, file_name: String) -> void:
 	if _is_busy or SaveManager.is_busy():
 		return
 	
+	# Decode the selected archive before enabling destination selection.
 	var decoded := PortableSaveService.decode(data, SaveManager.SAVE_VERSION)
 	if not bool(decoded.get("success", false)):
-		_set_status(str(decoded.get("error", "Import failed.")))
+		_pending_import_payload.clear()
+		import_save_dialog.show_file_error(str(decoded.get("error", "Import failed.")))
 		return
 	_pending_import_payload = decoded["payload"]
-	
-	# Populate the destination selector with new and existing user slots.
-	_import_destination_option.clear()
-	_import_destination_option.add_item("New save (first empty slot)", 0)
-	for existing_entry: SaveBrowserEntry in SaveManager.get_existing_user_saves():
-		_import_destination_option.add_item("Replace Slot %d — %s" % [existing_entry.slot, existing_entry.display_name], existing_entry.slot)
-	_import_destination_option.select(0)
-	_import_destination_dialog.popup_centered()
+	import_save_dialog.set_selected_file(
+		file_name,
+		str(_pending_import_payload.get("display_name", "Imported Save")),
+	)
 
 
-## Accepts the selected import destination and closes the destination window.
-func _accept_portable_import_dialog() -> void:
-	_import_destination_dialog.hide()
-	_on_import_destination_confirmed()
-
-
-## Cancels the destination selection and clears the pending imported data.
-func _cancel_portable_import_dialog() -> void:
-	_import_destination_dialog.hide()
-	_on_import_destination_canceled()
-
-
-## Imports the selected save into the chosen user slot after any required confirmation.
-func _on_import_destination_confirmed() -> void:
+## Imports the selected file into [param requested_slot], after confirming any replacement.
+func _on_import_dialog_requested(requested_slot: int) -> void:
 	if _pending_import_payload.is_empty():
 		return
 	
-	var item_index := _import_destination_option.selected
-	if item_index < 0:
-		return
-	var destination_slot := _import_destination_option.get_item_id(item_index)
-	if destination_slot == 0:
+	# Resolve the default destination and confirm occupied slots.
+	var destination_slot := requested_slot
+	if destination_slot == ModalImportSaveDialog.AUTOMATIC_SLOT:
 		destination_slot = SaveManager.get_first_empty_user_slot()
+	if destination_slot < SaveManager.FIRST_SLOT:
+		import_save_dialog.show_file_error("The destination slot is invalid.")
+		return
 	
-	# Confirm replacement of an occupied slot.
+	import_save_dialog.visible = false
 	if SaveManager.has_user_save(destination_slot):
 		var entry := SaveManager.get_user_save(destination_slot)
 		var confirmed := await _request_confirmation(
@@ -2311,23 +2265,26 @@ func _on_import_destination_confirmed() -> void:
 			"Replace", "Cancel", true,
 		)
 		if not confirmed:
-			_pending_import_payload.clear()
+			import_save_dialog.visible = true
 			return
 	
-	# Confirm discarding unsaved changes before refreshing the details panel.
+	# Confirm changes to the selected save's unsaved details.
 	var can_discard := await _confirm_discard_unsaved_changes("Importing will update the selected save details.")
 	if not can_discard:
-		_pending_import_payload.clear()
+		import_save_dialog.visible = true
 		return
 	
-	# Store the imported game state and select its user save entry.
+	# Save imported game state into the selected user slot.
 	_set_busy(true, "Importing...")
 	var success := await SaveManager.import_portable_user_save(destination_slot, _pending_import_payload)
-	_pending_import_payload.clear()
 	if not success:
 		_set_busy(false, "Import failed.")
+		import_save_dialog.visible = true
 		return
 	
+	# Select the newly imported user save in the normal list view.
+	_pending_import_payload.clear()
+	import_save_dialog.close_dialog()
 	_browse_mode = SaveUIEnums.BrowseMode.LIST_VIEW
 	_selected_entry = SaveManager.get_user_save(destination_slot)
 	_remember_selected_entry(_selected_entry)
@@ -2335,15 +2292,19 @@ func _on_import_destination_confirmed() -> void:
 	_refresh_interface()
 
 
-## Clears the pending import when the destination dialog is cancelled.
+## Clears the imported file data when the dialog is cancelled.
 func _on_import_destination_canceled() -> void:
 	_pending_import_payload.clear()
 	_restore_default_status()
 
 
-## Displays the provided file transfer [param message] as status text.
+## Displays the platform file operation [param message].
 func _on_transfer_file_error(message: String) -> void:
-	_set_status(message)
+	if import_save_dialog.visible:
+		_pending_import_payload.clear()
+		import_save_dialog.show_file_error(message)
+	else:
+		_set_status(message)
 
 #endregion
 
@@ -2713,13 +2674,13 @@ func _apply_interaction_state() -> void:
 	
 	# Update disabled state of close and transfer buttons.
 	close_button.disabled = interaction_blocked
-	transfer_button.disabled = interaction_blocked or _is_transitioning or _confirmation_pending
+	transfer_button.disabled = interaction_blocked or SaveManager.is_busy() or _confirmation_pending
 	
 	# Enable exporting only when an existing save or example is selected.
 	var export_available := _selected_entry != null and _selected_entry.exists and not _selected_entry.is_new_save()
 	var transfer_popup := transfer_button.get_popup()
-	transfer_popup.set_item_disabled(transfer_popup.get_item_index(TRANSFER_IMPORT_ID), interaction_blocked)
-	transfer_popup.set_item_disabled(transfer_popup.get_item_index(TRANSFER_EXPORT_ID), interaction_blocked or not export_available)
+	transfer_popup.set_item_disabled(transfer_popup.get_item_index(TRANSFER_IMPORT_ID), interaction_blocked or SaveManager.is_busy() or _confirmation_pending)
+	transfer_popup.set_item_disabled(transfer_popup.get_item_index(TRANSFER_EXPORT_ID), interaction_blocked or SaveManager.is_busy() or _confirmation_pending or _is_transitioning or not export_available)
 	
 	# Update disabled state of view modes buttons.
 	slot_view_button.disabled = interaction_blocked

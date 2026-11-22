@@ -209,7 +209,6 @@ text = "Choose a user slot"
 vertical_alignment = 1
 
 [node name="SpecificSlotRow" type="HBoxContainer" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer/DestinationBodyMargin/DestinationBodyContent/DestinationOptions" unique_id=825674386]
-visible = false
 layout_mode = 2
 theme_override_constants/separation = 8
 

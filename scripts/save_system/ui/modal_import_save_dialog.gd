@@ -16,6 +16,8 @@ const TEXT_WARNING: Color = Color("e0ae76")
 var _file_valid: bool = false
 var _first_empty_slot: int = 1
 
+var _slot_row_tween: Tween
+
 
 @onready var choose_file_button: Button = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/SourceBodyMargin/SourceBodyContent/FileRow/ChooseFileButton
 @onready var file_name_label: Label = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/SourceBodyMargin/SourceBodyContent/FileRow/FileNameLabel
@@ -133,10 +135,10 @@ func _refresh_destination() -> void:
 	if not is_node_ready():
 		return
 	
-	# Show the slot selector only for the specific-slot destination mode.
+	# Update slot number selection field.
 	var use_specific_slot := specific_slot_radio.button_pressed
-	specific_slot_row.visible = use_specific_slot
 	var selected_slot := int(slot_number.value) if use_specific_slot else _first_empty_slot
+	_update_specific_slot_row(use_specific_slot)
 	
 	# Describe whether importing to the selected slot replaces saved data.
 	if SaveManager.has_user_save(selected_slot):
@@ -148,6 +150,42 @@ func _refresh_destination() -> void:
 		slot_status_label.add_theme_color_override("font_color", TEXT_MUTED)
 	
 	import_button.disabled = not _file_valid
+
+
+## Updates the availability and appearance of the specific slot controls.
+func _update_specific_slot_row(enabled: bool) -> void:
+	# Keep the row visible to preserve the dialog layout.
+	specific_slot_row.visible = true
+	
+	# Disable direct editing and interaction while the option is inactive.
+	slot_number.editable = enabled
+	slot_number.mouse_filter = Control.MOUSE_FILTER_STOP if enabled else Control.MOUSE_FILTER_IGNORE
+	slot_number.focus_mode = Control.FOCUS_ALL if enabled else Control.FOCUS_NONE
+	
+	# Disable indirect editing and interaction while the option is inactive through built-in line edit.
+	var line_edit := slot_number.get_line_edit()
+	line_edit.mouse_filter = Control.MOUSE_FILTER_STOP if enabled else Control.MOUSE_FILTER_IGNORE
+	line_edit.focus_mode = Control.FOCUS_ALL if enabled else Control.FOCUS_NONE
+	line_edit.mouse_default_cursor_shape = Control.CURSOR_IBEAM if enabled else Control.CURSOR_ARROW
+	if not enabled and line_edit.has_focus():
+		line_edit.release_focus()
+	
+	# Stop any previous appearance transition.
+	if _slot_row_tween and _slot_row_tween.is_running():
+		_slot_row_tween.kill()
+	_slot_row_tween = null
+	
+	# Prepare target opacity for the slot row.
+	var target_alpha := 1.0 if enabled else 0.4
+	
+	# Avoid animating the initial layout while the modal is hidden.
+	if not is_visible_in_tree():
+		specific_slot_row.modulate.a = target_alpha
+		return
+	
+	# Smoothly fade between active and inactive appearance.
+	_slot_row_tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_slot_row_tween.tween_property(specific_slot_row, "modulate:a", target_alpha, 0.15)
 
 
 ## Emits the selected import destination when the archive is valid.

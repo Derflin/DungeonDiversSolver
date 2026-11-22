@@ -2138,7 +2138,27 @@ func _setup_portable_save_transfer() -> void:
 	popup.clear()
 	popup.add_item("Import Save...", TRANSFER_IMPORT_ID)
 	popup.add_item("Export Selected Save...", TRANSFER_EXPORT_ID)
+	
+	# Let the popup determine its width from its menu items.
+	popup.min_size = Vector2i.ZERO
+	
+	# Reduce the spacing around individual popup items.
+	popup.add_theme_constant_override("item_start_padding", 4)
+	popup.add_theme_constant_override("item_end_padding", 4)
+	popup.add_theme_constant_override("v_separation", 4)
+	
+	# Give popup a compact panel without modifying other menus.
+	var panel_style := popup.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
+	if panel_style != null:
+		panel_style.content_margin_left = 4.0
+		panel_style.content_margin_right = 4.0
+		panel_style.content_margin_top = 4.0
+		panel_style.content_margin_bottom = 4.0
+		popup.add_theme_stylebox_override("panel", panel_style)
+	
 	popup.id_pressed.connect(_on_transfer_menu_item_pressed)
+	popup.visibility_changed.connect(_on_transfer_popup_visibility_changed)
+	transfer_button.about_to_popup.connect(_apply_interaction_state)
 	
 	# Initialize the platform file picker and connect its results.
 	_transfer_file_io = PortableSaveFileIO.new()
@@ -2150,6 +2170,30 @@ func _setup_portable_save_transfer() -> void:
 	import_save_dialog.file_requested.connect(_on_import_file_requested)
 	import_save_dialog.import_requested.connect(_on_import_dialog_requested)
 	import_save_dialog.cancelled.connect(_on_import_destination_canceled)
+
+
+## Aligns the popup after the MenuButton has opened it and assigned its screen position.
+func _on_transfer_popup_visibility_changed() -> void:
+	if transfer_button.get_popup().visible:
+		_align_transfer_popup_right.call_deferred()
+
+
+## Aligns the transfer popup's right edge with the transfer button's right edge.
+func _align_transfer_popup_right() -> void:
+	var popup := transfer_button.get_popup()
+	if not popup.visible:
+		return
+	
+	# Calculate the button's right edge in screen coordinates.
+	var button_right := transfer_button.get_screen_transform() * Vector2(transfer_button.size.x, 0.0)
+	
+	# Preserve the popup's vertical position.
+	var popup_position := popup.position
+	popup_position.x = roundi(button_right.x) - popup.size.x
+	
+	# Apply the adjusted horizontal position.
+	popup.position = popup_position
+
 
 ## Handles the transfer action selected by [param item_id].
 func _on_transfer_menu_item_pressed(item_id: int) -> void:
@@ -2463,6 +2507,10 @@ func _confirm_discard_unsaved_changes(action_message: String) -> bool:
 ## Sets flag whether the save manager is currently performing a visual transition to the provided [param transitioning] flag.
 func _set_transitioning(transitioning: bool) -> void:
 	_is_transitioning = transitioning
+	
+	# Restore interactions availability when transitions finish, including opening animations.
+	if not transitioning and is_node_ready():
+		_apply_interaction_state()
 
 
 ## Fades the save manager display target opacity to the provided [param target_alpha] value over the provided [param duration] in seconds.

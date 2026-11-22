@@ -8,20 +8,25 @@ signal cancelled
 
 
 const AUTOMATIC_SLOT: int = -1
+const TEXT_MUTED: Color = Color("b0b0b0")
+const TEXT_ACCENT: Color = Color("e0c68d")
+const TEXT_WARNING: Color = Color("e0ae76")
 
 
 var _file_valid: bool = false
 var _first_empty_slot: int = 1
 
 
-@onready var choose_file_button: Button = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/FileRow/ChooseFileButton
-@onready var file_name_label: Label = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/FileRow/FileNameLabel
-@onready var file_message_label: Label = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/FileMessageLabel
-@onready var first_empty_radio: CheckBox = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/DestinationOptions/FirstEmptyRadio
-@onready var specific_slot_radio: CheckBox = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/DestinationOptions/SpecificSlotRadio
-@onready var specific_slot_row: HBoxContainer = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/DestinationOptions/SpecificSlotRow
-@onready var slot_number: SpinBox = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/DestinationOptions/SpecificSlotRow/SlotNumber
-@onready var slot_status_label: Label = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/SlotStatusLabel
+@onready var choose_file_button: Button = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/SourceBodyMargin/SourceBodyContent/FileRow/ChooseFileButton
+@onready var file_name_label: Label = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/SourceBodyMargin/SourceBodyContent/FileRow/FileNameLabel
+@onready var save_info_row: HBoxContainer = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/SourceBodyMargin/SourceBodyContent/SaveInfoRow
+@onready var save_name_label: Label = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/SourceBodyMargin/SourceBodyContent/SaveInfoRow/SaveNameLabel
+@onready var file_message_label: Label = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/SourceBodyMargin/SourceBodyContent/FileMessageLabel
+@onready var first_empty_radio: CheckBox = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/DestinationBodyMargin/DestinationBodyContent/DestinationOptions/FirstEmptyRadio
+@onready var specific_slot_radio: CheckBox = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/DestinationBodyMargin/DestinationBodyContent/DestinationOptions/SpecificSlotRadio
+@onready var specific_slot_row: HBoxContainer = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/DestinationBodyMargin/DestinationBodyContent/DestinationOptions/SpecificSlotRow
+@onready var slot_number: SpinBox = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/DestinationBodyMargin/DestinationBodyContent/DestinationOptions/SpecificSlotRow/SlotNumber
+@onready var slot_status_label: Label = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/DestinationBodyMargin/DestinationBodyContent/SlotStatusLabel
 @onready var cancel_button: Button = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/Buttons/CancelButton
 @onready var import_button: Button = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/Buttons/ImportButton
 
@@ -48,6 +53,13 @@ func open_dialog(first_empty_slot: int) -> void:
 	_file_valid = false
 	file_name_label.text = "No file selected"
 	file_message_label.text = "Select a portable save file."
+	file_message_label.add_theme_color_override("font_color", TEXT_MUTED)
+	file_message_label.visible = true
+	file_name_label.add_theme_color_override("font_color", TEXT_MUTED)
+	file_name_label.tooltip_text = ""
+	save_info_row.visible = false
+	save_name_label.text = ""
+	save_name_label.tooltip_text = ""
 	first_empty_radio.set_pressed_no_signal(true)
 	specific_slot_radio.set_pressed_no_signal(false)
 	slot_number.value = float(_first_empty_slot)
@@ -60,9 +72,18 @@ func open_dialog(first_empty_slot: int) -> void:
 
 ## Displays information about the selected [param file_name] and its [param display_name].
 func set_selected_file(file_name: String, display_name: String) -> void:
+	# Display the archive filename with its full value available as a tooltip.
 	_file_valid = true
 	file_name_label.text = file_name.get_file()
-	file_message_label.text = "Save: %s" % display_name
+	file_name_label.tooltip_text = file_name.get_file()
+	file_name_label.add_theme_color_override("font_color", TEXT_ACCENT)
+	
+	# Show the decoded save name separately from file errors.
+	save_name_label.text = display_name
+	save_name_label.tooltip_text = display_name
+	save_info_row.visible = true
+	file_message_label.visible = false
+	
 	_refresh_destination()
 
 
@@ -70,7 +91,16 @@ func set_selected_file(file_name: String, display_name: String) -> void:
 func show_file_error(message: String) -> void:
 	_file_valid = false
 	file_name_label.text = "No valid file selected"
+	file_name_label.tooltip_text = ""
+	file_name_label.add_theme_color_override("font_color", TEXT_MUTED)
+	
+	# Hide metadata from a previously validated file.
+	save_info_row.visible = false
+	save_name_label.text = ""
+	
 	file_message_label.text = message
+	file_message_label.add_theme_color_override("font_color", TEXT_WARNING)
+	file_message_label.visible = true
 	_refresh_destination()
 
 
@@ -112,8 +142,10 @@ func _refresh_destination() -> void:
 	if SaveManager.has_user_save(selected_slot):
 		var occupied_entry := SaveManager.get_user_save(selected_slot)
 		slot_status_label.text = "Slot %d: %s (replacement requires confirmation)." % [selected_slot, occupied_entry.display_name]
+		slot_status_label.add_theme_color_override("font_color", TEXT_WARNING)
 	else:
 		slot_status_label.text = "Slot %d is empty." % selected_slot
+		slot_status_label.add_theme_color_override("font_color", TEXT_MUTED)
 	
 	import_button.disabled = not _file_valid
 

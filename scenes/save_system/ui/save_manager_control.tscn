@@ -91,7 +91,7 @@ layout_mode = 2
 [node name="TransferButton" type="MenuButton" parent="OuterMargin/MainPanel/MainContents/Header" unique_id=1603277926]
 layout_mode = 2
 theme_type_variation = &"SaveTransferMenuButton"
-text = "Transfer"
+text = "Transfer ▼"
 flat = false
 
 [node name="CloseButton" type="Button" parent="OuterMargin/MainPanel/MainContents/Header" unique_id=393914659]

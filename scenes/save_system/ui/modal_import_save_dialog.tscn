@@ -2,6 +2,7 @@
 
 [ext_resource type="Theme" uid="uid://cby524paqvken" path="res://themes/save_manager_theme.tres" id="1_u5q6p"]
 [ext_resource type="Script" uid="uid://blenqyln0o5gw" path="res://scripts/save_system/ui/modal_import_save_dialog.gd" id="2_jlr85"]
+[ext_resource type="Script" uid="uid://b8x8oocqx8an3" path="res://scripts/ui/components/scramble_label.gd" id="3_jlr85"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_u5q6p"]
 content_margin_left = 0.0
@@ -128,29 +129,26 @@ size_flags_horizontal = 3
 text = "No file selected"
 vertical_alignment = 1
 clip_text = true
+script = ExtResource("3_jlr85")
+scramble_auto_reset_size = false
 
-[node name="SaveInfoRow" type="HBoxContainer" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer/SourceBodyMargin/SourceBodyContent" unique_id=1401926815]
-visible = false
+[node name="FileDetailRow" type="HBoxContainer" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer/SourceBodyMargin/SourceBodyContent" unique_id=1401926815]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="SaveCaptionLabel" type="Label" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer/SourceBodyMargin/SourceBodyContent/SaveInfoRow" unique_id=1372698200]
+[node name="FileDetailCaption" type="Label" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer/SourceBodyMargin/SourceBodyContent/FileDetailRow" unique_id=1372698200]
 layout_mode = 2
 text = "Save:"
 vertical_alignment = 1
 
-[node name="SaveNameLabel" type="Label" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer/SourceBodyMargin/SourceBodyContent/SaveInfoRow" unique_id=199338502]
+[node name="FileDetailValue" type="Label" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer/SourceBodyMargin/SourceBodyContent/FileDetailRow" unique_id=199338502]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.8784314, 0.7764706, 0.5529412, 1)
 vertical_alignment = 1
-clip_text = true
-
-[node name="FileMessageLabel" type="Label" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer/SourceBodyMargin/SourceBodyContent" unique_id=720545366]
-layout_mode = 2
-text = "Select a portable save file."
-vertical_alignment = 1
 autowrap_mode = 3
+script = ExtResource("3_jlr85")
+scramble_auto_reset_size = false
 
 [node name="DestinationSeparator" type="HSeparator" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer" unique_id=1652690316]
 layout_mode = 2
@@ -230,6 +228,8 @@ layout_mode = 2
 text = "Slot 1 is empty."
 vertical_alignment = 1
 autowrap_mode = 3
+script = ExtResource("3_jlr85")
+scramble_auto_reset_size = false
 
 [node name="ActionsSeparator" type="HSeparator" parent="CenterContainer/DialogPanel/MarginContainer/ContentsContainer" unique_id=660557719]
 layout_mode = 2

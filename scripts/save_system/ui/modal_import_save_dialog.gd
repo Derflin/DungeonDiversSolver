@@ -20,15 +20,15 @@ var _slot_row_tween: Tween
 
 
 @onready var choose_file_button: Button = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/SourceBodyMargin/SourceBodyContent/FileRow/ChooseFileButton
-@onready var file_name_label: Label = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/SourceBodyMargin/SourceBodyContent/FileRow/FileNameLabel
-@onready var save_info_row: HBoxContainer = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/SourceBodyMargin/SourceBodyContent/SaveInfoRow
-@onready var save_name_label: Label = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/SourceBodyMargin/SourceBodyContent/SaveInfoRow/SaveNameLabel
-@onready var file_message_label: Label = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/SourceBodyMargin/SourceBodyContent/FileMessageLabel
+@onready var file_name_label: ScrambleLabel = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/SourceBodyMargin/SourceBodyContent/FileRow/FileNameLabel
+@onready var file_detail_row: HBoxContainer = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/SourceBodyMargin/SourceBodyContent/FileDetailRow
+@onready var file_detail_caption: Label = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/SourceBodyMargin/SourceBodyContent/FileDetailRow/FileDetailCaption
+@onready var file_detail_value: ScrambleLabel = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/SourceBodyMargin/SourceBodyContent/FileDetailRow/FileDetailValue
 @onready var first_empty_radio: CheckBox = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/DestinationBodyMargin/DestinationBodyContent/DestinationOptions/FirstEmptyRadio
 @onready var specific_slot_radio: CheckBox = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/DestinationBodyMargin/DestinationBodyContent/DestinationOptions/SpecificSlotRadio
 @onready var specific_slot_row: HBoxContainer = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/DestinationBodyMargin/DestinationBodyContent/DestinationOptions/SpecificSlotRow
 @onready var slot_number: SpinBox = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/DestinationBodyMargin/DestinationBodyContent/DestinationOptions/SpecificSlotRow/SlotNumber
-@onready var slot_status_label: Label = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/DestinationBodyMargin/DestinationBodyContent/SlotStatusLabel
+@onready var slot_status_label: ScrambleLabel = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/DestinationBodyMargin/DestinationBodyContent/SlotStatusLabel
 @onready var cancel_button: Button = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/Buttons/CancelButton
 @onready var import_button: Button = $CenterContainer/DialogPanel/MarginContainer/ContentsContainer/Buttons/ImportButton
 
@@ -53,15 +53,16 @@ func open_dialog(first_empty_slot: int) -> void:
 	# Reset the selected file and destination settings.
 	_first_empty_slot = maxi(1, first_empty_slot)
 	_file_valid = false
-	file_name_label.text = "No file selected"
-	file_message_label.text = "Select a portable save file."
-	file_message_label.add_theme_color_override("font_color", TEXT_MUTED)
-	file_message_label.visible = true
-	file_name_label.add_theme_color_override("font_color", TEXT_MUTED)
+	
+	# Reset the selected filename display.
+	file_name_label.set_text_immediate("No file selected")
 	file_name_label.tooltip_text = ""
-	save_info_row.visible = false
-	save_name_label.text = ""
-	save_name_label.tooltip_text = ""
+	file_name_label.add_theme_color_override("font_color", TEXT_MUTED)
+	
+	# Reset the shared file details without an animation.
+	_update_file_detail("", "Select a portable save file.", TEXT_MUTED, false)
+	
+	# Restore the default destination selection.
 	first_empty_radio.set_pressed_no_signal(true)
 	specific_slot_radio.set_pressed_no_signal(false)
 	slot_number.value = float(_first_empty_slot)
@@ -74,35 +75,35 @@ func open_dialog(first_empty_slot: int) -> void:
 
 ## Displays information about the selected [param file_name] and its [param display_name].
 func set_selected_file(file_name: String, display_name: String) -> void:
-	# Display the archive filename with its full value available as a tooltip.
+	# Mark the selected file as valid.
 	_file_valid = true
-	file_name_label.text = file_name.get_file()
+	
+	# Display the archive filename with its full value available as a tooltip.
+	file_name_label.change_text(file_name.get_file())
 	file_name_label.tooltip_text = file_name.get_file()
 	file_name_label.add_theme_color_override("font_color", TEXT_ACCENT)
 	
-	# Show the decoded save name separately from file errors.
-	save_name_label.text = display_name
-	save_name_label.tooltip_text = display_name
-	save_info_row.visible = true
-	file_message_label.visible = false
+	# Display the decoded save name using the shared animated detail label.
+	_update_file_detail("Save:", display_name, TEXT_ACCENT)
 	
+	# Refresh the available import destination.
 	_refresh_destination()
 
 
 ## Displays the provided [param message] and disables importing the current file.
 func show_file_error(message: String) -> void:
+	# Mark the current file selection as invalid.
 	_file_valid = false
-	file_name_label.text = "No valid file selected"
+	
+	# Reset the selected filename display.
+	file_name_label.change_text("No valid file selected")
 	file_name_label.tooltip_text = ""
 	file_name_label.add_theme_color_override("font_color", TEXT_MUTED)
 	
-	# Hide metadata from a previously validated file.
-	save_info_row.visible = false
-	save_name_label.text = ""
+	# Display the validation error using the shared animated detail label.
+	_update_file_detail("Error:", message, TEXT_WARNING)
 	
-	file_message_label.text = message
-	file_message_label.add_theme_color_override("font_color", TEXT_WARNING)
-	file_message_label.visible = true
+	# Refresh the destination and disable the import action.
 	_refresh_destination()
 
 
@@ -143,10 +144,10 @@ func _refresh_destination() -> void:
 	# Describe whether importing to the selected slot replaces saved data.
 	if SaveManager.has_user_save(selected_slot):
 		var occupied_entry := SaveManager.get_user_save(selected_slot)
-		slot_status_label.text = "Slot %d: %s (replacement requires confirmation)." % [selected_slot, occupied_entry.display_name]
+		slot_status_label.change_text("Slot %d: %s (replacement requires confirmation)." % [selected_slot, occupied_entry.display_name])
 		slot_status_label.add_theme_color_override("font_color", TEXT_WARNING)
 	else:
-		slot_status_label.text = "Slot %d is empty." % selected_slot
+		slot_status_label.change_text("Slot %d is empty." % selected_slot)
 		slot_status_label.add_theme_color_override("font_color", TEXT_MUTED)
 	
 	import_button.disabled = not _file_valid
@@ -186,6 +187,21 @@ func _update_specific_slot_row(enabled: bool) -> void:
 	# Smoothly fade between active and inactive appearance.
 	_slot_row_tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	_slot_row_tween.tween_property(specific_slot_row, "modulate:a", target_alpha, 0.15)
+
+
+## Updates the source file details with a caption, message and text color.
+func _update_file_detail(caption: String, message: String, color: Color, animate: bool = true) -> void:
+	# Update the optional caption.
+	file_detail_caption.text = caption
+	file_detail_caption.visible = not caption.is_empty()
+	
+	# Update the animated message and its appearance.
+	file_detail_value.add_theme_color_override("font_color", color)
+	file_detail_value.tooltip_text = message
+	if animate:
+		file_detail_value.change_text(message)
+	else:
+		file_detail_value.set_text_immediate(message)
 
 
 ## Emits the selected import destination when the archive is valid.

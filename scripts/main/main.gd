@@ -19,6 +19,16 @@ func _ready() -> void:
 	map_manager_control.map_manager_reset_map_settings_requested.connect(_on_map_manager_control_reset_map_settings_requested)
 
 
+## Toggles the application between windowed and fullscreen modes when the fullscreen shortcut is pressed.
+func _unhandled_key_input(event: InputEvent) -> void:
+	if event.is_action_pressed("toggle_fullscreen") and not event.is_echo():
+		var window := get_window()
+		if window.mode in [Window.MODE_FULLSCREEN, Window.MODE_EXCLUSIVE_FULLSCREEN]:
+			window.mode = Window.MODE_WINDOWED
+		else:
+			window.mode = Window.MODE_FULLSCREEN
+
+
 ## Handles opening up the confirmation dialog for the map state reset and then if confirmed also handles map state reset process.
 ## After confirmation calls appropriate function from the GameState autoloaded scene to trigger the map state reset.
 func _on_map_manager_control_reset_map_state_requested() -> void:

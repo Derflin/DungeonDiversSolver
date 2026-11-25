@@ -43,10 +43,10 @@ jobs:
       - name: Import Godot resources
         run: godot --headless --import
 
-      - name: Export Web - Website
+      - name: Export Web (Website Shell)
         run: |
           mkdir -p builds/web-website
-          godot --headless --export-release 'Web - Website' builds/web-website/index.html
+          godot --headless --export-release 'Web (Website Shell)' builds/web-website/index.html
 
       - name: Generate website documentation and copy screenshots
         env:

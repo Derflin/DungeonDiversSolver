@@ -25,6 +25,10 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	if event.is_echo() or _confirmation_pending:
 		return
 	
+	# Disable fullscreen keyboard shortcuts in web builds.
+	if OS.has_feature("web"):
+		return
+	
 	var window := get_window()
 	var is_fullscreen := window.mode in [Window.MODE_FULLSCREEN, Window.MODE_EXCLUSIVE_FULLSCREEN]
 	

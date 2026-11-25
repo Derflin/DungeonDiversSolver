@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#121820">
+  <meta name="description" content="Play Dungeon Divers Solver and read its project documentation.">
+  <title>$GODOT_PROJECT_NAME</title>
+  $GODOT_HEAD_INCLUDE
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #10141b;
+      color: #e9eef6;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    .readme h1, .readme h2, .readme h3, .readme h4,
+    .readme h5, .readme h6 { scroll-margin-top: 1.25rem; }
+    body { margin: 0; min-width: 280px; }
+    a { color: #a3c9ff; }
+    a:hover { color: #d4e6ff; }
+    button { font: inherit; }
+    .page { width: min(100% - 2rem, 1120px); margin: 0 auto; padding: 1.8rem 0 4rem; }
+    .page-header { margin-bottom: 1rem; }
+    .page-header h1 { margin: 0 0 .35rem; font-size: clamp(1.5rem, 4vw, 2.15rem); }
+    .page-header p { margin: 0; color: #aeb9ca; }
+    .game-stage {
+      width: 100%;
+      position: relative;
+      aspect-ratio: 16 / 9;
+      min-height: 230px;
+      overflow: hidden;
+      background: #171d26;
+      border: 1px solid #3b4655;
+      border-radius: 12px;
+      isolation: isolate;
+    }
+    #canvas {
+      display: block;
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+    #canvas:focus-visible { outline: 2px solid #a3c9ff; outline-offset: -3px; }
+    .fullscreen-button {
+      position: absolute;
+      z-index: 5;
+      top: .65rem;
+      right: .65rem;
+      padding: .45rem .8rem;
+      border: 1px solid #637184;
+      border-radius: 7px;
+      background: rgba(18, 24, 32, .91);
+      color: #fff;
+      cursor: pointer;
+    }
+    .fullscreen-button:hover { background: #39465a; }
+    .fullscreen-button:focus-visible { outline: 3px solid #9ac0ff; }
+    .game-stage:fullscreen,
+    .game-stage:-webkit-full-screen {
+      width: 100vw;
+      height: 100vh;
+      min-height: 0;
+      aspect-ratio: auto;
+      border: 0;
+      border-radius: 0;
+      background: #000;
+    }
+    .game-hint { color: #aeb9ca; font-size: .875rem; margin: .75rem 0 2.5rem; }
+    .loading-overlay {
+      position: absolute;
+      z-index: 4;
+      inset: 0;
+      background: #171d26;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: 2rem;
+      text-align: center;
+      gap: .65rem;
+    }
+    .loading-overlay[hidden] { display: none; }
+    .loading-overlay img { max-width: min(50%, 300px); max-height: 40%; object-fit: contain; }
+    .loading-overlay progress { width: min(75%, 360px); }
+    .loading-overlay p { margin: 0; color: #d2dbe8; }
+    .loading-overlay .error { color: #ffb7b7; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .loading-overlay .show-image--false { display: none; }
+    .loading-overlay .use-filter--false { image-rendering: pixelated; }
+    .readme { line-height: 1.65; font-size: 1rem; overflow-wrap: anywhere; }
+    .readme h1, .readme h2, .readme h3, .readme h4 { line-height: 1.25; margin-top: 2rem; }
+    .readme h1 { font-size: 1.85rem; }
+    .readme h2 { font-size: 1.45rem; border-bottom: 1px solid #394454; padding-bottom: .4rem; }
+    .readme img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin-inline: auto;
+      border-radius: 7px;
+    }
+    .readme p[align="center"] { text-align: center; }
+    .readme p[align="center"] em { color: #aeb9ca; font-size: .925rem; }
+    .readme pre, .readme code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .readme pre { padding: 1rem; background: #1b2330; border-radius: 8px; overflow-x: auto; }
+    .readme :not(pre) > code { background: #222b39; padding: .1em .3em; border-radius: 4px; }
+    .readme table { display: block; width: max-content; max-width: 100%; border-collapse: collapse; overflow-x: auto; }
+    .readme th, .readme td { padding: .5rem .85rem; text-align: left; border: 1px solid #485367; }
+    .readme th { background: #232d3c; }
+    .readme hr { border: 0; border-top: 1px solid #394454; margin: 2.5rem 0; }
+    .readme input[type=checkbox] { margin-right: .45rem; accent-color: #95bffc; }
+    .readme li { margin: .25rem 0; }
+    .back-to-top {
+      position: fixed;
+      z-index: 15;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      border: 1px solid #637184;
+      border-radius: 999px;
+      background: #232d3c;
+      color: #fff;
+      padding: .6rem .9rem;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, .4);
+      cursor: pointer;
+    }
+    .back-to-top:hover { background: #39465a; }
+    .back-to-top:focus-visible { outline: 3px solid #9ac0ff; outline-offset: 2px; }
+    .back-to-top[hidden] { display: none; }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+    }
+    @media (max-width: 620px) {
+      .page { width: min(100% - 1rem, 1120px); padding-top: .9rem; }
+      .game-stage { aspect-ratio: 4 / 3; min-height: 0; }
+      .fullscreen-button { top: .4rem; right: .4rem; font-size: .85rem; }
+      .back-to-top { bottom: .9rem; right: .9rem; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="page-header">
+      <h1>Dungeon Divers Solver</h1>
+      <p>Interactive map solver — play in your browser.</p>
+    </header>
+
+    <section aria-label="Play Dungeon Divers Solver">
+      <div class="game-stage" id="game-stage">
+        <canvas id="canvas" tabindex="0" aria-label="Dungeon Divers Solver game">
+          Your browser does not support the canvas element.
+        </canvas>
+        <button class="fullscreen-button" id="fullscreen-button" type="button">Fullscreen</button>
+        <div class="loading-overlay" id="loading-overlay" role="status" aria-live="polite">
+          <img src="$GODOT_SPLASH" class="$GODOT_SPLASH_CLASSES" alt="">
+          <p id="loading-text">Loading game…</p>
+          <progress id="loading-progress"></progress>
+          <p id="loading-error" class="error" hidden></p>
+        </div>
+      </div>
+      <p class="game-hint">Click the game to interact with it. Use Fullscreen to expand; press Esc to exit fullscreen.</p>
+    </section>
+
+    <article class="readme" id="project-readme" aria-label="Project documentation">
+      <!-- BEGIN_GENERATED_README -->
+      <p>Documentation is generated here after exporting the game.</p>
+      <!-- END_GENERATED_README -->
+    </article>
+  </main>
+
+  <button class="back-to-top" id="back-to-top" type="button" aria-label="Back to top" hidden>
+    ↑ Back to top
+  </button>
+
+  <noscript>This page needs JavaScript to run the Godot application.</noscript>
+  <script src="$GODOT_URL"></script>
+  <script>
+    (() => {
+      'use strict';
+      const stage = document.getElementById('game-stage');
+      const canvas = document.getElementById('canvas');
+      const fullscreenButton = document.getElementById('fullscreen-button');
+      const loadingOverlay = document.getElementById('loading-overlay');
+      const loadingText = document.getElementById('loading-text');
+      const loadingProgress = document.getElementById('loading-progress');
+      const loadingError = document.getElementById('loading-error');
+      const backToTopButton = document.getElementById('back-to-top');
+
+      // Show the button only after the reader has moved down the page.
+      function updateBackToTopVisibility() {
+        backToTopButton.hidden = window.scrollY < 350;
+      }
+      window.addEventListener('scroll', updateBackToTopVisibility, { passive: true });
+      updateBackToTopVisibility();
+      backToTopButton.addEventListener('click', () => {
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        window.scrollTo({ top: 0, behavior: reduceMotion ? 'instant' : 'smooth' });
+      });
+
+      // The Godot export fills this placeholder with the generated engine options.
+      const config = $GODOT_CONFIG;
+      config.canvas = canvas;
+      config.canvasResizePolicy = 0; // Manual: the canvas tracks its container, not the page.
+
+      let animationFrameId = null;
+      function resizeCanvas() {
+        animationFrameId = null;
+        const bounds = stage.getBoundingClientRect();
+        // Keep pixel density reasonable on high-DPI screens.
+        const scale = Math.min(window.devicePixelRatio || 1, 2);
+        const width = Math.max(1, Math.round(bounds.width * scale));
+        const height = Math.max(1, Math.round(bounds.height * scale));
+        if (canvas.width !== width || canvas.height !== height) {
+          canvas.width = width;
+          canvas.height = height;
+          // Notify Godot's browser resize listeners after changing the canvas size.
+          window.dispatchEvent(new Event('resize'));
+        }
+      }
+      function scheduleCanvasResize() {
+        if (animationFrameId === null) {
+          animationFrameId = requestAnimationFrame(resizeCanvas);
+        }
+      }
+      resizeCanvas();
+      new ResizeObserver(scheduleCanvasResize).observe(stage);
+      window.addEventListener('resize', scheduleCanvasResize);
+      document.addEventListener('fullscreenchange', () => {
+        fullscreenButton.textContent = document.fullscreenElement === stage ? 'Exit fullscreen' : 'Fullscreen';
+        scheduleCanvasResize();
+      });
+
+      fullscreenButton.addEventListener('click', async () => {
+        try {
+          if (document.fullscreenElement === stage) {
+            await document.exitFullscreen();
+          } else {
+            await stage.requestFullscreen();
+          }
+        } catch (error) {
+          console.error('Fullscreen unavailable:', error);
+        }
+      });
+
+      function fail(error) {
+        console.error(error);
+        loadingText.textContent = 'Unable to start the game.';
+        loadingProgress.hidden = true;
+        loadingError.hidden = false;
+        loadingError.textContent = error instanceof Error ? error.message : String(error);
+      }
+
+      try {
+        const missing = Engine.getMissingFeatures({ threads: false });
+        if (missing.length > 0) {
+          fail(new Error('Missing browser features: ' + missing.join(', ')));
+          return;
+        }
+        const engine = new Engine(config);
+        engine.startGame({
+          onProgress(current, total) {
+            if (current > 0 && total > 0) {
+              loadingProgress.max = total;
+              loadingProgress.value = current;
+            } else {
+              loadingProgress.removeAttribute('value');
+            }
+          },
+        }).then(() => {
+          loadingOverlay.hidden = true;
+        }).catch(fail);
+      } catch (error) {
+        fail(error);
+      }
+    })();
+  </script>
+</body>
+</html>

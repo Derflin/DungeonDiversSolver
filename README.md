@@ -33,11 +33,23 @@ This is a rather small app that I decided to make inside Godot 4.x, in order to 
 
 #### Web
 
-#TODO
+The Web version allows running the application directly in a browser without installing anything.
+
+1. Open the [Dungeon Divers Solver website](https://Derflin.github.io/DungeonDiversSolver/).
+2. Wait for the application to load in the embedded game window.
+3. Click inside the application to interact with the map. Use the **Fullscreen** button in the top-right corner of the game area to expand it, and press **Esc** to exit fullscreen.
+
+**Note:** Browser saves are tied to the browser's local storage. Use the save manager's export and import options to transfer `.ddsave` files between browsers or desktop builds.
 
 #### Windows/Linux
 
-#TODO
+Desktop versions are available through the project's [GitHub Releases](https://github.com/Derflin/DungeonDiversSolver/releases/latest).
+
+1. Open the releases page and download the archive for your operating system (**Windows** or **Linux**).
+2. Extract the downloaded archive to a directory of your choice.
+3. Launch the application from the extracted files. On Linux, you may need to mark the executable as runnable (for example, using `chmod +x` on the `.x86_64` file).
+
+No Godot Engine installation is needed to run the exported desktop versions.
 
 #### Import through Godot Engine
 

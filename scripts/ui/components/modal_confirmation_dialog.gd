@@ -16,6 +16,21 @@ func _ready() -> void:
 	confirm_button.pressed.connect(_on_confirm_pressed)
 
 
+## Cancels the active confirmation dialog when the cancel shortcut is pressed.
+func _unhandled_key_input(event: InputEvent) -> void:
+	# Filter out processing if the dialog isn't visible.
+	if not is_visible_in_tree():
+		return
+	
+	# Filter out unrelated or repeated keyboard input.
+	if not event.is_action_pressed("ui_cancel") or event.is_echo():
+		return
+	
+	# Consume the shortcut before cancelling the dialog.
+	get_viewport().set_input_as_handled()
+	_on_cancel_pressed()
+
+
 ## Populates modal confirmation dialog, shows it, waits for a response from it and then hides it.
 ## By default the confirm button will be focussed on, but [param focus_cancel] flag can be set to set focus to the cancel button.
 ## Returns a bool value representing the confirmation response.

@@ -19,14 +19,24 @@ func _ready() -> void:
 	map_manager_control.map_manager_reset_map_settings_requested.connect(_on_map_manager_control_reset_map_settings_requested)
 
 
-## Toggles the application between windowed and fullscreen modes when the fullscreen shortcut is pressed.
+## Handles keyboard shortcuts for toggling fullscreen and returning to windowed mode.
 func _unhandled_key_input(event: InputEvent) -> void:
-	if event.is_action_pressed("toggle_fullscreen") and not event.is_echo():
-		var window := get_window()
-		if window.mode in [Window.MODE_FULLSCREEN, Window.MODE_EXCLUSIVE_FULLSCREEN]:
-			window.mode = Window.MODE_WINDOWED
-		else:
-			window.mode = Window.MODE_FULLSCREEN
+	# Filter out repeated input and active confirmation dialogs.
+	if event.is_echo() or _confirmation_pending:
+		return
+	
+	var window := get_window()
+	var is_fullscreen := window.mode in [Window.MODE_FULLSCREEN, Window.MODE_EXCLUSIVE_FULLSCREEN]
+	
+	# Toggle fullscreen mode.
+	if event.is_action_pressed("toggle_fullscreen"):
+		window.mode = Window.MODE_WINDOWED if is_fullscreen else Window.MODE_FULLSCREEN
+		return
+	
+	# Exit fullscreen mode when the cancel shortcut is pressed.
+	if event.is_action_pressed("ui_cancel") and is_fullscreen:
+		window.mode = Window.MODE_WINDOWED
+		get_viewport().set_input_as_handled()
 
 
 ## Handles opening up the confirmation dialog for the map state reset and then if confirmed also handles map state reset process.

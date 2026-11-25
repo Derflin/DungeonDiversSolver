@@ -66,7 +66,8 @@ No Godot Engine installation is needed to run the exported desktop versions.
 | Zoom | Mouse Wheel Up/Down Scroll |
 | Center camera | Mouse Wheel Click |
 | Interact / Create room / Open room editor menu | Left Mouse Button |
-| Toggle fullscreen/windowed mode | Alt+Enter |
+| Toggle fullscreen/windowed mode (Desktop) | Alt+Enter |
+| Exit fullscreen (Desktop) / Close Save Manager / Cancel dialogs | Esc |
 
 ### Map Editor
 

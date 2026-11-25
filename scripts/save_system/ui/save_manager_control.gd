@@ -193,6 +193,25 @@ func _input(event: InputEvent) -> void:
 	focus_owner.release_focus()
 
 
+## Requests closing the save manager when the cancel shortcut is pressed.
+func _unhandled_key_input(event: InputEvent) -> void:
+	# Only process the shortcut while the save manager is visible.
+	if not is_visible_in_tree():
+		return
+	
+	# Filter out unrelated keyboard events and repeated key presses.
+	if not event.is_action_pressed("ui_cancel") or event.is_echo():
+		return
+	
+	# Let active modal dialogs and popups handle cancellation first.
+	if _confirmation_pending or import_save_dialog.visible or transfer_button.get_popup().visible:
+		return
+	
+	# Mark the event as handled and request closing the save manager.
+	get_viewport().set_input_as_handled()
+	request_close() 
+
+
 #region Opening/Closing
 
 ## Opens save manager display in save mode. 

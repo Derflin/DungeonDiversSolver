@@ -48,6 +48,21 @@ func _ready() -> void:
 	_refresh_destination()
 
 
+## Cancels the import dialog when the cancel shortcut is pressed.
+func _unhandled_key_input(event: InputEvent) -> void:
+	# Filter out processing if the dialog isn't visible.
+	if not is_visible_in_tree():
+		return
+	
+	# Filter out unrelated or repeated keyboard input.
+	if not event.is_action_pressed("ui_cancel") or event.is_echo():
+		return
+	
+	# Consume the shortcut before cancelling the import.
+	get_viewport().set_input_as_handled()
+	_on_cancel_pressed()
+
+
 ## Opens the import dialog with [param first_empty_slot] as the default destination.
 func open_dialog(first_empty_slot: int) -> void:
 	# Reset the selected file and destination settings.

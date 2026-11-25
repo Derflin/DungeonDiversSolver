@@ -105,6 +105,7 @@ layout_mode = 2
 layout_mode = 2
 theme_override_constants/margin_left = 8
 theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 4
 
 [node name="ContainerContents" type="VBoxContainer" parent="DrawerAnchor/DrawerRoot/DrawerPanel/MarginContainer/ScrollContainer/DrawerContents/MapSecretSettingsMarginContainer" unique_id=1701760283]
 layout_mode = 2

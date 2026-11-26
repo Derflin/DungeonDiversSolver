@@ -120,7 +120,13 @@ func prepare_screenshot(buffer: PackedByteArray, file_name: String) -> void:
 func _detect_image_format(buffer: PackedByteArray) -> String:
 	# Detect PNG from its eight-byte header.
 	if buffer.size() >= 8:
-		if buffer[0] == 0x89 and buffer[1] == 0x50 and buffer[2] == 0x4E and buffer[3] == 0x47 and buffer[4] == 0x0D and buffer[5] == 0x0A and buffer[6] == 0x1A and buffer[7] == 0x0A:
+		var is_png: bool = (
+			buffer[0] == 0x89 and buffer[1] == 0x50
+			and buffer[2] == 0x4E and buffer[3] == 0x47
+			and buffer[4] == 0x0D and buffer[5] == 0x0A
+			and buffer[6] == 0x1A and buffer[7] == 0x0A
+		)
+		if is_png:
 			return "png"
 	
 	# Detect JPEG from its start-of-image marker.
@@ -130,7 +136,9 @@ func _detect_image_format(buffer: PackedByteArray) -> String:
 	
 	# Detect WebP from its RIFF container markers.
 	if buffer.size() >= 12:
-		if buffer.slice(0, 4).get_string_from_ascii() == "RIFF" and buffer.slice(8, 12).get_string_from_ascii() == "WEBP":
+		var has_riff_header: bool = buffer.slice(0, 4).get_string_from_ascii() == "RIFF"
+		var has_webp_marker: bool = buffer.slice(8, 12).get_string_from_ascii() == "WEBP"
+		if has_riff_header and has_webp_marker:
 			return "webp"
 	
 	return ""

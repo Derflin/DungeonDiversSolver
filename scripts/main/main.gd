@@ -10,47 +10,29 @@ var _confirmation_pending: bool = false
 
 @onready var confirmation_dialog: ModalConfirmationDialog = $HudLayer/HudRoot/ModalConfirmationDialog
 
-@onready var screenshot_image_input: ScreenshotImageInput = $Systems/ScreenshotImageInput
-@onready var screenshot_importer: ScreenshotImporter = $Systems/ScreenshotImporter
-@onready var screenshot_import_dialog: ScreenshotImportDialog = $HudLayer/HudRoot/ScreenshotImportDialog
+@onready var screenshot_import_controller: ScreenshotImportController = $Systems/ScreenshotImportController
 
 
+#region Initialization
+
+## Connects map-management requests to their corresponding handlers.
 func _ready() -> void:
-	# Connect signal from map manager to handle reset map state requested signal.
+	# Connect the map reset and settings reset requests.al.
 	map_manager_control.map_manager_reset_map_state_requested.connect(_on_map_manager_control_reset_map_state_requested)
-	
-	# Connect signal from map manager to handle reset map settings requested signal.
 	map_manager_control.map_manager_reset_map_settings_requested.connect(_on_map_manager_control_reset_map_settings_requested)
 	
-	# Connect the screenshot import request and the file selection results.
+	# Connect the request to open the screenshot import workflow.
 	map_manager_control.map_manager_import_screenshot_requested.connect(_on_map_manager_control_import_screenshot_requested)
-	screenshot_image_input.image_file_selected.connect(_on_screenshot_image_file_selected)
-	screenshot_image_input.file_error.connect(_on_screenshot_image_input_error)
-	
-	# Open the file picker when the screenshot import dialog requests a file.
-	screenshot_import_dialog.select_screenshot_requested.connect(_on_screenshot_import_dialog_select_screenshot_requested)
-	
-	# Request clipboard image input when the import dialog receives a paste shortcut.
-	screenshot_import_dialog.paste_screenshot_requested.connect(_on_screenshot_import_dialog_paste_screenshot_requested)
-	
-	# Update the screenshot import dialog while a file is dragged over the application.
-	screenshot_image_input.drop_hover_changed.connect(_on_screenshot_image_input_drop_hover_changed)
-	
-	# Connect screenshot image preparation updates to the progress dialog.
-	screenshot_importer.progress_changed.connect(screenshot_import_dialog.set_stage)
-	screenshot_importer.screenshot_prepared.connect(_on_screenshot_prepared)
-	screenshot_importer.import_failed.connect(_on_screenshot_import_failed)
-	screenshot_importer.import_cancelled.connect(_on_screenshot_import_cancelled)
-	
-	# Connect dialog cancellation and closing actions.
-	screenshot_import_dialog.cancel_requested.connect(screenshot_importer.request_cancel)
-	screenshot_import_dialog.close_requested.connect(_on_screenshot_import_dialog_closed)
 
+#endregion
+
+
+#region Window Shortcut
 
 ## Handles keyboard shortcuts for toggling fullscreen and returning to windowed mode.
 func _unhandled_key_input(event: InputEvent) -> void:
 	# Filter out repeated input and active confirmation dialogs.
-	if event.is_echo() or _confirmation_pending or screenshot_import_dialog.visible:
+	if event.is_echo() or _confirmation_pending or screenshot_import_controller.is_dialog_open():
 		return
 	
 	# Disable fullscreen keyboard shortcuts in web builds.
@@ -70,120 +52,24 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		window.mode = Window.MODE_WINDOWED
 		get_viewport().set_input_as_handled()
 
+#endregion
+
 
 #region Screenshot Import
 
-## Opens the screenshot picker when the map manager requests an import.
+## Opens the screenshot import dialog when requested by the map manager.
 func _on_map_manager_control_import_screenshot_requested() -> void:
-	# Prevent opening the picker while another modal or import task is active.
-	if _confirmation_pending or screenshot_import_dialog.visible or screenshot_importer.is_import_in_progress():
-		return
-	if map_manager_control.save_manager_control.visible:
+	# Keep the confirmation and save-manager dialogs mutually exclusive with import.
+	if _confirmation_pending or map_manager_control.save_manager_control.visible:
 		return
 	
-	# Open the screenshot input dialog instead of the file picker.
-	screenshot_import_dialog.show_input()
-	
-	# Accept dropped screenshot files while the input dialog is waiting for a selection.
-	screenshot_image_input.set_drop_enabled(true)
-	
-	# Accept clipboard images while the screenshot selection view is active.
-	screenshot_image_input.set_paste_enabled(true)
-
-
-## Opens the platform-specific screenshot file picker from the dialog.
-func _on_screenshot_import_dialog_select_screenshot_requested() -> void:
-	# Ignore requests after the dialog has closed or while analysis is active.
-	if not screenshot_import_dialog.visible or screenshot_importer.is_import_in_progress():
-		return
-	
-	# Open the file picker directly from the selection button's press event.
-	screenshot_image_input.request_image()
-
-
-## Requests a screenshot image from the desktop clipboard.
-func _on_screenshot_import_dialog_paste_screenshot_requested() -> void:
-	# Ignore requests outside the screenshot selection view.
-	if not screenshot_import_dialog.visible or screenshot_importer.is_import_in_progress():
-		return
-	
-	screenshot_image_input.request_clipboard_image()
-
-
-## Updates the screenshot import dialog while a file is dragged over the application.
-func _on_screenshot_image_input_drop_hover_changed(is_hovering: bool) -> void:
-	if not screenshot_import_dialog.visible:
-		return
-	
-	screenshot_import_dialog.set_drop_hovered(is_hovering)
-
-
-## Starts screenshot preparation after a file has been selected.
-func _on_screenshot_image_file_selected(buffer: PackedByteArray, file_name: String) -> void:
-	# Ignore delayed file picker results when the input dialog is no longer active.
-	if not screenshot_import_dialog.visible or screenshot_importer.is_import_in_progress():
-		return
-	
-	# Stop accepting dropped files once a concrete screenshot is being prepared.
-	screenshot_image_input.set_drop_enabled(false)
-	
-	# Stop accepting clipboard images while an image is being prepared.
-	screenshot_image_input.set_paste_enabled(false)
-	
-	# Show activity feedback before beginning image decoding.
-	screenshot_import_dialog.begin()
-	await screenshot_importer.prepare_screenshot(buffer, file_name)
-
-
-## Displays a file-selection error without changing the active map.
-func _on_screenshot_image_input_error(message: String) -> void:
-	# Ignore errors received after the dialog closes or while processing another image.
-	if not screenshot_import_dialog.visible or screenshot_importer.is_import_in_progress():
-		return
-	
-	# Keep screenshot selection available after a failed input attempt.
-	screenshot_import_dialog.show_error(message)
-	screenshot_image_input.set_drop_enabled(true)
-	screenshot_image_input.set_paste_enabled(true)
-
-
-## Displays the prepared screenshot and its source dimensions.
-func _on_screenshot_prepared(image: Image, preview: Image, file_name: String) -> void:
-	screenshot_import_dialog.show_prepared(image, preview, file_name)
-
-
-## Displays an import error and restores screenshot selection.
-func _on_screenshot_import_failed(message: String) -> void:
-	# Ignore late completion events after the dialog has closed.
-	if not screenshot_import_dialog.visible:
-		return
-	
-	# Return to the selection view after screenshot preparation fails.
-	screenshot_import_dialog.show_error(message)
-	screenshot_image_input.set_drop_enabled(true)
-	screenshot_image_input.set_paste_enabled(true)
-
-
-## Restores screenshot selection after a preparation task is cancelled.
-func _on_screenshot_import_cancelled() -> void:
-	# Ignore late cancellation events after the dialog has closed.
-	if not screenshot_import_dialog.visible:
-		return
-	
-	# Make the available input methods active again.
-	screenshot_import_dialog.show_cancelled()
-	screenshot_image_input.set_drop_enabled(true)
-	screenshot_image_input.set_paste_enabled(true)
-
-
-## Disables screenshot input when the import dialog closes.
-func _on_screenshot_import_dialog_closed() -> void:
-	# Stop receiving dropped files and clipboard images outside the dialog.
-	screenshot_image_input.set_drop_enabled(false)
-	screenshot_image_input.set_paste_enabled(false)
+	# Delegate screenshot input and preparation to the dedicated controller.
+	screenshot_import_controller.open_dialog()
 
 #endregion
 
+
+#region Map Reset
 
 ## Handles opening up the confirmation dialog for the map state reset and then if confirmed also handles map state reset process.
 ## After confirmation calls appropriate function from the GameState autoloaded scene to trigger the map state reset.
@@ -226,6 +112,8 @@ func _on_map_manager_control_reset_map_settings_requested() -> void:
 	
 	# Reset game map settings.
 	GameSettings.reset_map_settings_to_default()
+
+#endregion
 
 
 #region Confirmation

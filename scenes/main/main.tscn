@@ -8,6 +8,7 @@
 [ext_resource type="Script" uid="uid://b2bflacdusdor" path="res://scripts/import_system/screenshot_image_input.gd" id="3_th5th"]
 [ext_resource type="Script" uid="uid://0nro7830vnnn" path="res://scripts/import_system/screenshot_importer.gd" id="4_7smn1"]
 [ext_resource type="Script" uid="uid://bd1j1t2mtq8k8" path="res://scripts/hud/hud_layout_coordinator.gd" id="4_a8run"]
+[ext_resource type="Script" uid="uid://cv8bytl3vn0ln" path="res://scripts/import_system/screenshot_import_controller.gd" id="5_7smn1"]
 [ext_resource type="PackedScene" uid="uid://dbher8pgko3e0" path="res://scenes/hud/map_manager_control.tscn" id="5_ow5a4"]
 [ext_resource type="PackedScene" uid="uid://cn0aoor0wyoo2" path="res://scenes/hud/map_parameter_help_control.tscn" id="6_b1x3f"]
 [ext_resource type="PackedScene" uid="uid://8bk1yrjo8s7q" path="res://scenes/save_system/ui/save_manager_control.tscn" id="6_hujxm"]
@@ -26,6 +27,9 @@ script = ExtResource("3_th5th")
 
 [node name="ScreenshotImporter" type="Node" parent="Systems" unique_id=1483051221]
 script = ExtResource("4_7smn1")
+
+[node name="ScreenshotImportController" type="Node" parent="Systems" unique_id=339545129]
+script = ExtResource("5_7smn1")
 
 [node name="World" type="Node2D" parent="." unique_id=1955869184]
 

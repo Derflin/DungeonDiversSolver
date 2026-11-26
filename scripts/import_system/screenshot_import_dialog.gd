@@ -14,7 +14,6 @@ var _drop_hovered: bool = false
 
 @onready var input_container: VBoxContainer = $CenterContainer/PanelContainer/MarginContainer/Contents/InputContainer
 @onready var select_screenshot_button: Button = $CenterContainer/PanelContainer/MarginContainer/Contents/InputContainer/SelectScreenshotButton
-@onready var drop_target_panel: PanelContainer = $CenterContainer/PanelContainer/MarginContainer/Contents/InputContainer/DropTargetPanel
 @onready var drop_target_title_label: Label = $CenterContainer/PanelContainer/MarginContainer/Contents/InputContainer/DropTargetPanel/DropTargetMargin/DropTargetContents/DropTargetTitleLabel
 @onready var stage_label: Label = $CenterContainer/PanelContainer/MarginContainer/Contents/StageLabel
 @onready var progress_bar: ProgressBar = $CenterContainer/PanelContainer/MarginContainer/Contents/ProgressBar
@@ -23,6 +22,8 @@ var _drop_hovered: bool = false
 @onready var preview_texture: TextureRect = $CenterContainer/PanelContainer/MarginContainer/Contents/PreviewContainer/PreviewTexture
 @onready var close_button: Button = $CenterContainer/PanelContainer/MarginContainer/Contents/CloseButton
 
+
+#region Initialization
 
 ## Connects the dialog controls and initializes the progress display.
 func _ready() -> void:
@@ -34,6 +35,10 @@ func _ready() -> void:
 	
 	visible = false
 
+#endregion
+
+
+#region Dialog Views
 
 ## Displays the screenshot selection controls and resets the previous result.
 func show_input() -> void:
@@ -56,6 +61,11 @@ func show_input() -> void:
 	close_button.text = "Close"
 	close_button.disabled = false
 	select_screenshot_button.grab_focus()
+
+
+## Returns whether the dialog is accepting new screenshot input.
+func is_waiting_for_input() -> bool:
+	return is_visible_in_tree() and input_container.visible and not _processing
 
 
 ## Displays the progress dialog for a newly selected screenshot.
@@ -123,54 +133,43 @@ func show_prepared(image: Image, preview: Image, file_name: String) -> void:
 	close_button.disabled = false
 
 
-## Displays an error message and allows the user to close the dialog.
+## Displays an error and keeps screenshot selection available for another attempt.
 func show_error(message: String) -> void:
+	_show_selection_message("Screenshot could not be prepared", message)
+
+
+## Displays the result of a cancelled screenshot preparation task.
+func show_cancelled() -> void:
+	_show_selection_message("Screenshot preparation cancelled", "The current map was not changed.")
+
+
+## Displays a message with the screenshot selection controls available.
+func _show_selection_message(title: String, message: String) -> void:
 	_processing = false
 	visible = true
 	
-	# Reset the drop-target feedback after processing finishes.
-	_drop_hovered = false
-	_update_drop_target_state()
-	
-	# Keep the file selection controls available for another attempt.
+	# Restore the selection controls and hide any stale preview or progress bar.
 	input_container.visible = true
 	stage_label.visible = true
 	progress_bar.visible = false
 	message_label.visible = true
+	preview_container.visible = false
 	preview_texture.texture = null
 	
-	stage_label.text = "Screenshot could not be prepared"
+	# Reset the drop target and present the result message.
+	_drop_hovered = false
+	_update_drop_target_state()
+	stage_label.text = title
 	message_label.text = message
 	progress_bar.indeterminate = false
 	progress_bar.value = 0.0
-	preview_container.visible = false
 	close_button.text = "Close"
 	close_button.disabled = false
 
+#endregion
 
-## Displays the result of a cancelled preparation task.
-func show_cancelled() -> void:
-	_processing = false
-	
-	# Reset the drop-target feedback after processing finishes.
-	_drop_hovered = false
-	_update_drop_target_state()
-	
-	# Allow another screenshot to be selected after cancellation.
-	input_container.visible = true
-	stage_label.visible = true
-	progress_bar.visible = false
-	message_label.visible = true
-	preview_texture.texture = null
-	
-	stage_label.text = "Screenshot preparation cancelled"
-	message_label.text = "The current map was not changed."
-	progress_bar.indeterminate = false
-	progress_bar.value = 0.0
-	preview_container.visible = false
-	close_button.text = "Close"
-	close_button.disabled = false
 
+#region Input Events
 
 ## Handles the cancel shortcut while the progress dialog is visible.
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -181,7 +180,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	_on_close_button_pressed()
 
 
-## Requests clipboard image input when the selection view receives a paste shotcut.
+## Requests clipboard image input when the selection view receives a paste shortcut.
 func _input(event: InputEvent) -> void:
 	# Browser clipboard input is handled through the page's paste event.
 	if OS.has_feature("web"):
@@ -196,7 +195,7 @@ func _input(event: InputEvent) -> void:
 	if not key_event.pressed or key_event.echo:
 		return
 	
-	# Recognize the plaform paste shortcut without affecting other key presses.
+	# Recognize the platform paste shortcut without affecting other key presses.
 	var paste_modifier_pressed: bool = key_event.ctrl_pressed or key_event.meta_pressed
 	var paste_key_pressed: bool = key_event.keycode == KEY_V or key_event.physical_keycode == KEY_V
 	if not paste_modifier_pressed or not paste_key_pressed:
@@ -208,6 +207,9 @@ func _input(event: InputEvent) -> void:
 
 ## Cancels active processing or closes the completed dialog.
 func _on_close_button_pressed() -> void:
+	if close_button.disabled:
+		return
+	
 	if _processing:
 		close_button.disabled = true
 		close_button.text = "Cancelling..."
@@ -218,12 +220,10 @@ func _on_close_button_pressed() -> void:
 	close_requested.emit()
 
 
-#region Screenshot Selection
-
 ## Requests a screenshot file selection when the dialog is idle.
 func _on_select_screenshot_button_pressed() -> void:
-	# Prevent additional file selections while an image is being processed.
-	if _processing:
+	# Accept selection only while the dialog is waiting for screenshot input.
+	if not is_waiting_for_input():
 		return
 	
 	select_screenshot_requested.emit()

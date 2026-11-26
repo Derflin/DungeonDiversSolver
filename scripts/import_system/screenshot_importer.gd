@@ -19,6 +19,8 @@ var _is_processing: bool = false
 var _cancel_requested: bool = false
 
 
+#region Preparation Lifecycle
+
 ## Returns whether a screenshot import operation is currently active.
 func is_import_in_progress() -> bool:
 	return _is_processing
@@ -108,6 +110,8 @@ func prepare_screenshot(buffer: PackedByteArray, file_name: String) -> void:
 	_is_processing = false
 	progress_changed.emit("Screenshot ready", 1, 1, false)
 	screenshot_prepared.emit(source_image, preview_image, file_name)
+
+#endregion
 
 
 #region Image Format Detection

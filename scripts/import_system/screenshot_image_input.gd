@@ -8,6 +8,7 @@ signal drop_hover_changed(is_hovering: bool)
 
 
 const MAX_IMAGE_BYTES: int = 32 * 1024 * 1024
+const MAX_IMAGE_PIXELS: int = 32 * 1000 * 1000
 
 
 var _import_dialog: FileDialog
@@ -22,7 +23,9 @@ var _web_paste_callback: Variant = null
 var _paste_enabled: bool = false
 
 
-## Prepares the desktop file dialog and retains the browser file selection callback.
+#region Initialization
+
+## Initializes desktop screenshot input and registers browser callbacks.
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	
@@ -43,7 +46,7 @@ func _ready() -> void:
 	# Listen for native file drops on desktop platforms.
 	get_window().files_dropped.connect(_on_desktop_files_dropped)
 	
-	# Keep the browser callback referenced for the lifetime of this node.
+	# Register persistent browser callbacks for file selection, dropping, and pasting.
 	if OS.has_feature("web"):
 		_web_file_callback = JavaScriptBridge.create_callback(_on_web_file_selected)
 		_web_drop_callback = JavaScriptBridge.create_callback(_on_web_file_dropped)
@@ -56,7 +59,7 @@ func _ready() -> void:
 		browser_window.dd_solver_screenshot_paste_callback = _web_paste_callback
 
 
-## Releases the browser callback reference when the input node leaves the scene tree.
+## Removes browser input listeners and releases their callback references.
 func _exit_tree() -> void:
 	if OS.has_feature("web"):
 		_set_web_drop_enabled(false)
@@ -70,6 +73,10 @@ func _exit_tree() -> void:
 		_web_drop_hover_callback = null
 		_web_paste_callback = null
 
+#endregion
+
+
+#region Public Input Methods
 
 ## Opens the screenshot file picker on the current platform.
 func request_image() -> void:
@@ -112,8 +119,9 @@ func set_paste_enabled(enabled: bool) -> void:
 		_set_web_paste_enabled(_paste_enabled)
 
 
-## Reads a screenshot image from the desktop clipboard.
+## Reads screenshot pixel data from the desktop clipboard.
 func request_clipboard_image() -> void:
+	# Ignore requests while clipboard input is disabled, another request is pending, or running on Web.
 	if not _paste_enabled or _request_pending or OS.has_feature("web"):
 		return
 	
@@ -130,7 +138,7 @@ func request_clipboard_image() -> void:
 		_request_pending = false
 		file_error.emit("Clipboard doesn't contain a readable image.")
 		return
-	if image.get_width() * image.get_height() > 32 * 1000 * 1000:
+	if image.get_width() * image.get_height() > MAX_IMAGE_PIXELS:
 		_request_pending = false
 		file_error.emit("Clipboard image exceeds the supported 32-megapixel limit.")
 		return
@@ -144,6 +152,10 @@ func request_clipboard_image() -> void:
 	
 	image_file_selected.emit(buffer, "Clipboard.png")
 
+#endregion
+
+
+#region Desktop File Input
 
 ## Reads an image file from disk and emits its contents for screenshot decoding.
 func _read_image_file_from_path(path: String) -> void:
@@ -159,7 +171,7 @@ func _read_image_file_from_path(path: String) -> void:
 		file_error.emit("Screenshot file is empty or exceeds the 32 MiB limit.")
 		return
 	
-	# Forward the screenshot bytes to the importer.
+	# Read the file contents and verify that the complete buffer was retrieved.
 	var buffer: PackedByteArray = file.get_buffer(file_size)
 	file.close()
 	if buffer.size() != file_size:
@@ -167,9 +179,6 @@ func _read_image_file_from_path(path: String) -> void:
 		return
 	
 	image_file_selected.emit(buffer, path.get_file())
-
-
-#region Desktop File Selection
 
 ## Reads the selected desktop file and emits its binary contents.
 func _on_desktop_file_selected(path: String) -> void:
@@ -182,17 +191,16 @@ func _on_desktop_dialog_canceled() -> void:
 	_request_pending = false
 
 
-## Reads a dropped image file when drag-and-drop import is active.
+## Reads the first dropped file when desktop drag-and-drop input is active.
 func _on_desktop_files_dropped(files: PackedStringArray) -> void:
-	if not _drop_enabled or _request_pending:
-		return
-	if files.is_empty():
+	# Ignore dropped files when input is disabled or another request is active.
+	if not _drop_enabled or _request_pending or files.is_empty():
 		return
 	
 	_request_pending = true
 	drop_hover_changed.emit(false)
 	
-	# Use only the first dropped path for this importer.
+	# Process only the first file from the dropped selection.
 	var path: String = files[0]
 	_read_image_file_from_path(path)
 	_request_pending = false
@@ -200,7 +208,7 @@ func _on_desktop_files_dropped(files: PackedStringArray) -> void:
 #endregion
 
 
-#region Web File Selection
+#region Browser File Picker
 
 ## Opens the browser file picker and forwards its bytes through the JavaScript callback.
 func _request_web_image() -> void:
@@ -242,6 +250,9 @@ func _request_web_image() -> void:
 		})();
 	""")
 
+#endregion
+
+#region Browser Drag-and-Drop
 
 ## Installs or removes browser drag-and-drop listeners for screenshot import.
 func _set_web_drop_enabled(enabled: bool) -> void:
@@ -254,19 +265,27 @@ func _set_web_drop_enabled(enabled: bool) -> void:
 			if (!enabled) {
 				return;
 			}
+			let hovering = false;
 			const onDragOver = function (event) {
 				event.preventDefault();
 				if (event.dataTransfer) {
 					event.dataTransfer.dropEffect = 'copy';
 				}
-				window.dd_solver_screenshot_drop_hover_callback(true);
+				if (!hovering) {
+					hovering = true;
+					window.dd_solver_screenshot_drop_hover_callback(true);
+				}
 			};
 			const onDragLeave = function (event) {
 				event.preventDefault();
-				window.dd_solver_screenshot_drop_hover_callback(false);
+				if (hovering) {
+					hovering = false;
+					window.dd_solver_screenshot_drop_hover_callback(false);
+				}
 			};
 			const onDrop = async function (event) {
 				event.preventDefault();
+				hovering = false;
 				window.dd_solver_screenshot_drop_hover_callback(false);
 				const file = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
 				if (!file) {
@@ -295,6 +314,9 @@ func _set_web_drop_enabled(enabled: bool) -> void:
 		})(%s);
 	""" % ["true" if enabled else "false"])
 
+#endregion
+
+#region Browser Clipboard
 
 ## Installs or removes the browser clipboard image listener.
 func _set_web_paste_enabled(enabled: bool) -> void:
@@ -343,6 +365,9 @@ func _set_web_paste_enabled(enabled: bool) -> void:
 		})(%s);
 	""" % ["true" if enabled else "false"])
 
+#endregion
+
+#region Browser Result Callbacks
 
 ## Converts browser-supplied image bytes into a Godot packed byte array.
 func _on_web_file_selected(args: Array) -> void:
@@ -395,7 +420,7 @@ func _on_web_file_dropped(args: Array) -> void:
 	image_file_selected.emit(buffer, file_name)
 
 
-## Updates the dialog feedback while a file is dragged across the browser window.
+## Reports whether a dragged file is hovering over the browser window.
 func _on_web_drop_hover_changed(args: Array) -> void:
 	if not _drop_enabled:
 		return

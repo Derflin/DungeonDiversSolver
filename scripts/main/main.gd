@@ -30,12 +30,18 @@ func _ready() -> void:
 	# Open the file picker when the screenshot import dialog requests a file.
 	screenshot_import_dialog.select_screenshot_requested.connect(_on_screenshot_import_dialog_select_screenshot_requested)
 	
+	# Update the screenshot import dialog while a file is dragged over the application.
+	screenshot_image_input.drop_hover_changed.connect(_on_screenshot_image_input_drop_hover_changed)
+	
 	# Connect screenshot image preparation updates to the progress dialog.
 	screenshot_importer.progress_changed.connect(screenshot_import_dialog.set_stage)
 	screenshot_importer.screenshot_prepared.connect(_on_screenshot_prepared)
-	screenshot_importer.import_failed.connect(screenshot_import_dialog.show_error)
-	screenshot_importer.import_cancelled.connect(screenshot_import_dialog.show_cancelled)
+	screenshot_importer.import_failed.connect(_on_screenshot_import_failed)
+	screenshot_importer.import_cancelled.connect(_on_screenshot_import_cancelled)
+	
+	# Connect dialog cancellation and closing actions.
 	screenshot_import_dialog.cancel_requested.connect(screenshot_importer.request_cancel)
+	screenshot_import_dialog.close_requested.connect(_on_screenshot_import_dialog_closed)
 
 
 ## Handles keyboard shortcuts for toggling fullscreen and returning to windowed mode.
@@ -74,6 +80,9 @@ func _on_map_manager_control_import_screenshot_requested() -> void:
 	
 	# Open the screenshot input dialog instead of the file picker.
 	screenshot_import_dialog.show_input()
+	
+	# Accept dropped screenshot files while the input dialog is waiting for a selection.
+	screenshot_image_input.set_drop_enabled(true)
 
 
 ## Opens the platform-specific screenshot file picker from the dialog.
@@ -86,11 +95,22 @@ func _on_screenshot_import_dialog_select_screenshot_requested() -> void:
 	screenshot_image_input.request_image()
 
 
+## Updates the screenshot import dialog while a file is dragged over the application.
+func _on_screenshot_image_input_drop_hover_changed(is_hovering: bool) -> void:
+	if not screenshot_import_dialog.visible:
+		return
+	
+	screenshot_import_dialog.set_drop_hovered(is_hovering)
+
+
 ## Starts screenshot preparation after a file has been selected.
 func _on_screenshot_image_file_selected(buffer: PackedByteArray, file_name: String) -> void:
 	# Ignore delayed file picker results when the input dialog is no longer active.
 	if not screenshot_import_dialog.visible or screenshot_importer.is_import_in_progress():
 		return
+	
+	# Stop accepting dropped files once a concrete screenshot is being prepared.
+	screenshot_image_input.set_drop_enabled(false)
 	
 	# Show activity feedback before beginning image decoding.
 	screenshot_import_dialog.begin()
@@ -99,12 +119,46 @@ func _on_screenshot_image_file_selected(buffer: PackedByteArray, file_name: Stri
 
 ## Displays a file-selection error without changing the active map.
 func _on_screenshot_image_input_error(message: String) -> void:
+	# Ignore errors received after the dialog closes or while processing another image.
+	if not screenshot_import_dialog.visible or screenshot_importer.is_import_in_progress():
+		return
+	
+	# Keep screenshot selection available after a failed input attempt.
 	screenshot_import_dialog.show_error(message)
+	screenshot_image_input.set_drop_enabled(true)
 
 
 ## Displays the prepared screenshot and its source dimensions.
 func _on_screenshot_prepared(image: Image, preview: Image, file_name: String) -> void:
 	screenshot_import_dialog.show_prepared(image, preview, file_name)
+
+
+## Displays an import error and restores screenshot selection.
+func _on_screenshot_import_failed(message: String) -> void:
+	# Ignore late completion events after the dialog has closed.
+	if not screenshot_import_dialog.visible:
+		return
+	
+	# Return to the selection view after screenshot preparation fails.
+	screenshot_import_dialog.show_error(message)
+	screenshot_image_input.set_drop_enabled(true)
+
+
+## Restores screenshot selection after a preparation task is cancelled.
+func _on_screenshot_import_cancelled() -> void:
+	# Ignore late cancellation events after the dialog has closed.
+	if not screenshot_import_dialog.visible:
+		return
+	
+	# Make the available input methods active again.
+	screenshot_import_dialog.show_cancelled()
+	screenshot_image_input.set_drop_enabled(true)
+
+
+## Disables screenshot input when the import dialog closes.
+func _on_screenshot_import_dialog_closed() -> void:
+	# Stop accepting file drops outside the screenshot selection dialog.
+	screenshot_image_input.set_drop_enabled(false)
 
 #endregion
 

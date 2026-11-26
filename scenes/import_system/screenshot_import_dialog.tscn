@@ -63,6 +63,35 @@ autowrap_mode = 3
 layout_mode = 2
 text = "Select Screenshot"
 
+[node name="DropTargetPanel" type="PanelContainer" parent="CenterContainer/PanelContainer/MarginContainer/Contents/InputContainer" unique_id=556414827]
+custom_minimum_size = Vector2(0, 120)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="DropTargetMargin" type="MarginContainer" parent="CenterContainer/PanelContainer/MarginContainer/Contents/InputContainer/DropTargetPanel" unique_id=1568909013]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 14
+
+[node name="DropTargetContents" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/Contents/InputContainer/DropTargetPanel/DropTargetMargin" unique_id=1426206671]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="DropTargetTitleLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/Contents/InputContainer/DropTargetPanel/DropTargetMargin/DropTargetContents" unique_id=931183990]
+layout_mode = 2
+text = "Drag and drop a screenshot here"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DropTargetHintLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/Contents/InputContainer/DropTargetPanel/DropTargetMargin/DropTargetContents" unique_id=920438343]
+layout_mode = 2
+text = "PNG, JPG or WebP"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
 [node name="StageLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/Contents" unique_id=1599433014]
 layout_mode = 2
 text = "Preparing screenshot"

@@ -8,10 +8,13 @@ signal select_screenshot_requested()
 
 
 var _processing: bool = false
+var _drop_hovered: bool = false
 
 
 @onready var input_container: VBoxContainer = $CenterContainer/PanelContainer/MarginContainer/Contents/InputContainer
 @onready var select_screenshot_button: Button = $CenterContainer/PanelContainer/MarginContainer/Contents/InputContainer/SelectScreenshotButton
+@onready var drop_target_panel: PanelContainer = $CenterContainer/PanelContainer/MarginContainer/Contents/InputContainer/DropTargetPanel
+@onready var drop_target_title_label: Label = $CenterContainer/PanelContainer/MarginContainer/Contents/InputContainer/DropTargetPanel/DropTargetMargin/DropTargetContents/DropTargetTitleLabel
 @onready var stage_label: Label = $CenterContainer/PanelContainer/MarginContainer/Contents/StageLabel
 @onready var progress_bar: ProgressBar = $CenterContainer/PanelContainer/MarginContainer/Contents/ProgressBar
 @onready var message_label: Label = $CenterContainer/PanelContainer/MarginContainer/Contents/MessageLabel
@@ -44,6 +47,10 @@ func show_input() -> void:
 	preview_container.visible = false
 	preview_texture.texture = null
 	
+	# Reset the drop-target visuals whenever the selection view is shown.
+	_drop_hovered = false
+	_update_drop_target_state()
+	
 	# Restore the dialog dismissal control and focus the primary action.
 	close_button.text = "Close"
 	close_button.disabled = false
@@ -60,6 +67,10 @@ func begin() -> void:
 	stage_label.visible = true
 	progress_bar.visible = true
 	message_label.visible = true
+	
+	# Clear the drop-target feedback while processing is active.
+	_drop_hovered = false
+	_update_drop_target_state()
 	
 	stage_label.text = "Preparing screenshot"
 	message_label.text = "Reading the selected image."
@@ -89,6 +100,17 @@ func set_stage(stage: String, completed: int, total: int, indeterminate: bool) -
 ## Displays the decoded screenshot preview without modifying the active map.
 func show_prepared(image: Image, preview: Image, file_name: String) -> void:
 	_processing = false
+	
+	# Display the completed result instead of the screenshot selection view.
+	input_container.visible = false
+	stage_label.visible = true
+	progress_bar.visible = true
+	message_label.visible = true
+	
+	# Reset the drop-target feedback after processing finishes.
+	_drop_hovered = false
+	_update_drop_target_state()
+	
 	stage_label.text = "Screenshot ready"
 	message_label.text = "%s — %d × %d pixels\nMap recognition is not implemented yet. The current map was not changed." % [file_name, image.get_width(), image.get_height()]
 	progress_bar.indeterminate = false
@@ -104,6 +126,10 @@ func show_prepared(image: Image, preview: Image, file_name: String) -> void:
 func show_error(message: String) -> void:
 	_processing = false
 	visible = true
+	
+	# Reset the drop-target feedback after processing finishes.
+	_drop_hovered = false
+	_update_drop_target_state()
 	
 	# Keep the file selection controls available for another attempt.
 	input_container.visible = true
@@ -124,6 +150,10 @@ func show_error(message: String) -> void:
 ## Displays the result of a cancelled preparation task.
 func show_cancelled() -> void:
 	_processing = false
+	
+	# Reset the drop-target feedback after processing finishes.
+	_drop_hovered = false
+	_update_drop_target_state()
 	
 	# Allow another screenshot to be selected after cancellation.
 	input_container.visible = true
@@ -171,5 +201,26 @@ func _on_select_screenshot_button_pressed() -> void:
 		return
 	
 	select_screenshot_requested.emit()
+
+#endregion
+
+
+#region Drop Target Feedback
+
+## Updates the drop-target appearance while a file is dragged over the dialog.
+func set_drop_hovered(is_hovered: bool) -> void:
+	if _drop_hovered == is_hovered:
+		return
+	
+	_drop_hovered = is_hovered
+	_update_drop_target_state()
+
+
+## Refreshes the drop-target text according to its current hover state.
+func _update_drop_target_state() -> void:
+	if _drop_hovered:
+		drop_target_title_label.text = "Release to import the screenshot"
+	else:
+		drop_target_title_label.text = "Drag and drop a screenshot here"
 
 #endregion

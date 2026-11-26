@@ -53,6 +53,9 @@ text = "Screenshot Import"
 layout_mode = 2
 theme_override_constants/separation = 12
 
+[node name="TitleSeparator" type="HSeparator" parent="CenterContainer/PanelContainer/MarginContainer/Contents/InputContainer" unique_id=302919905]
+layout_mode = 2
+
 [node name="InstructionLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/Contents/InputContainer" unique_id=1490271806]
 layout_mode = 2
 text = "Select a screenshot of your Dungeon Divers map to begin."
@@ -91,6 +94,15 @@ text = "PNG, JPG or WebP"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3
+
+[node name="PasteHintLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/Contents/InputContainer" unique_id=1789942163]
+layout_mode = 2
+text = "You can also copy and paste a screenshot with Ctrl+V."
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="ProgressSeparator" type="HSeparator" parent="CenterContainer/PanelContainer/MarginContainer/Contents/InputContainer" unique_id=473284083]
+layout_mode = 2
 
 [node name="StageLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/Contents" unique_id=1599433014]
 layout_mode = 2

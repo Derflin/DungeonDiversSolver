@@ -30,6 +30,9 @@ func _ready() -> void:
 	# Open the file picker when the screenshot import dialog requests a file.
 	screenshot_import_dialog.select_screenshot_requested.connect(_on_screenshot_import_dialog_select_screenshot_requested)
 	
+	# Request clipboard image input when the import dialog receives a paste shortcut.
+	screenshot_import_dialog.paste_screenshot_requested.connect(_on_screenshot_import_dialog_paste_screenshot_requested)
+	
 	# Update the screenshot import dialog while a file is dragged over the application.
 	screenshot_image_input.drop_hover_changed.connect(_on_screenshot_image_input_drop_hover_changed)
 	
@@ -83,6 +86,9 @@ func _on_map_manager_control_import_screenshot_requested() -> void:
 	
 	# Accept dropped screenshot files while the input dialog is waiting for a selection.
 	screenshot_image_input.set_drop_enabled(true)
+	
+	# Accept clipboard images while the screenshot selection view is active.
+	screenshot_image_input.set_paste_enabled(true)
 
 
 ## Opens the platform-specific screenshot file picker from the dialog.
@@ -93,6 +99,15 @@ func _on_screenshot_import_dialog_select_screenshot_requested() -> void:
 	
 	# Open the file picker directly from the selection button's press event.
 	screenshot_image_input.request_image()
+
+
+## Requests a screenshot image from the desktop clipboard.
+func _on_screenshot_import_dialog_paste_screenshot_requested() -> void:
+	# Ignore requests outside the screenshot selection view.
+	if not screenshot_import_dialog.visible or screenshot_importer.is_import_in_progress():
+		return
+	
+	screenshot_image_input.request_clipboard_image()
 
 
 ## Updates the screenshot import dialog while a file is dragged over the application.
@@ -112,6 +127,9 @@ func _on_screenshot_image_file_selected(buffer: PackedByteArray, file_name: Stri
 	# Stop accepting dropped files once a concrete screenshot is being prepared.
 	screenshot_image_input.set_drop_enabled(false)
 	
+	# Stop accepting clipboard images while an image is being prepared.
+	screenshot_image_input.set_paste_enabled(false)
+	
 	# Show activity feedback before beginning image decoding.
 	screenshot_import_dialog.begin()
 	await screenshot_importer.prepare_screenshot(buffer, file_name)
@@ -126,6 +144,7 @@ func _on_screenshot_image_input_error(message: String) -> void:
 	# Keep screenshot selection available after a failed input attempt.
 	screenshot_import_dialog.show_error(message)
 	screenshot_image_input.set_drop_enabled(true)
+	screenshot_image_input.set_paste_enabled(true)
 
 
 ## Displays the prepared screenshot and its source dimensions.
@@ -142,6 +161,7 @@ func _on_screenshot_import_failed(message: String) -> void:
 	# Return to the selection view after screenshot preparation fails.
 	screenshot_import_dialog.show_error(message)
 	screenshot_image_input.set_drop_enabled(true)
+	screenshot_image_input.set_paste_enabled(true)
 
 
 ## Restores screenshot selection after a preparation task is cancelled.
@@ -153,12 +173,14 @@ func _on_screenshot_import_cancelled() -> void:
 	# Make the available input methods active again.
 	screenshot_import_dialog.show_cancelled()
 	screenshot_image_input.set_drop_enabled(true)
+	screenshot_image_input.set_paste_enabled(true)
 
 
 ## Disables screenshot input when the import dialog closes.
 func _on_screenshot_import_dialog_closed() -> void:
-	# Stop accepting file drops outside the screenshot selection dialog.
+	# Stop receiving dropped files and clipboard images outside the dialog.
 	screenshot_image_input.set_drop_enabled(false)
+	screenshot_image_input.set_paste_enabled(false)
 
 #endregion
 

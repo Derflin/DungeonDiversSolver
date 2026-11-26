@@ -18,6 +18,9 @@ var _web_drop_callback: Variant = null
 var _web_drop_hover_callback: Variant = null
 var _drop_enabled: bool = false
 
+var _web_paste_callback: Variant = null
+var _paste_enabled: bool = false
+
 
 ## Prepares the desktop file dialog and retains the browser file selection callback.
 func _ready() -> void:
@@ -45,22 +48,27 @@ func _ready() -> void:
 		_web_file_callback = JavaScriptBridge.create_callback(_on_web_file_selected)
 		_web_drop_callback = JavaScriptBridge.create_callback(_on_web_file_dropped)
 		_web_drop_hover_callback = JavaScriptBridge.create_callback(_on_web_drop_hover_changed)
+		_web_paste_callback = JavaScriptBridge.create_callback(_on_web_image_pasted)
 		var browser_window := JavaScriptBridge.get_interface("window")
 		browser_window.dd_solver_screenshot_file_callback = _web_file_callback
 		browser_window.dd_solver_screenshot_drop_callback = _web_drop_callback
 		browser_window.dd_solver_screenshot_drop_hover_callback = _web_drop_hover_callback
+		browser_window.dd_solver_screenshot_paste_callback = _web_paste_callback
 
 
 ## Releases the browser callback reference when the input node leaves the scene tree.
 func _exit_tree() -> void:
 	if OS.has_feature("web"):
 		_set_web_drop_enabled(false)
+		_set_web_paste_enabled(false)
 		JavaScriptBridge.eval("delete window.dd_solver_screenshot_file_callback;")
 		JavaScriptBridge.eval("delete window.dd_solver_screenshot_drop_callback;")
 		JavaScriptBridge.eval("delete window.dd_solver_screenshot_drop_hover_callback;")
+		JavaScriptBridge.eval("delete window.dd_solver_screenshot_paste_callback;")
 		_web_file_callback = null
 		_web_drop_callback = null
 		_web_drop_hover_callback = null
+		_web_paste_callback = null
 
 
 ## Opens the screenshot file picker on the current platform.
@@ -90,6 +98,51 @@ func set_drop_enabled(enabled: bool) -> void:
 	
 	if OS.has_feature("web"):
 		_set_web_drop_enabled(_drop_enabled)
+
+
+## Enables or disables clipboard-paste screenshot input.
+func set_paste_enabled(enabled: bool) -> void:
+	if _paste_enabled == enabled:
+		return
+	
+	_paste_enabled = enabled
+	
+	# Register browser paste events only while screenshot selection is active.
+	if OS.has_feature("web"):
+		_set_web_paste_enabled(_paste_enabled)
+
+
+## Reads a screenshot image from the desktop clipboard.
+func request_clipboard_image() -> void:
+	if not _paste_enabled or _request_pending or OS.has_feature("web"):
+		return
+	
+	_request_pending = true
+	
+	# Read clipboard pixel data and reject empty or oversized images.
+	if not DisplayServer.clipboard_has_image():
+		_request_pending = false
+		file_error.emit("Clipboard does not contain an image.")
+		return
+	
+	var image: Image = DisplayServer.clipboard_get_image()
+	if image == null or image.is_empty():
+		_request_pending = false
+		file_error.emit("Clipboard doesn't contain a readable image.")
+		return
+	if image.get_width() * image.get_height() > 32 * 1000 * 1000:
+		_request_pending = false
+		file_error.emit("Clipboard image exceeds the supported 32-megapixel limit.")
+		return
+	
+	# Encode the image for the common screenshot file-processing pipeline.
+	var buffer: PackedByteArray = image.save_png_to_buffer()
+	_request_pending = false
+	if buffer.is_empty() or buffer.size() > MAX_IMAGE_BYTES:
+		file_error.emit("Clipboard image is empty or exceeds the 32 MiB limit.")
+		return
+	
+	image_file_selected.emit(buffer, "Clipboard.png")
 
 
 ## Reads an image file from disk and emits its contents for screenshot decoding.
@@ -243,6 +296,54 @@ func _set_web_drop_enabled(enabled: bool) -> void:
 	""" % ["true" if enabled else "false"])
 
 
+## Installs or removes the browser clipboard image listener.
+func _set_web_paste_enabled(enabled: bool) -> void:
+	JavaScriptBridge.eval("""
+		(function (enabled) {
+			if (window.ddSolverScreenshotPasteCleanup) {
+				window.ddSolverScreenshotPasteCleanup();
+				window.ddSolverScreenshotPasteCleanup = null;
+			}
+			if (!enabled) {
+				return;
+			}
+			const onPaste = async function (event) {
+				const items = event.clipboardData?.items;
+				if (!items) {
+					window.dd_solver_screenshot_paste_callback(new Uint8Array(), '', 'no_image');
+					return;
+				}
+				let file = null;
+				for (const item of items) {
+					if (item.kind === 'file' && item.type.startsWith('image/')) {
+						file = item.getAsFile();
+						break;
+					}
+				}
+				if (!file) {
+					window.dd_solver_screenshot_paste_callback(new Uint8Array(), '', 'no_image');
+					return;
+				}
+				event.preventDefault();
+				if (file.size === 0 || file.size > 32 * 1024 * 1024) {
+					window.dd_solver_screenshot_paste_callback(new Uint8Array(), file.name, 'invalid_size');
+					return;
+				}
+				try {
+					const bytes = new Uint8Array(await file.arrayBuffer());
+					window.dd_solver_screenshot_paste_callback(bytes, file.name || 'Clipboard.png', 'ok');
+				} catch (error) {
+					window.dd_solver_screenshot_paste_callback(new Uint8Array(), file.name || 'Clipboard.png', 'read_error');
+				}
+			};
+			window.addEventListener('paste', onPaste, true);
+			window.ddSolverScreenshotPasteCleanup = function () {
+				window.removeEventListener('paste', onPaste, true);
+			};
+		})(%s);
+	""" % ["true" if enabled else "false"])
+
+
 ## Converts browser-supplied image bytes into a Godot packed byte array.
 func _on_web_file_selected(args: Array) -> void:
 	_request_pending = false
@@ -301,5 +402,31 @@ func _on_web_drop_hover_changed(args: Array) -> void:
 	
 	var is_hovering: bool = bool(args[0]) if not args.is_empty() else false
 	drop_hover_changed.emit(is_hovering)
+
+
+## Converts browser clipboard image data into screenshot input bytes.
+func _on_web_image_pasted(args: Array) -> void:
+	# Ignore late clipboard callbacks after screenshot selection ends.
+	if not _paste_enabled or _request_pending:
+		return
+	
+	var status: String = str(args[2]) if args.size() > 2 else "read_error"
+	if status == "no_image":
+		file_error.emit("Clipboard does not contain an image.")
+		return
+	if status == "invalid_size":
+		file_error.emit("Clipboard image is empty or exceeds the 32 MiB limit.")
+		return
+	if status != "ok" or args.is_empty() or not JavaScriptBridge.is_js_buffer(args[0]):
+		file_error.emit("Browser could not read the pasted screenshot.")
+		return
+	
+	var buffer: PackedByteArray = JavaScriptBridge.js_buffer_to_packed_byte_array(args[0])
+	if buffer.is_empty() or buffer.size() > MAX_IMAGE_BYTES:
+		file_error.emit("Clipboard image is empty or exceeds the 32 MiB limit.")
+		return
+	
+	var file_name: String = str(args[1]) if args.size() > 1 else "Clipboard.png"
+	image_file_selected.emit(buffer, file_name)
 
 #endregion

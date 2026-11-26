@@ -5,6 +5,7 @@ extends Control
 signal cancel_requested()
 signal close_requested()
 signal select_screenshot_requested()
+signal paste_screenshot_requested()
 
 
 var _processing: bool = false
@@ -178,6 +179,31 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	
 	get_viewport().set_input_as_handled()
 	_on_close_button_pressed()
+
+
+## Requests clipboard image input when the selection view receives a paste shotcut.
+func _input(event: InputEvent) -> void:
+	# Browser clipboard input is handled through the page's paste event.
+	if OS.has_feature("web"):
+		return
+	
+	if not is_visible_in_tree() or not input_container.visible or _processing:
+		return
+	if not (event is InputEventKey):
+		return
+	
+	var key_event := event as InputEventKey
+	if not key_event.pressed or key_event.echo:
+		return
+	
+	# Recognize the plaform paste shortcut without affecting other key presses.
+	var paste_modifier_pressed: bool = key_event.ctrl_pressed or key_event.meta_pressed
+	var paste_key_pressed: bool = key_event.keycode == KEY_V or key_event.physical_keycode == KEY_V
+	if not paste_modifier_pressed or not paste_key_pressed:
+		return
+	
+	get_viewport().set_input_as_handled()
+	paste_screenshot_requested.emit()
 
 
 ## Cancels active processing or closes the completed dialog.

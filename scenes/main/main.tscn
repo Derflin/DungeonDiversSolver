@@ -5,11 +5,14 @@
 [ext_resource type="Script" uid="uid://dajs142gr5t7f" path="res://scripts/main/main.gd" id="1_yyfjg"]
 [ext_resource type="PackedScene" uid="uid://q8745vdh26mn" path="res://scenes/hud/map_parameters_control.tscn" id="2_iuonh"]
 [ext_resource type="PackedScene" uid="uid://b65s6cwmlyn4f" path="res://scenes/hud/map_solver_control.tscn" id="3_k2fmo"]
+[ext_resource type="Script" uid="uid://b2bflacdusdor" path="res://scripts/import_system/screenshot_image_input.gd" id="3_th5th"]
+[ext_resource type="Script" uid="uid://0nro7830vnnn" path="res://scripts/import_system/screenshot_importer.gd" id="4_7smn1"]
 [ext_resource type="Script" uid="uid://bd1j1t2mtq8k8" path="res://scripts/hud/hud_layout_coordinator.gd" id="4_a8run"]
 [ext_resource type="PackedScene" uid="uid://dbher8pgko3e0" path="res://scenes/hud/map_manager_control.tscn" id="5_ow5a4"]
 [ext_resource type="PackedScene" uid="uid://cn0aoor0wyoo2" path="res://scenes/hud/map_parameter_help_control.tscn" id="6_b1x3f"]
 [ext_resource type="PackedScene" uid="uid://8bk1yrjo8s7q" path="res://scenes/save_system/ui/save_manager_control.tscn" id="6_hujxm"]
 [ext_resource type="PackedScene" uid="uid://d0dhy4jipapar" path="res://scenes/ui/components/modal_confirmation_dialog.tscn" id="8_b1x3f"]
+[ext_resource type="PackedScene" uid="uid://r148iost0ict" path="res://scenes/import_system/screenshot_import_dialog.tscn" id="13_raeie"]
 
 [node name="Main" type="Node" unique_id=107272976]
 script = ExtResource("1_yyfjg")
@@ -17,6 +20,12 @@ script = ExtResource("1_yyfjg")
 [node name="Systems" type="Node" parent="." unique_id=1350648501]
 
 [node name="GameSaveAdapter" parent="Systems" unique_id=1783445634 instance=ExtResource("1_l3cfh")]
+
+[node name="ScreenshotImageInput" type="Node" parent="Systems" unique_id=1184038345]
+script = ExtResource("3_th5th")
+
+[node name="ScreenshotImporter" type="Node" parent="Systems" unique_id=1483051221]
+script = ExtResource("4_7smn1")
 
 [node name="World" type="Node2D" parent="." unique_id=1955869184]
 
@@ -60,6 +69,9 @@ z_index = 100
 layout_mode = 1
 
 [node name="ModalConfirmationDialog" parent="HudLayer/HudRoot" unique_id=24606316 instance=ExtResource("8_b1x3f")]
+layout_mode = 1
+
+[node name="ScreenshotImportDialog" parent="HudLayer/HudRoot" unique_id=1986366389 instance=ExtResource("13_raeie")]
 layout_mode = 1
 
 [node name="PauseLayer" type="CanvasLayer" parent="." unique_id=621645473]

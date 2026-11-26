@@ -134,6 +134,11 @@ layout_mode = 2
 theme_override_styles/normal = SubResource("StyleBoxFlat_g2fwo")
 text = "Clear Config"
 
+[node name="ImportScreenshotButton" type="Button" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons/MapManagerContainer/VBoxContainer" unique_id=1295020585]
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_g2fwo")
+text = "Import"
+
 [node name="SectionSeparator" type="HSeparator" parent="MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons" unique_id=2104596187]
 layout_mode = 2
 theme_override_constants/separation = 4

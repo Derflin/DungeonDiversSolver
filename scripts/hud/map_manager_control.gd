@@ -4,6 +4,7 @@ extends Control
 
 signal map_manager_reset_map_state_requested()
 signal map_manager_reset_map_settings_requested()
+signal map_manager_import_screenshot_requested()
 
 
 const HUD_TRANSITION_WAIT_GROUP: StringName = &"hud_transition_wait"
@@ -31,6 +32,7 @@ var _menu_effective_ui_scale: float = 1.0
 
 @onready var reset_map_state_button: Button = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons/MapManagerContainer/VBoxContainer/ResetMapStateButton
 @onready var reset_map_settings_button: Button = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons/MapManagerContainer/VBoxContainer/ResetMapSettingsButton
+@onready var import_screenshot_button: Button = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons/MapManagerContainer/VBoxContainer/ImportScreenshotButton
 @onready var save_button: Button = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons/SaveManagerContainer/VBoxContainer/SaveButton
 @onready var load_button: Button = $MenuAnchor/MenuRoot/MenuContents/MenuPanel/MarginContainer/Buttons/SaveManagerContainer/VBoxContainer/LoadButton
 
@@ -48,6 +50,7 @@ func _ready() -> void:
 	# Handle map manager buttons pressed signal by connecting them to appropriate local functions.
 	reset_map_state_button.pressed.connect(_on_reset_map_state_button_pressed)
 	reset_map_settings_button.pressed.connect(_on_reset_map_settings_button_pressed)
+	import_screenshot_button.pressed.connect(_on_import_screenshot_button_pressed)
 	
 	# Handle save manager buttons pressed signal by connecting them to appropriate local functions.
 	save_button.pressed.connect(_on_save_button_pressed)
@@ -115,6 +118,11 @@ func _on_reset_map_state_button_pressed() -> void:
 ## Handles propagating the reset map settings requested signal.
 func _on_reset_map_settings_button_pressed() -> void:
 	map_manager_reset_map_settings_requested.emit()
+
+
+## Handles propagating the import screenshot game state requested signal.
+func _on_import_screenshot_button_pressed() -> void:
+	map_manager_import_screenshot_requested.emit()
 
 
 ## Handles save button pressed signal to open the save manager display in save mode.

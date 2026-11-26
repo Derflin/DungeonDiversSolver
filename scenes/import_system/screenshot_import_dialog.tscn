@@ -1,0 +1,84 @@
+[gd_scene format=3 uid="uid://r148iost0ict"]
+
+[ext_resource type="Script" uid="uid://b4n3rffd078fn" path="res://scripts/import_system/screenshot_import_dialog.gd" id="1_6xyqd"]
+
+[node name="ScreenshotImportDialog" type="Control" unique_id=29875892 groups=["blocks_map_result_tooltips"]]
+visible = false
+z_index = 200
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_6xyqd")
+
+[node name="Dimmer" type="ColorRect" parent="." unique_id=1375520100]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.7)
+
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=624957663]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PanelContainer" type="PanelContainer" parent="CenterContainer" unique_id=1127381933]
+custom_minimum_size = Vector2(460, 0)
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/PanelContainer" unique_id=9619774]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="Contents" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer" unique_id=1431976529]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TitleLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/Contents" unique_id=938751976]
+layout_mode = 2
+text = "Screenshot Import"
+
+[node name="StageLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/Contents" unique_id=1599433014]
+layout_mode = 2
+text = "Preparing screenshot"
+
+[node name="ProgressBar" type="ProgressBar" parent="CenterContainer/PanelContainer/MarginContainer/Contents" unique_id=500883901]
+custom_minimum_size = Vector2(0, 18)
+layout_mode = 2
+show_percentage = false
+indeterminate = true
+editor_preview_indeterminate = false
+
+[node name="MessageLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/Contents" unique_id=1395051776]
+layout_mode = 2
+text = "Reading the selected image."
+autowrap_mode = 3
+
+[node name="PreviewContainer" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/Contents" unique_id=1569330031]
+visible = false
+layout_mode = 2
+
+[node name="PreviewLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/Contents/PreviewContainer" unique_id=1645757752]
+layout_mode = 2
+text = "Screenshot preview"
+
+[node name="PreviewTexture" type="TextureRect" parent="CenterContainer/PanelContainer/MarginContainer/Contents/PreviewContainer" unique_id=460447054]
+custom_minimum_size = Vector2(360, 200)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CloseButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/Contents" unique_id=734472599]
+layout_mode = 2
+text = "Cancel"

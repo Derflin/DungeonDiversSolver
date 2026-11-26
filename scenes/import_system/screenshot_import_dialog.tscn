@@ -49,6 +49,20 @@ theme_override_constants/separation = 10
 layout_mode = 2
 text = "Screenshot Import"
 
+[node name="InputContainer" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/Contents" unique_id=1609307739]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="InstructionLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/Contents/InputContainer" unique_id=1490271806]
+layout_mode = 2
+text = "Select a screenshot of your Dungeon Divers map to begin."
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="SelectScreenshotButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/Contents/InputContainer" unique_id=1507036964]
+layout_mode = 2
+text = "Select Screenshot"
+
 [node name="StageLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/Contents" unique_id=1599433014]
 layout_mode = 2
 text = "Preparing screenshot"

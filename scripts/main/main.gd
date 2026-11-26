@@ -27,6 +27,9 @@ func _ready() -> void:
 	screenshot_image_input.image_file_selected.connect(_on_screenshot_image_file_selected)
 	screenshot_image_input.file_error.connect(_on_screenshot_image_input_error)
 	
+	# Open the file picker when the screenshot import dialog requests a file.
+	screenshot_import_dialog.select_screenshot_requested.connect(_on_screenshot_import_dialog_select_screenshot_requested)
+	
 	# Connect screenshot image preparation updates to the progress dialog.
 	screenshot_importer.progress_changed.connect(screenshot_import_dialog.set_stage)
 	screenshot_importer.screenshot_prepared.connect(_on_screenshot_prepared)
@@ -69,12 +72,26 @@ func _on_map_manager_control_import_screenshot_requested() -> void:
 	if map_manager_control.save_manager_control.visible:
 		return
 	
-	# Open the platform-specific file picker from the button interaction.
+	# Open the screenshot input dialog instead of the file picker.
+	screenshot_import_dialog.show_input()
+
+
+## Opens the platform-specific screenshot file picker from the dialog.
+func _on_screenshot_import_dialog_select_screenshot_requested() -> void:
+	# Ignore requests after the dialog has closed or while analysis is active.
+	if not screenshot_import_dialog.visible or screenshot_importer.is_import_in_progress():
+		return
+	
+	# Open the file picker directly from the selection button's press event.
 	screenshot_image_input.request_image()
 
 
 ## Starts screenshot preparation after a file has been selected.
 func _on_screenshot_image_file_selected(buffer: PackedByteArray, file_name: String) -> void:
+	# Ignore delayed file picker results when the input dialog is no longer active.
+	if not screenshot_import_dialog.visible or screenshot_importer.is_import_in_progress():
+		return
+	
 	# Show activity feedback before beginning image decoding.
 	screenshot_import_dialog.begin()
 	await screenshot_importer.prepare_screenshot(buffer, file_name)
